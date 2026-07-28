@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "documentType": "death_report",
+  "data": {
+    "documentType": "",
+    "deceasedName": "김민수",
+    "deceasedGender": "male",
+    "deceasedBirthDate": "1955-03-12",
+    "deathDateTime": "2026-07-07T14:20",
+    "deathPlaceCategory": "medical_institution",
+    "deathPlaceAddress": "부산광역시 금정구 부산대학로 63번길 2",
+    "reporterName": "",
+    "reporterRelationship": "",
+    "reporterAddress": "",
+    "reportDate": "2026-07-08"
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

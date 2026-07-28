@@ -1,0 +1,69 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "death_report_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "description": "문서가 사망신고서이면 death_report를 반환한다."
+        },
+        "deceasedName": {
+          "type": "string",
+          "description": "사망자의 성명. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "deceasedGender": {
+          "type": "string",
+          "description": "사망자의 성별. 남자는 male, 여자는 female, 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "deceasedBirthDate": {
+          "type": "string",
+          "description": "사망자의 출생연월일을 YYYY-MM-DD 형식으로 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "deathDateTime": {
+        "type": "string",
+        "description": "① 사망자 영역의 '사망일시' 행에 기재된 연, 월, 일, 시, 분을 읽어 YYYY-MM-DDTHH:mm 형식으로 반환한다. 주민등록번호, 발병일, 사고일시, 신고일과 혼동하지 않는다. 예: 2026년 7월 7일 14시 20분은 2026-07-07T14:20."
+        },
+        "deathPlaceCategory": {
+          "type": "string",
+          "description": "선택된 사망 장소 유형. residence, medical_institution, welfare_facility, public_facility, road, commercial_facility, industrial_site, farm, during_transport, other 중 하나를 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "deathPlaceAddress": {
+          "type": "string",
+          "description": "사망 장소의 주소. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "reporterName": {
+          "type": "string",
+          "description": "신고인의 성명. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "reporterRelationship": {
+          "type": "string",
+          "description": "신고인과 사망자의 관계. spouse, child, parent, relative, cohabitant, other 중 하나를 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "reporterAddress": {
+          "type": "string",
+          "description": "신고인의 주소. 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "사망신고서 작성일 또는 신고일을 YYYY-MM-DD 형식으로 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+        }
+      },
+      "required": [
+        "documentType",
+        "deceasedName",
+        "deceasedGender",
+        "deceasedBirthDate",
+        "deathDateTime",
+        "deathPlaceCategory",
+        "deathPlaceAddress",
+        "reporterName",
+        "reporterRelationship",
+        "reporterAddress",
+        "reportDate"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
