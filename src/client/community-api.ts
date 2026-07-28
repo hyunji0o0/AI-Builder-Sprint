@@ -1,4 +1,4 @@
-import { CommunityPost, CreateCommunityPostInput } from '../schemas/community'
+import { CommunityPost, CreateCommunityPostInput, UpdateCommunityPostInput } from '../schemas/community'
 
 export async function fetchCommunityPosts(category?: string): Promise<CommunityPost[]> {
   const query = category && category !== 'ALL' ? `?category=${category}` : ''
@@ -15,5 +15,16 @@ export async function submitCommunityPost(input: CreateCommunityPostInput): Prom
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error ?? '글을 등록하지 못했어요.')
+  return data as CommunityPost
+}
+
+export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost> {
+  const res = await fetch(`/api/community/posts/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? '글을 수정하지 못했어요.')
   return data as CommunityPost
 }

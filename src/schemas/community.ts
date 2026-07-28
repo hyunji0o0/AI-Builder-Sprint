@@ -37,6 +37,12 @@ export const createCommunityPostSchema = communityPostSchema.pick({
 })
 export type CreateCommunityPostInput = z.infer<typeof createCommunityPostSchema>
 
+export const updateCommunityPostSchema = communityPostSchema.pick({
+  category: true,
+  content: true,
+})
+export type UpdateCommunityPostInput = z.infer<typeof updateCommunityPostSchema>
+
 // agent_and_ui의 agent-output.ts COMMUNITY_REVIEW 블록과 합칠 때 쓸 어댑터.
 // 지금 AgentBlock.tsx는 review 배열의 첫 번째 항목만 렌더링하니,
 // 백엔드에서 이 함수로 변환한 배열을 그대로 흘려보내면 됨.

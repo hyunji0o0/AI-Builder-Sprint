@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { CommunityPost, CreateCommunityPostInput, communityPostSchema } from '../schemas/community'
+import { CommunityPost, CreateCommunityPostInput, UpdateCommunityPostInput, communityPostSchema } from '../schemas/community'
 
 const SEED_PATH = path.resolve(process.cwd(), 'data/community-posts.seed.json')
 const RUNTIME_PATH = path.resolve(process.cwd(), 'data/community-posts.runtime.json')
@@ -42,4 +42,15 @@ export async function createCommunityPost(input: CreateCommunityPostInput): Prom
   }
   await savePosts([post, ...posts])
   return post
+}
+
+export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost | null> {
+  const posts = await loadPosts()
+  const index = posts.findIndex((post) => post.id === id)
+  if (index === -1) return null
+  const updated: CommunityPost = { ...posts[index], ...input }
+  const next = [...posts]
+  next[index] = updated
+  await savePosts(next)
+  return updated
 }

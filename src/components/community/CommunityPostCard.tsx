@@ -1,4 +1,5 @@
 import { CATEGORY_LABEL, CommunityPost } from '../../schemas/community'
+import { isMyPost } from '../../client/my-community-posts'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 
@@ -18,7 +19,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(days / 7)}주 전`
 }
 
-export function CommunityPostCard({ post }: { post: CommunityPost }) {
+export function CommunityPostCard({ post, onEdit }: { post: CommunityPost; onEdit: (post: CommunityPost) => void }) {
   const tone = CATEGORY_TONE[post.category]
   return (
     <article className="cm-card">
@@ -29,6 +30,11 @@ export function CommunityPostCard({ post }: { post: CommunityPost }) {
           <span>{timeAgo(post.createdAt)}</span>
         </div>
         <span className={`cm-badge cm-${tone}`}>{CATEGORY_LABEL[post.category]}</span>
+        {isMyPost(post.id) && (
+          <button type="button" className="cm-card-edit" onClick={() => onEdit(post)} aria-label="내 글 수정">
+            <Icon name="edit" size={13} />
+          </button>
+        )}
       </div>
       <p className="cm-card-content">{post.content}</p>
       <footer className="cm-card-footer">
