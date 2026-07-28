@@ -1,0 +1,9 @@
+{
+  "fixtureId": "case-incomplete",
+  "documents": ["death-certificate-blurred-demo.png", "loan-amount-missing-demo.png"],
+  "expectedClassification": ["DEATH_CERTIFICATE", "FINANCIAL_DEBT_DOCUMENT"],
+  "expectedExtractedFields": ["deathDate", "amount"],
+  "expectedValidationIssues": ["INVALID_AMOUNT"],
+  "expectedFinancialSummary": { "totalAssets": null, "totalDebts": null, "difference": null },
+  "expectedRiskLevel": "NEEDS_MORE_INFORMATION"
+}

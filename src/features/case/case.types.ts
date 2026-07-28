@@ -1,4 +1,6 @@
-export type CaseState = {
+import { AgentUIBlock } from '../../agent/schemas/agent-output'
+
+export type DashboardCaseState = {
   documents: number
   activeTasks: number
   needsCheck: number
@@ -32,6 +34,7 @@ export type AgentMessage = {
   role: 'agent' | 'user'
   text: string
   block?: AgentBlockKind
+  ui?: AgentUIBlock[]
 }
 
 export type CaseStage = {

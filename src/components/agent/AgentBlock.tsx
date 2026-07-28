@@ -3,10 +3,91 @@ import { AgentBlockKind } from '../../features/case/case.types'
 import { CaseAgentController } from '../../features/case/useCaseAgent'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
+import { AgentUIBlock } from '../../agent/schemas/agent-output'
 
-type Props = { block?: AgentBlockKind; controller: CaseAgentController }
+type Props = { block?: AgentBlockKind; ui?: AgentUIBlock[]; controller: CaseAgentController }
 
-export function AgentBlock({ block, controller: c }: Props) {
+export function AgentBlock({ block, ui, controller: c }: Props) {
+  const structured = ui?.[0]
+  if (structured?.type === 'CHOICE') return (
+    <div className="da-choice">
+      {structured.options.map((option) => <button key={option.id} onClick={() => c.addAgent(`${option.label}을 선택했어요.`)}>{option.label}</button>)}
+    </div>
+  )
+
+  if (structured?.type === 'RISK_ALERT') return (
+    <div className="da-action-card da-coral">
+      <GlassIcon icon="alert" tone="coral"/>
+      <div><small>현재 확인된 자료 기준</small><strong>{structured.title}</strong>{structured.facts.map((fact) => <span key={fact}>{fact}</span>)}<span>{structured.disclaimer}</span></div>
+    </div>
+  )
+
+  if (structured?.type === 'TASK_CARD') return (
+    <div className={`da-action-card ${structured.priority === 'URGENT' ? 'da-coral' : 'da-amber'}`}>
+      <GlassIcon icon={structured.priority === 'URGENT' ? 'alert' : 'check'} tone={structured.priority === 'URGENT' ? 'coral' : 'amber'}/>
+      <div><small>{structured.priority === 'URGENT' ? '먼저 확인' : '다음 단계'}</small><strong>{structured.title}</strong><span>준비도 {structured.readiness}%</span></div>
+      <button onClick={() => c.addAgent('이 업무를 이어서 진행할게요.', structured.priority === 'URGENT' ? 'finance' : 'checklist')}>이어하기</button>
+    </div>
+  )
+
+  if (structured?.type === 'INSTITUTION') return (
+    <div className="da-institution">
+      <GlassIcon icon="building" tone="blue"/>
+      <div><small>공식 정보 확인 필요</small><strong>{structured.results[0]?.name || '기관 정보 없음'}</strong><span>{structured.results[0]?.district}</span></div>
+    </div>
+  )
+
+  if (structured?.type === 'COMMUNITY_REVIEW') {
+    const review = structured.reviews[0]
+    return review ? (
+      <div className="da-review">
+        <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><small>{review.label}</small><strong>비슷한 경험자의 팁</strong></div></div>
+        <blockquote>“{review.excerpt}”</blockquote>
+        <footer><span><Icon name="heart" size={15}/> 도움이 됐어요 {review.helpfulCount}</span><span>{review.createdAt}</span></footer>
+        <p>추천 이유: {review.reason}<br/>{structured.disclaimer}</p>
+      </div>
+    ) : null
+  }
+
+  if (structured?.type === 'DOCUMENT_BATCH_SUMMARY') return (
+    <div className="da-checklist">
+      {structured.files.map((file) => (
+        <div key={file.documentId}>
+          <strong>{file.fileName}</strong>
+          <span>{file.documentType} · 신뢰도 {Math.round(file.confidence * 100)}% · {file.status}</span>
+        </div>
+      ))}
+      {structured.issues.map((issue) => <p key={`${issue.code}-${issue.documentId}`}>{issue.message}</p>)}
+      <small>AI BUILDER SPRINT 테스트용 가상 문서 결과일 수 있으며 실제 기관 발급 결과가 아닙니다.</small>
+    </div>
+  )
+
+  if (structured?.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION') return (
+    <div className="da-extract">
+      <div><span>파일</span><strong>{structured.fileName}</strong></div>
+      <div><span>예상 문서 종류</span><strong>{structured.suggestedType}</strong></div>
+      <div><span>분류 신뢰도</span><strong>{Math.round(structured.confidence * 100)}%</strong></div>
+      <button onClick={() => c.addAgent('문서 종류를 확인했어요.', 'extract')}>문서 종류 확인</button>
+    </div>
+  )
+
+  if (structured?.type === 'FIELD_VERIFICATION') return (
+    <div className="da-extract">
+      <div><span>{structured.label}</span><strong>{structured.formattedValue}</strong></div>
+      <div><span>원문 근거</span><strong>{structured.sourceText || '원문에서 직접 확인 필요'}</strong></div>
+      <button onClick={() => c.confirmPipelineField(structured.documentId, structured.fieldKey, structured.value)}>맞아요</button>
+      <button onClick={() => c.addAgent(`${structured.label} 값을 직접 입력해 주세요.`, structured.fieldKey === 'amount' ? 'finance' : 'extract')}>수정할게요</button>
+    </div>
+  )
+
+  if (structured?.type === 'DOCUMENT_CONFLICT') return (
+    <div className="da-action-card da-coral">
+      <GlassIcon icon="alert" tone="coral"/>
+      <div><small>문서 간 교차검증</small><strong>{structured.title}</strong>{structured.issues.map((issue) => <span key={issue.code}>{issue.message}</span>)}</div>
+      <button onClick={() => c.addAgent('충돌한 항목을 원문과 함께 하나씩 확인할게요.', 'extract')}>하나씩 확인</button>
+    </div>
+  )
+
   if (!block || block === 'text') return null
 
   if (block === 'choice') return (
@@ -28,7 +109,8 @@ export function AgentBlock({ block, controller: c }: Props) {
       <Icon name="upload" size={27}/>
       <strong>{c.caseState.uploadedFile || '서류를 선택하거나 끌어다 놓으세요'}</strong>
       <span>PDF, JPG, PNG · 최대 10MB</span>
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={c.upload}/>
+      <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" onChange={c.upload}/>
+      {c.documentProgress.map((progress) => <small key={progress.fileId}>{progress.label} · {progress.progress}%</small>)}
     </label>
   )
 
@@ -79,7 +161,7 @@ export function AgentBlock({ block, controller: c }: Props) {
           <span><Icon name="check" size={15}/></span>{item}
         </button>
       ))}
-      <label className="da-mini-upload"><Icon name="upload" size={16}/>부족한 서류 업로드<input type="file" onChange={c.upload}/></label>
+      <label className="da-mini-upload"><Icon name="upload" size={16}/>부족한 서류 업로드<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={c.upload}/></label>
     </div>
   )
 

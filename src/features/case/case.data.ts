@@ -1,26 +1,36 @@
-import { AgentMessage, CaseState } from './case.types'
+import { createInitialCaseState } from '../../agent/state/initial-case'
+import { CaseState } from '../../agent/schemas/case-state'
+import { AgentMessage, DashboardCaseState } from './case.types'
 
-export const initialCase: CaseState = {
-  documents: 3,
-  activeTasks: 2,
-  needsCheck: 1,
-  assets: 123000000,
-  debts: 42000000,
-  readiness: 60,
-  todayTasks: 2,
-  deadline: '상속 포기 검토 · 2026.08.14까지',
-  selectedDate: '',
-  uploadedFile: '',
-  extractionConfirmed: false,
-  checklist: [true, true, false, false],
+export const initialCase = createInitialCaseState()
+
+export const toDashboardCase = (
+  state: CaseState,
+  ui: Pick<DashboardCaseState, 'selectedDate' | 'uploadedFile' | 'extractionConfirmed' | 'checklist'>,
+): DashboardCaseState => {
+  const activeTasks = state.tasks.filter((task) => task.status === 'IN_PROGRESS' || task.status === 'NOT_STARTED').length
+  const readiness = state.tasks.length
+    ? Math.round(state.tasks.reduce((sum, task) => sum + (task.status === 'COMPLETED' ? 100 : task.readiness), 0) / state.tasks.length)
+    : state.onboardingCompleted ? 100 : 0
+  const deadlineTask = state.tasks.find((task) => task.deadline)
+  return {
+    documents: state.documents.filter((document) => document.status === 'VERIFIED').length,
+    activeTasks,
+    needsCheck: state.missingFields.filter((field) => !field.resolved).length,
+    assets: state.financials.totalAssets ?? 0,
+    debts: state.financials.totalDebts ?? 0,
+    readiness,
+    todayTasks: state.tasks.filter((task) => task.status === 'IN_PROGRESS').length,
+    deadline: deadlineTask?.deadline ? `${deadlineTask.title} · ${deadlineTask.deadline}까지` : '주요 검토 기한 · 확인 필요',
+    ...ui,
+  }
 }
 
 export const initialMessages: AgentMessage[] = [
   {
     id: 1,
     role: 'agent',
-    text: '현재 상황을 정리했어요. 대시보드의 항목을 누르거나 아래에서 필요한 업무를 선택해 주세요.',
-    block: 'next',
+    text: '안녕하세요. 복잡한 사후 행정 업무를 함께 차근차근 정리해 드릴게요. 궁금한 내용이나 지금 도움이 필요한 일을 편하게 말씀해 주세요.',
   },
 ]
 

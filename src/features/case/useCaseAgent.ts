@@ -1,25 +1,45 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
-import { initialCase, initialMessages } from './case.data'
+import { initialCase, initialMessages, toDashboardCase } from './case.data'
 import { AgentBlockKind, AgentMessage, CaseStage } from './case.types'
+import { requestSolarReply } from '../../agent/client/agent-api'
+import { AgentUIBlock } from '../../agent/schemas/agent-output'
+import { DocumentProgress } from '../../agent/schemas/document-pipeline'
+import { processDocuments } from '../../agent/client/document-api'
+import { confirmDocumentField } from '../../agent/documents/run-document-pipeline'
 
-const responseFor = (question: string): [string, AgentBlockKind] => {
-  const compact = question.replace(/\s/g, '')
-  if (compact.includes('서류')) return ['현재 준비 상태를 확인했어요. 부족한 서류를 체크하거나 파일을 올려주세요.', 'checklist']
-  if (compact.includes('채무') || compact.includes('자산') || compact.includes('재산')) return ['현재 확인된 자산과 채무를 수정할 수 있어요.', 'finance']
-  if (compact.includes('부산') || compact.includes('기관')) return ['현재 사건 정보와 가까운 부산 지역 기관을 정리했어요.', 'institution']
-  if (compact.includes('후기') || compact.includes('경험') || compact.includes('팁')) return ['비슷한 상황을 경험한 사용자의 팁을 찾았어요.', 'review']
-  if (compact.includes('날짜') || compact.includes('상담')) return ['상담을 준비할 날짜를 선택해 주세요.', 'date']
-  if (compact.includes('급')) return ['기한이 지나기 전에 먼저 확인해야 할 항목이에요.', 'urgent']
-  return ['어떤 방식으로 진행할까요?', 'choice']
+const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
+  const map: Partial<Record<AgentUIBlock['type'], AgentBlockKind>> = {
+    CHOICE: 'choice',
+    DATE_INPUT: 'date',
+    DOCUMENT_UPLOAD: 'upload',
+    EXTRACTION_CONFIRMATION: 'extract',
+    FINANCIAL_INPUT: 'finance',
+    RISK_ALERT: 'urgent',
+    TASK_CARD: 'next',
+    DOCUMENT_CHECKLIST: 'checklist',
+    INSTITUTION: 'institution',
+    COMMUNITY_REVIEW: 'review',
+    PROGRESS_SUMMARY: 'text',
+  }
+  return ui[0] ? map[ui[0].type] : undefined
 }
 
 export function useCaseAgent() {
-  const [caseState, setCaseState] = useState(initialCase)
+  const [agentCaseState, setAgentCaseState] = useState(initialCase)
+  const [caseUi, setCaseUi] = useState({
+    selectedDate: '',
+    uploadedFile: '',
+    extractionConfirmed: false,
+    checklist: [true, true, false, false],
+  })
   const [messages, setMessages] = useState<AgentMessage[]>(initialMessages)
   const [input, setInput] = useState('')
   const [activeMenu, setActiveMenu] = useState('AI 홈')
-  const [assetDraft, setAssetDraft] = useState(String(initialCase.assets))
-  const [debtDraft, setDebtDraft] = useState(String(initialCase.debts))
+  const [assetDraft, setAssetDraft] = useState(String(initialCase.financials.totalAssets ?? 0))
+  const [debtDraft, setDebtDraft] = useState(String(initialCase.financials.totalDebts ?? 0))
+  const [isResponding, setIsResponding] = useState(false)
+  const [documentProgress, setDocumentProgress] = useState<DocumentProgress[]>([])
+  const caseState = useMemo(() => toDashboardCase(agentCaseState, caseUi), [agentCaseState, caseUi])
 
   const stages: CaseStage[] = useMemo(() => [
     { label: '기본 정보 확인', state: '완료', done: true },
@@ -28,22 +48,36 @@ export function useCaseAgent() {
     { label: '상담 준비', state: caseState.activeTasks === 0 ? '준비 완료' : '곧 진행 예정', done: caseState.activeTasks === 0 },
   ], [caseState])
 
-  const addAgent = (text: string, block?: AgentBlockKind) => {
+  const addAgent = (text: string, block?: AgentBlockKind, ui?: AgentUIBlock[]) => {
     setMessages((current) => [...current, {
       id: Date.now() + current.length,
       role: 'agent',
       text,
       block,
+      ui,
     }])
   }
 
-  const send = (event?: FormEvent) => {
+  const send = async (event?: FormEvent) => {
     event?.preventDefault()
     const question = input.trim()
-    if (!question) return
-    setMessages((current) => [...current, { id: Date.now(), role: 'user', text: question }])
+    if (!question || isResponding) return
+    const userMessage: AgentMessage = { id: Date.now(), role: 'user', text: question }
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
     setInput('')
-    window.setTimeout(() => addAgent(...responseFor(question)), 350)
+    setIsResponding(true)
+
+    try {
+      const reply = await requestSolarReply(question, agentCaseState, undefined, nextMessages)
+      setAgentCaseState(reply.caseState)
+      addAgent(reply.output.message, blockFromUI(reply.output.ui), reply.output.ui)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.'
+      addAgent(`연결 중 문제가 생겼어요. ${message}`)
+    } finally {
+      setIsResponding(false)
+    }
   }
 
   const chooseQuick = (label: string, block: AgentBlockKind) => {
@@ -70,66 +104,99 @@ export function useCaseAgent() {
     addAgent(...mapping[label])
   }
 
-  const upload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    setCaseState((state) => ({ ...state, uploadedFile: file.name }))
-    window.setTimeout(() => addAgent(`${file.name}에서 주요 정보를 추출했어요. 내용을 확인해 주세요.`, 'extract'), 250)
+  const upload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) return
+    setCaseUi((state) => ({ ...state, uploadedFile: files.length === 1 ? files[0].name : `${files.length}개 파일` }))
+    setIsResponding(true)
+    try {
+      const result = await processDocuments(files, agentCaseState, setDocumentProgress)
+      setAgentCaseState(result.caseState)
+      addAgent(result.output.message, blockFromUI(result.output.ui), result.output.ui)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '잠시 후 다시 시도해 주세요.'
+      addAgent(`이 파일에서는 내용을 충분히 확인하지 못했어요. ${message}`)
+    } finally {
+      setIsResponding(false)
+      event.target.value = ''
+    }
   }
 
   const confirmExtraction = () => {
-    setCaseState((state) => ({
+    setCaseUi((state) => ({ ...state, extractionConfirmed: true }))
+    setAgentCaseState((state) => ({
       ...state,
-      documents: state.extractionConfirmed ? state.documents : state.documents + 1,
-      readiness: Math.min(100, state.readiness + (state.extractionConfirmed ? 0 : 8)),
-      extractionConfirmed: true,
+      documents: state.documents.map((document) => document.status === 'NEEDS_CONFIRMATION'
+        ? { ...document, status: 'VERIFIED' as const }
+        : document),
+      stage: 'CHECKING_MISSING_INFO',
+      lastUpdatedAt: new Date().toISOString(),
     }))
     addAgent('서류 확인이 완료되어 대시보드에 반영했어요.', 'complete')
   }
 
+  const confirmPipelineField = (documentId: string, fieldKey: string, value: string | number | null) => {
+    if (value === null) {
+      addAgent('이 값은 직접 입력한 뒤 확인할 수 있어요.', fieldKey === 'amount' ? 'finance' : 'extract')
+      return
+    }
+    setAgentCaseState((state) => confirmDocumentField(state, documentId, fieldKey, value))
+    addAgent('확인한 값을 사건 상태와 대시보드에 반영했어요.', 'complete')
+  }
+
   const saveFinance = () => {
-    setCaseState((state) => ({
+    const assets = Number(assetDraft) || 0
+    const debts = Number(debtDraft) || 0
+    setAgentCaseState((state) => ({
       ...state,
-      assets: Number(assetDraft) || 0,
-      debts: Number(debtDraft) || 0,
-      needsCheck: 0,
-      readiness: Math.max(state.readiness, 76),
+      stage: debts > assets ? 'URGENT_REVIEW' : 'IN_PROGRESS',
+      financials: {
+        assets: [{ id: 'asset-user', category: 'ASSET', type: 'OTHER', institution: null, amount: assets, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
+        debts: [{ id: 'debt-user', category: 'DEBT', type: 'OTHER', institution: null, amount: debts, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
+        totalAssets: assets,
+        totalDebts: debts,
+        difference: assets - debts,
+        hasUnverifiedItems: false,
+      },
+      missingFields: state.missingFields.map((field) => ({ ...field, resolved: true })),
+      lastUpdatedAt: new Date().toISOString(),
     }))
     addAgent('자산·채무 금액을 저장했고 확인 필요 항목을 해결했어요.', 'complete')
   }
 
   const completeTask = () => {
-    setCaseState((state) => ({
-      ...state,
-      activeTasks: Math.max(0, state.activeTasks - 1),
-      todayTasks: Math.max(0, state.todayTasks - 1),
-      readiness: Math.min(100, state.readiness + 10),
-    }))
+    setAgentCaseState((state) => {
+      const target = state.tasks.find((task) => task.status === 'IN_PROGRESS' || task.status === 'NOT_STARTED')
+      return {
+        ...state,
+        tasks: state.tasks.map((task) => task.id === target?.id ? { ...task, status: 'COMPLETED' as const, readiness: 100 } : task),
+        lastUpdatedAt: new Date().toISOString(),
+      }
+    })
     addAgent('업무를 완료 처리했어요. 진행률과 오늘 할 일을 갱신했습니다.', 'complete')
   }
 
   const toggleChecklist = (index: number) => {
-    setCaseState((state) => {
+    setCaseUi((state) => {
       const checklist = [...state.checklist]
       checklist[index] = !checklist[index]
-      return {
-        ...state,
-        checklist,
-        readiness: checklist.every(Boolean) ? Math.max(state.readiness, 84) : state.readiness,
-      }
+      return { ...state, checklist }
     })
   }
 
   const setSelectedDate = (selectedDate: string) =>
-    setCaseState((state) => ({ ...state, selectedDate }))
+    setCaseUi((state) => ({ ...state, selectedDate }))
 
   return {
     caseState,
+    agentCaseState,
     messages,
     input,
     activeMenu,
     assetDraft,
     debtDraft,
+    isResponding,
+    documentProgress,
     stages,
     setInput,
     setAssetDraft,
@@ -141,6 +208,7 @@ export function useCaseAgent() {
     menuAction,
     upload,
     confirmExtraction,
+    confirmPipelineField,
     saveFinance,
     completeTask,
     toggleChecklist,

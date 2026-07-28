@@ -89,3 +89,34 @@ git push origin develop
 
 - 대회 관련 문의: 해커톤 문의 오픈채팅방
 - 주최: 부산대학교 APPTIVE, 정보컴퓨터공학부 동아리연합회 / 후원: Upstage, 부산대 Anchor 사업단, 부산대 AI융합교육원
+
+## 로컬 실행
+
+1. 프로젝트 루트에 `.env.local` 파일을 만들고 Upstage API 키를 설정합니다.
+
+```env
+UPSTAGE_API_KEY=up_your_api_key_here
+UPSTAGE_MODEL=solar-pro3
+AGENT_MOCK_MODE=false
+DOCUMENT_PIPELINE_MODE=mock
+ALLOW_MOCK_DOCUMENT_PIPELINE_IN_PRODUCTION=false
+```
+
+2. 의존성을 설치하고 개발 서버를 실행합니다.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+브라우저에는 API 키가 전달되지 않으며, Vite 개발 서버의 `/api/chat` 프록시가
+Upstage Solar Chat Completions API를 호출합니다. `.env.local`을 변경한 경우
+개발 서버를 다시 시작해야 합니다.
+
+API 키 발급 전에는 `AGENT_MOCK_MODE=true`로 설정하면 외부 LLM 호출 없이
+동일한 Agent 상태·도구·UI Block 흐름을 확인할 수 있습니다. 실제 Solar를
+연결할 때는 반드시 `false`로 되돌려 주세요.
+
+문서 파이프라인은 개발 환경에서 `DOCUMENT_PIPELINE_MODE=mock`이 기본입니다.
+실제 Upstage Document Parse를 사용할 때는 `live`로 변경합니다. 운영 환경에서
+mock 사용은 기본 차단되며, 명시적 데모 배포가 아니라면 허용 옵션을 켜지 마세요.
