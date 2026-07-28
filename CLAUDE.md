@@ -84,5 +84,49 @@ Cowork에서 진행한 커뮤니티(경험 나눔) 기능 작업 배경과 결�
 
 이 커뮤니티 기능은 Cowork(클라우드 샌드박스)에서 작성됐고, 그 환경은 npm
 레지스트리·GitHub 접근이 막혀 있어서 `npm install`/`npm run dev`로 직접
-돌려보거나 타입체크를 못 했음. 로컬(또는 Claude Code)에서 먼저
-`npm install && npm run dev`로 실행 확인 후 이상 있으면 고칠 것.
+돌려보거나 타입체크를 못 했음. → **Claude Code(로컬)에서 실행 확인 완료**
+(아래 참고). `npm install && npm run dev` 정상, `tsc --noEmit` 에러 없음,
+브라우저에서 글쓰기·수정까지 실동작 확인함.
+
+## Claude Code(로컬) 세션에서 이어서 작업한 것
+
+Cowork 인계 이후 로컬 Claude Code 세션에서 추가로 바꾼 부분. **아직 커밋 안
+됨** (working tree에 변경 상태로 남아있음 — 새 세션에서 `git status`/`git
+diff`로 확인 가능, 파일 자체는 디스크에 그대로 있으니 커밋 여부와 무관하게
+보임).
+
+- **글쓰기 UI를 인라인 폼 → 게시판 스타일로 변경.** `CommunityFeed.tsx`에
+  `view: 'list' | 'write'` 상태를 두고, 헤더의 "글쓰기" 버튼을 누르면 목록/탭이
+  사라지고 `CommunityComposer`가 전체 화면 폼(닉네임 + 카테고리 칩 + 여러 줄
+  textarea + 취소/등록 버튼)으로 나타나는 방식. **URL 라우팅(react-router)은
+  일부러 안 씀** — merge 대상인 `agent_and_ui`도 라우터가 없는 단일 SPA라서,
+  라우팅 라이브러리를 새로 얹으면 merge 때 부담이 커짐. 그래서 클라이언트
+  상태 토글만으로 구현.
+- **"내가 쓴 글 확인·수정" 기능 추가.** 아직 로그인이 없어서(§"왜 이런
+  구조인가" 참고), 소유권 판별은 **이 브라우저의 localStorage**에 작성한 글
+  id를 기록해두는 방식으로 스텁 처리함 (`src/client/my-community-posts.ts`).
+  내가 쓴 글의 카드에만 수정 아이콘이 뜨고, 누르면 글쓰기 화면이 기존
+  내용으로 채워진 채 열림. 나중에 로그인 붙이면 이 판별 로직만 서버 쪽 소유자
+  필드 체크로 교체하면 됨 (스키마 변경은 최소화됨 — `updateCommunityPostSchema`
+  는 category/content만 받음, nickname은 수정 불가로 고정).
+  - 백엔드: `PATCH /api/community/posts/:id` 추가 (`community-server-plugin.ts`,
+    `community-store.ts`의 `updateCommunityPost()`)
+  - 프론트: `community-api.ts`에 `updateCommunityPost()`, `CommunityPostCard`에
+    소유자에게만 보이는 수정 버튼, `CommunityComposer`가 `initialPost` prop으로
+    생성/수정 겸용 모드 지원
+- **DB 전환은 보류.** "커뮤니티 글을 DB에 넣어야 한다"는 논의가 있었지만,
+  지금은 기존 파일 기반 저장(`community-store.ts`)을 그대로 두기로 함. DB
+  전환은 라우팅과 무관한 별개 작업이라 나중에 하기로 함.
+- **사진 첨부 기능은 요청했다가 바로 취소됨.** 실제로 코드에 반영된 적 없음
+  (착수 전 취소).
+- **`docs/tips_raw.md` 신규.** 세무사 상담 내용 요약에서 법정 기한 있는
+  사실(이미 §12 룰 테이블에 있음)은 빼고, 노하우·주의사항만 자연스러운
+  문장으로 뽑아 쌓아둔 원자료. 아직 F7 팁 카드로 갈지 커뮤니티로 갈지
+  미정 — 원자료 단계. **주의: 이 내용은 세무사(전문가) 조언이라 팀원 1인칭
+  경험담(현재 시드 데이터 톤)과 성격이 다름.** 그대로 커뮤니티 글처럼
+  넣으면 "실제 팀원 경험 맞냐"는 심사 질문에 애매해지니, 출처를 "세무사
+  상담 요약"으로 명시하는 별도 카드로 갈지 검토 필요.
+- **`.claude/launch.json` 신규.** Claude Code 프리뷰 도구로 dev 서버를 이름
+  기반(`community-dev`)으로 띄우기 위한 설정. 단, 세션에 따라 이 파일이
+  아니라 세션 시작 당시 디렉토리의 launch.json을 참조하는 경우가 있었음 —
+  안 되면 `npm run dev` 직접 실행 후 `preview_start`에 `url` 파라미터로 열 것.
