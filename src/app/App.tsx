@@ -1,19 +1,44 @@
+import { useEffect, useState } from 'react'
 import { AgentChat } from '../components/agent/AgentChat'
 import { CaseSummary } from '../components/dashboard/CaseSummary'
 import { ProgressDashboard } from '../components/dashboard/ProgressDashboard'
 import { MobileNav, Sidebar } from '../components/layout/Sidebar'
 import { useCaseAgent } from '../features/case/useCaseAgent'
+import { CommunityRouter, useCommunity } from '../features/community'
 import '../dashboard.css'
 
 export default function App() {
   const controller = useCaseAgent()
+  const community = useCommunity()
+  const [path, setPath] = useState(window.location.pathname)
+  const isCommunity = path.startsWith('/community')
+
+  useEffect(() => {
+    const updatePath = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', updatePath)
+    return () => window.removeEventListener('popstate', updatePath)
+  }, [])
+
+  const menuAction = (label: string) => {
+    if (label === '경험 나눔') {
+      window.history.pushState({}, '', '/community')
+      setPath('/community')
+      return
+    }
+    if (isCommunity) {
+      window.history.pushState({}, '', '/')
+      setPath('/')
+    }
+    controller.menuAction(label)
+  }
+
+  const activeMenu = isCommunity ? '경험 나눔' : controller.activeMenu
 
   return (
     <div className="da-page">
-      <div className="da-cloud da-cloud-a"/>
-      <div className="da-cloud da-cloud-b"/>
       <main className="da-shell">
-        <Sidebar activeMenu={controller.activeMenu} menuAction={controller.menuAction}/>
+        <Sidebar activeMenu={activeMenu} menuAction={menuAction}/>
+        {isCommunity ? <CommunityRouter path={path} controller={community}/> : <>
         <section className="da-main">
           <ProgressDashboard
             caseState={controller.caseState}
@@ -27,8 +52,9 @@ export default function App() {
           addAgent={controller.addAgent}
           completeTask={controller.completeTask}
         />
+        </>}
       </main>
-      <MobileNav activeMenu={controller.activeMenu} menuAction={controller.menuAction}/>
+      <MobileNav activeMenu={activeMenu} menuAction={menuAction}/>
     </div>
   )
 }

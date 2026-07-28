@@ -1,6 +1,5 @@
 import { CSSProperties } from 'react'
 import { CaseAgentController } from '../../features/case/useCaseAgent'
-import { GlassIcon } from '../ui/GlassIcon'
 import { Icon, IconName } from '../ui/Icon'
 
 export const menuItems: { label: string; icon: IconName }[] = [
@@ -18,7 +17,7 @@ export function Sidebar({ activeMenu, menuAction }: Props) {
   return (
     <aside className="da-sidebar">
       <div className="da-brand">
-        <GlassIcon icon="sparkle" tone="peach"/>
+        <img className="da-brand-logo" src="/aedohal-sigan-icon-3d.svg" alt=""/>
         <div><strong>애도할 시간</strong><span>당신의 곁에서 함께해요</span></div>
       </div>
       <nav aria-label="주요 메뉴" style={{ '--active-index': activeIndex } as CSSProperties}>

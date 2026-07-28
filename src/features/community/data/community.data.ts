@@ -1,0 +1,30 @@
+import { CommunityReview, CommunityUserContext } from '../model/community.types'
+
+const body = (situation: string, difficulty: string, actionTaken: string, preparedDocuments: string[], usefulTip: string, caution: string) => ({
+  situation, difficulty, actionTaken, preparedDocuments, usefulTip, caution,
+})
+
+export const communityUserContext: CommunityUserContext = {
+  relation: '부모님',
+  region: '부산',
+  currentTaskTypes: ['채무 확인', '전문가 상담'],
+  financialStatus: '채무 확인 중',
+  preparingConsultation: true,
+}
+
+export const communityReviews: CommunityReview[] = [
+  { id:'notice-privacy',category:'공지',title:'후기 작성 전 개인정보 보호 안내',authorName:'운영자',isAnonymous:false,region:null,relation:null,taskType:'공지',situationTags:[],body:body('후기 작성 안내','개인정보 노출 위험','민감정보를 제외하고 경험을 작성해주세요.',[],'실명과 사건번호를 다시 확인해주세요.','개인정보를 게시하지 마세요.'),createdAt:'2026-07-29',helpfulCount:0,commentCount:0,isNotice:true,isSynthetic:true },
+  { id:'notice-boundary',category:'공지',title:'사용자 경험과 공식 행정정보를 구분해주세요',authorName:'운영자',isAnonymous:false,region:null,relation:null,taskType:'공지',situationTags:[],body:body('커뮤니티 이용 안내','경험과 공식 절차의 차이','후기는 참고하고 공식 기관에 다시 확인해주세요.',[],'방문 전 담당 기관에 확인하세요.','후기는 법률·행정 자문이 아닙니다.'),createdAt:'2026-07-29',helpfulCount:0,commentCount:0,isNotice:true,isSynthetic:true },
+  { id:'review-01',category:'재산·채무',title:'채무 금액을 모두 확인한 뒤 상담받은 경험',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'채무 확인',situationTags:['채무 확인 중','전문가 상담 준비'],body:body('부모님의 금융 조회 결과를 기다리던 상황','금액이 확정되지 않아 상담 질문을 정리하기 어려웠어요.','기관별 금액과 기준일을 표로 적은 뒤 상담을 받았어요.',['금융조회 결과','상담 질문 메모'],'확인 중인 금액과 확정 금액을 따로 적으니 설명하기 편했어요.','후기와 실제 적용 절차는 다를 수 있어요.'),createdAt:'2026-07-29',helpfulCount:38,commentCount:12,isNotice:false,isSynthetic:true },
+  { id:'review-02',category:'상담 준비',title:'상담 전 필요한 서류를 전화로 확인했어요',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'전문가 상담',situationTags:['전문가 상담 준비','부산'],body:body('상담 예약을 앞둔 상황','인터넷마다 준비물 설명이 달랐어요.','방문 전 상담기관에 전화해 준비물을 확인했어요.',['기본증명서','가족관계증명서'],'전화로 다시 확인하니 재방문을 줄일 수 있었어요.','기관과 상황에 따라 준비물이 다를 수 있어요.'),createdAt:'2026-07-29',helpfulCount:24,commentCount:8,isNotice:false,isSynthetic:true },
+  { id:'review-03',category:'질문',title:'처리 중인 금융 조회 결과는 얼마나 기다렸나요?',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'금융 조회',situationTags:['채무 확인 중'],body:body('금융 조회를 신청한 뒤 기다리는 중','결과가 언제 나오는지 몰라 불안했어요.','접수 기관에 진행 상태를 문의했어요.',[],'접수일과 문의한 날짜를 기록해두었어요.','처리 기간은 상황마다 다를 수 있어요.'),createdAt:'2026-07-28',helpfulCount:17,commentCount:9,isNotice:false,isSynthetic:true },
+  { id:'review-04',category:'부산 지역',title:'부산에서 상담기관을 찾아본 후기',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'배우자',taskType:'전문가 상담',situationTags:['부산'],body:body('부산에서 상담할 곳을 찾던 상황','어떤 기관이 맞는지 구분하기 어려웠어요.','공식 안내를 확인하고 방문 전 전화했어요.',['상담 질문 메모'],'지역보다 상담 분야를 먼저 확인했어요.','기관 정보는 방문 전에 공식 채널로 확인하세요.'),createdAt:'2026-07-28',helpfulCount:15,commentCount:4,isNotice:false,isSynthetic:true },
+  { id:'review-05',category:'서류',title:'기본증명서와 가족관계증명서 준비 과정',authorName:'익명의 곁',isAnonymous:true,region:'경남',relation:'부모님',taskType:'서류 준비',situationTags:['서류'],body:body('여러 서류를 준비하던 상황','서류 이름과 발급 기준이 헷갈렸어요.','필요하다고 안내받은 문서를 목록으로 만들었어요.',['기본증명서','가족관계증명서'],'제출처에 상세 종류를 먼저 물어봤어요.','발급 기준은 제출처에 확인하세요.'),createdAt:'2026-07-28',helpfulCount:12,commentCount:3,isNotice:false,isSynthetic:true },
+  { id:'review-06',category:'자동차',title:'자동차 명의이전 방문 전에 준비한 것들',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'자동차',situationTags:['자동차','부산'],body:body('고인 명의 자동차를 확인한 상황','방문 부서와 준비물이 헷갈렸어요.','차량 관련 담당 부서에 먼저 문의했어요.',['자동차등록 관련 서류'],'차량 상태와 처리 방향을 먼저 정리했어요.','차량 상황에 따라 절차가 달라질 수 있어요.'),createdAt:'2026-07-27',helpfulCount:11,commentCount:2,isNotice:false,isSynthetic:true },
+  { id:'review-07',category:'통신·공과금',title:'통신요금 명의변경 처리 후기',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'배우자',taskType:'통신',situationTags:['통신'],body:body('휴대전화와 인터넷 계약을 정리하던 상황','계약마다 처리 방식이 달랐어요.','각 고객센터에 필요한 내용을 문의했어요.',['관계 확인 서류'],'계약번호를 먼저 정리해두니 편했어요.','고객번호 같은 개인정보를 공개하지 마세요.'),createdAt:'2026-07-27',helpfulCount:9,commentCount:2,isNotice:false,isSynthetic:true },
+  { id:'review-08',category:'보험',title:'사망보험금 청구 준비부터 받은 과정까지 정리',authorName:'익명의 곁',isAnonymous:true,region:'울산',relation:'부모님',taskType:'보험',situationTags:['보험'],body:body('보험 가입 내역을 확인한 상황','청구 서류를 한꺼번에 파악하기 어려웠어요.','보험사별 안내를 따로 기록했어요.',['보험사 안내 서류'],'보험사마다 준비물이 달라 각각 확인했어요.','지급 여부와 조건은 계약에 따라 달라요.'),createdAt:'2026-07-26',helpfulCount:14,commentCount:5,isNotice:false,isSynthetic:true },
+  { id:'review-09',category:'사망신고',title:'사망신고 방문 전에 준비한 서류',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'사망신고',situationTags:['부산','서류'],body:body('사망신고를 준비하던 상황','처음 방문이라 준비물이 걱정됐어요.','방문할 주민센터에 먼저 확인했어요.',['사망진단 관련 서류'],'방문 전에 운영 시간을 확인했어요.','정확한 준비물은 담당 기관에 확인하세요.'),createdAt:'2026-07-26',helpfulCount:16,commentCount:6,isNotice:false,isSynthetic:true },
+  { id:'review-10',category:'재산·채무',title:'금융기관에 문의하기 전에 정리한 내용',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'채무 확인',situationTags:['채무 확인 중'],body:body('여러 금융기관에 문의해야 했던 상황','같은 설명을 반복하는 일이 힘들었어요.','확인할 질문을 짧게 정리했어요.',['금융기관 목록','질문 메모'],'기관명과 기준일을 함께 기록했어요.','계좌번호는 후기나 메모 공유 시 가려주세요.'),createdAt:'2026-07-25',helpfulCount:13,commentCount:4,isNotice:false,isSynthetic:true },
+  { id:'review-11',category:'상담 준비',title:'상담을 두 번 방문하게 된 이유',authorName:'익명의 곁',isAnonymous:true,region:'부산',relation:'부모님',taskType:'전문가 상담',situationTags:['전문가 상담 준비'],body:body('첫 상담을 준비한 상황','확인 중인 금융자료를 빠뜨렸어요.','두 번째 방문 전 서류 목록을 다시 확인했어요.',['금융조회 결과','가족관계증명서'],'미확인 자료가 있다는 사실도 상담 전에 알렸어요.','상담기관마다 필요한 자료가 달라요.'),createdAt:'2026-07-24',helpfulCount:10,commentCount:3,isNotice:false,isSynthetic:true },
+  { id:'review-12',category:'서류',title:'서류 사진을 미리 정리해둔 후기',authorName:'익명의 곁',isAnonymous:true,region:'경남',relation:'형제자매',taskType:'서류 준비',situationTags:['서류'],body:body('종이 서류가 늘어나던 상황','최신 서류를 찾기 어려웠어요.','파일명에 날짜와 서류 종류를 적었어요.',['서류 사진'],'민감정보가 보이는 사진은 공유하지 않았어요.','원본 보관이 필요한지 제출처에 확인하세요.'),createdAt:'2026-07-23',helpfulCount:8,commentCount:1,isNotice:false,isSynthetic:true },
+]
