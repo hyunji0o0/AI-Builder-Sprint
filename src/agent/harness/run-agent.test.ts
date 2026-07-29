@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createInitialCaseState } from '../state/initial-case'
 import { MemoryStateRepository } from '../state/state-repository'
 import { MockCaseTools } from '../tools/case-tools'
-import { classifyDeterministically } from './intent-classifier'
+import { classifyDeterministically, classifyIntent } from './intent-classifier'
 import { runAgent } from './run-agent'
 import { responseSimilarity } from './response-composer'
 
@@ -11,7 +11,8 @@ describe('Agent Harness', () => {
     const result = await runAgent({ input: '굿굿', caseState: createInitialCaseState() })
     expect(result.output.meta.intent).toBe('CASUAL_CHAT')
     expect(result.output.ui).toHaveLength(0)
-    expect(result.output.message).toContain('좋아요')
+    expect(result.output.message).toContain('좋아')
+    expect(result.output.message).not.toMatch(/좋아요|습니다/)
   })
 
   it('정신없는 기한 질문을 ASK_DEADLINE + DISTRESSED로 분류한다', () => {
@@ -50,6 +51,127 @@ describe('Agent Harness', () => {
     expect(result.output.ui[0]?.type).toBe('COMMUNITY_REVIEW')
   })
 
+  it('사망신고 질문에는 금융 조회가 아닌 실행 가능한 준비 패키지를 반환한다', async () => {
+    const result = await runAgent({
+      input: '사망신고를 도와줘',
+      caseState: createInitialCaseState(),
+    })
+
+    expect(result.output.meta.intent).toBe('ASK_DEATH_REPORT')
+    expect(result.output.ui[0]).toMatchObject({
+      type: 'DEATH_REPORT_PREPARATION',
+      taskId: 'confirm-death-report',
+      title: '사망신고 방문·우편 접수 준비',
+    })
+    const preparation = result.output.ui[0]
+    expect(preparation.type === 'DEATH_REPORT_PREPARATION' && preparation.checklist).toHaveLength(4)
+    expect(preparation.type === 'DEATH_REPORT_PREPARATION' && preparation.resources.some((resource) => resource.kind === 'FORM')).toBe(true)
+    expect(result.output.message).toContain('사망신고')
+    expect(result.output.message).not.toContain('금융 조회')
+  })
+
+  it('사망신고 맥락에서 준비 요청을 후속 업무로 이해한다', async () => {
+    const state = createInitialCaseState()
+    state.currentFocus = { type: 'CONFIRM_DEATH_REPORT', id: 'confirm-death-report' }
+    const result = await runAgent({
+      input: '내가 제출해야 할 것들을 준비해줘',
+      caseState: state,
+    })
+
+    expect(result.output.meta.intent).toBe('ASK_DEATH_REPORT')
+    expect(result.output.ui[0]?.type).toBe('DEATH_REPORT_PREPARATION')
+  })
+
+  it('사망신고를 마쳤다는 문장은 준비 요청과 구분하고 다음 업무를 반환한다', async () => {
+    const result = await runAgent({
+      input: '사망신고까지 다 했고, 이제 뭐 해야 해?',
+      caseState: createInitialCaseState(),
+    })
+
+    expect(result.output.meta.intent).toBe('DEATH_REPORT_COMPLETED')
+    expect(result.output.ui.some((block) => block.type === 'DEATH_REPORT_PREPARATION')).toBe(false)
+    expect(result.output.ui[0]).toMatchObject({
+      type: 'COMPLETION_CONFIRMATION',
+      title: '사망신고 완료',
+    })
+    expect(result.caseState.tasks.find((task) => task.type === 'CONFIRM_DEATH_REPORT')?.status).toBe('COMPLETED')
+    expect(result.output.message).toContain('\n\n')
+  })
+
+  it('사망신고까지는 했는데라는 완료 표현도 준비 요청으로 오분류하지 않는다', async () => {
+    const result = await runAgent({
+      input: '사망신고까지는 했는데, 나 이제 뭐해',
+      caseState: createInitialCaseState(),
+    })
+
+    expect(result.output.meta.intent).toBe('DEATH_REPORT_COMPLETED')
+    expect(result.output.ui.some((block) => block.type === 'DEATH_REPORT_PREPARATION')).toBe(false)
+    expect(result.output.ui.some((block) => block.type === 'TASK_CARD')).toBe(true)
+  })
+
+  it('아직 사망신고를 못했다는 문장은 완료로 처리하지 않는다', async () => {
+    const result = await runAgent({
+      input: '아직 사망신고를 못했는데 뭘 준비해야 해?',
+      caseState: createInitialCaseState(),
+    })
+
+    expect(result.output.meta.intent).toBe('ASK_DEATH_REPORT')
+    expect(result.output.ui[0]?.type).toBe('DEATH_REPORT_PREPARATION')
+  })
+
+  it('키워드와 달라도 Solar가 문장 의미를 보고 사망신고 완료를 판단한다', async () => {
+    const llm = {
+      complete: async () =>
+        '{"intent":"DEATH_REPORT_COMPLETED","emotion":{"signal":"NEUTRAL","intensity":"LOW"},"confidence":0.94}',
+    }
+    const result = await classifyIntent(
+      '신고 건은 정리 끝났어. 이제 그 뒤 순서가 궁금해',
+      createInitialCaseState(),
+      llm,
+    )
+
+    expect(result.intent).toBe('DEATH_REPORT_COMPLETED')
+  })
+
+  it('단어가 포함되어도 Solar의 문맥 판단을 정규식으로 덮어쓰지 않는다', async () => {
+    const llm = {
+      complete: async () =>
+        '{"intent":"DEATH_REPORT_COMPLETED","emotion":{"signal":"NEUTRAL","intensity":"LOW"},"confidence":0.91}',
+    }
+    const result = await classifyIntent(
+      '사망신고 얘기는 끝났고, 다음 순서로 넘어가자',
+      createInitialCaseState(),
+      llm,
+    )
+
+    expect(classifyDeterministically('사망신고 얘기는 끝났고, 다음 순서로 넘어가자').intent).toBe('ASK_DEATH_REPORT')
+    expect(result.intent).toBe('DEATH_REPORT_COMPLETED')
+  })
+
+  it('생략된 표현을 이해하도록 최근 대화와 사건 상태를 Solar 분류에 전달한다', async () => {
+    let classifierPayload = ''
+    const llm = {
+      complete: async (_system: string, user: string) => {
+        classifierPayload = user
+        return '{"intent":"DEATH_REPORT_COMPLETED","emotion":{"signal":"NEUTRAL","intensity":"LOW"},"confidence":0.89}'
+      },
+    }
+    const recentMessages = [
+      { role: 'agent' as const, text: '사망신고 처리 여부를 먼저 확인해보자.' },
+      { role: 'user' as const, text: '확인해볼게.' },
+    ]
+    const result = await classifyIntent(
+      '그건 어제 처리해뒀어. 다음 거 알려줘',
+      createInitialCaseState(),
+      llm,
+      recentMessages,
+    )
+
+    expect(result.intent).toBe('DEATH_REPORT_COMPLETED')
+    expect(classifierPayload).toContain('사망신고 처리 여부')
+    expect(classifierPayload).toContain('activeTasks')
+  })
+
   it('나중에 할게는 상태를 보존하고 일시정지를 기록한다', async () => {
     const state = createInitialCaseState()
     const snapshot = JSON.stringify({ financials: state.financials, tasks: state.tasks })
@@ -61,6 +183,11 @@ describe('Agent Harness', () => {
 
   it('도구 실패 시 직접 입력 또는 나중에 진행 폴백을 반환한다', async () => {
     const state = createInitialCaseState()
+    state.workflow = {
+      ...state.workflow,
+      phase: 'SELECTING_PRIORITY_TASK',
+      procedureGenerated: true,
+    }
     const tools = new MockCaseTools(new MemoryStateRepository(state))
     tools.getPrioritizedTasks = async () => { throw new Error('TEST_FAILURE') }
     const result = await runAgent({ input: '다음에 뭐 해야 해?', caseState: state }, { tools })
@@ -93,7 +220,7 @@ describe('Agent Harness', () => {
     const result = await runAgent({ input: '안녕', caseState: createInitialCaseState() })
     expect(result.output.meta.intent).toBe('CASUAL_CHAT')
     expect(result.output.ui).toHaveLength(0)
-    expect(result.output.message).toMatch(/안녕|반가워요/)
+    expect(result.output.message).toMatch(/안녕|반가워/)
   })
 
   it('가지고 있는 서류를 다 올려도 되는지 묻는 표현을 업로드 요청으로 처리한다', async () => {
@@ -111,15 +238,16 @@ describe('Agent Harness', () => {
       complete: async (system: string) => {
         if (system.includes('출력 형식')) return '{"intent":"UPLOAD_DOCUMENT","emotion":{"signal":"NEUTRAL","intensity":"LOW"},"confidence":0.96}'
         if (system.includes('허용 action')) return '{"action":"UPLOAD","tools":[]}'
-        return '물론이에요. 문서 종류는 미리 고르지 않으셔도 됩니다. 이미지와 PDF 파일을 한 번에 10개까지 올려주시면, 확인할 내용만 차례로 정리해드릴게요.'
+        return '물론이야. 문서 종류를 미리 고르지 않아도 돼. 이미지와 PDF 파일을 한 번에 10개까지 올려주면, 확인할 내용만 차례로 정리해줄게.'
       },
     }
     const result = await runAgent({
       input: '가지고 있는 서류를 전부 올려도 될까?',
       caseState: createInitialCaseState(),
     }, { llm })
-    expect(result.output.message).toContain('물론이에요')
+    expect(result.output.message).toContain('물론이야')
     expect(result.output.message).toContain('10개')
+    expect(result.output.message).not.toMatch(/습니다|주세요|해요/)
   })
 
   it('LLM 답변이 필수 사실을 빠뜨리면 안전한 한국어 폴백을 사용한다', async () => {
@@ -140,7 +268,7 @@ describe('Agent Harness', () => {
 
   it('최근 답변과 비슷한 LLM 문장을 거절하고 다른 표현으로 재작성한다', async () => {
     let composeCount = 0
-    const repeated = '정신이 없으신 것 같아요. 잠시 숨을 고르고, 지금 가장 먼저 확인하고 싶은 서류 하나만 알려주시면 함께 정리해 볼게요.'
+    const repeated = '정신이 많이 없을 수 있어. 잠시 숨을 고르고, 지금 가장 먼저 확인하고 싶은 서류 하나만 알려주면 함께 정리해볼게.'
     const llm = {
       complete: async (system: string) => {
         if (system.includes('출력 형식')) return '{"intent":"UNSUPPORTED","emotion":{"signal":"DISTRESSED","intensity":"HIGH"},"confidence":0.91}'
@@ -148,7 +276,7 @@ describe('Agent Harness', () => {
         composeCount += 1
         return composeCount === 1
           ? repeated
-          : '빚 이야기까지 겹치면서 더 막막해진 마음이 드실 수 있어요. 지금은 정리를 멈추고 잠시 쉬어도 되고, 원하실 때 확인된 내용 하나만 살펴봐도 괜찮습니다.'
+          : '빚 이야기까지 겹쳐서 더 막막할 수 있어. 지금은 정리를 멈추고 잠시 쉬어도 되고, 원할 때 확인된 내용 하나만 살펴봐도 괜찮아.'
       },
     }
     const result = await runAgent({

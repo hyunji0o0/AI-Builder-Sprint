@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { AgentBlockKind } from '../../features/case/case.types'
 import { CaseAgentController } from '../../features/case/useCaseAgent'
 import { GlassIcon } from '../ui/GlassIcon'
@@ -12,16 +13,28 @@ const quickQuestions: [string, AgentBlockKind][] = [
 ]
 
 export function AgentChat({ controller: c }: { controller: CaseAgentController }) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [c.messages.length, c.isResponding])
+
   return (
     <section className="da-agent da-glass">
       <div className="da-messages" aria-live="polite">
         {c.messages.map((message) => (
           <div className={`da-message ${message.role}`} key={message.id}>
-            {message.role === 'agent' && <GlassIcon icon="sparkle" tone="blue"/>}
+            {message.role === 'agent' && <img className="da-agent-avatar" src="/aedohal-sigan-icon-3d.svg" alt=""/>}
             <div className="da-message-content">
               {message.role === 'agent' && <small>곁</small>}
               <div className="da-bubble">
-                <p>{message.text}</p>
+                {message.text.split(/\n\s*\n/).map((paragraph, index) => <p key={`${message.id}-paragraph-${index}`}>{paragraph}</p>)}
                 {message.role === 'agent' && (
                   message.ui?.length
                     ? message.ui.map((ui, index) => <AgentBlock key={`${message.id}-${ui.type}-${index}`} block={message.block} ui={[ui]} controller={c}/>)
@@ -34,13 +47,14 @@ export function AgentChat({ controller: c }: { controller: CaseAgentController }
         ))}
         {c.isResponding && (
           <div className="da-message agent">
-            <GlassIcon icon="sparkle" tone="blue"/>
+            <img className="da-agent-avatar" src="/aedohal-sigan-icon-3d.svg" alt=""/>
             <div className="da-message-content">
               <small>곁</small>
               <div className="da-bubble"><p>답변을 정리하고 있어요…</p></div>
             </div>
           </div>
         )}
+        <div className="da-messages-end" ref={messagesEndRef} aria-hidden="true"/>
       </div>
       <footer className="da-composer-wrap">
         <div className="da-quick">

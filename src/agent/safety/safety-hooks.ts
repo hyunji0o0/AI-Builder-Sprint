@@ -15,5 +15,4 @@ export const assessSafety = (input: string, intent: UserIntent): SafetyAssessmen
   }
 }
 
-export const legalDisclaimer = '현재 확인된 정보를 정리한 안내이며 법률 자문이나 법적 결정이 아닙니다.'
-
+export const legalDisclaimer = '현재 확인된 정보를 정리한 안내일 뿐, 법률 자문이나 법적 결정은 아니야.'

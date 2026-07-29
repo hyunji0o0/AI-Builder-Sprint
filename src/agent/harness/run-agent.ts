@@ -35,7 +35,7 @@ export async function runAgent(request: RunAgentInput, dependencies: RunAgentDep
   const safeInput = privacyFilter.mask(request.input)
   const classification = request.uiActionIntent
     ? { intent: request.uiActionIntent, emotion: { signal: 'NEUTRAL' as const, intensity: 'LOW' as const }, confidence: 1 }
-    : await classifyIntent(safeInput, initialState, dependencies.llm)
+    : await classifyIntent(safeInput, initialState, dependencies.llm, request.recentMessages)
   const safety = assessSafety(safeInput, classification.intent)
   const selection = await selectAction(classification, initialState, dependencies.llm)
   const execution = await executeSelection(selection, initialState, tools)

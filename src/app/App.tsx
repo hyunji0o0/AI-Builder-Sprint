@@ -4,6 +4,7 @@ import { CaseSummary } from '../components/dashboard/CaseSummary'
 import { ProgressDashboard } from '../components/dashboard/ProgressDashboard'
 import { MobileNav, Sidebar } from '../components/layout/Sidebar'
 import { useCaseAgent } from '../features/case/useCaseAgent'
+import { CaseSectionView } from '../features/case/CaseSectionView'
 import { CommunityRouter, useCommunity } from '../features/community'
 import '../dashboard.css'
 
@@ -40,12 +41,14 @@ export default function App() {
         <Sidebar activeMenu={activeMenu} menuAction={menuAction}/>
         {isCommunity ? <CommunityRouter path={path} controller={community}/> : <>
         <section className="da-main">
+          {activeMenu === 'AI 홈' ? <>
           <ProgressDashboard
             caseState={controller.caseState}
             stages={controller.stages}
             addAgent={controller.addAgent}
           />
           <AgentChat controller={controller}/>
+          </> : <CaseSectionView controller={controller}/>}
         </section>
         <CaseSummary
           caseState={controller.caseState}

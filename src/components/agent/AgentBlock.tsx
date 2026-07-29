@@ -11,7 +11,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   const structured = ui?.[0]
   if (structured?.type === 'CHOICE') return (
     <div className="da-choice">
-      {structured.options.map((option) => <button key={option.id} onClick={() => c.addAgent(`${option.label}을 선택했어요.`)}>{option.label}</button>)}
+      {structured.options.map((option) => <button key={option.id} onClick={() => c.handleUiAction(option.id, option.label)}>{option.label}</button>)}
     </div>
   )
 
@@ -26,7 +26,140 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className={`da-action-card ${structured.priority === 'URGENT' ? 'da-coral' : 'da-amber'}`}>
       <GlassIcon icon={structured.priority === 'URGENT' ? 'alert' : 'check'} tone={structured.priority === 'URGENT' ? 'coral' : 'amber'}/>
       <div><small>{structured.priority === 'URGENT' ? '먼저 확인' : '다음 단계'}</small><strong>{structured.title}</strong><span>준비도 {structured.readiness}%</span></div>
-      <button onClick={() => c.addAgent('이 업무를 이어서 진행할게요.', structured.priority === 'URGENT' ? 'finance' : 'checklist')}>이어하기</button>
+      <button onClick={() => c.handleUiAction(structured.actions[0]?.id ?? 'continue', structured.actions[0]?.label ?? '이어하기')}>
+        {structured.actions[0]?.label ?? '이어하기'}
+      </button>
+    </div>
+  )
+
+  if (structured?.type === 'DEATH_REPORT_PREPARATION') return (
+    <div className="da-death-report">
+      <header>
+        <GlassIcon icon="file" tone="peach"/>
+        <div>
+          <small>공식 접수 준비</small>
+          <strong>{structured.title}</strong>
+          <span>기한 · {structured.deadlineText}</span>
+        </div>
+        <em>{structured.submissionMethods.join(' · ')}</em>
+      </header>
+      <div className="da-death-checklist">
+        {structured.checklist.map((item) => (
+          <article className={item.status.toLowerCase()} key={item.id}>
+            <span><Icon name={item.status === 'HELD' ? 'check' : 'file'} size={17}/></span>
+            <div>
+              <strong>{item.label}</strong>
+              {item.note && <small>{item.note}</small>}
+            </div>
+            <b>{item.status === 'HELD' ? '보유' : item.status === 'OPTIONAL' ? '조건부' : '준비 필요'}</b>
+          </article>
+        ))}
+      </div>
+      <div className="da-official-links">
+        {structured.resources.map((resource) => (
+          <a href={resource.url} target="_blank" rel="noreferrer" key={resource.id}>
+            <Icon name={resource.kind === 'FORM' ? 'upload' : 'chevronRight'} size={17}/>
+            <span>{resource.label}</span>
+          </a>
+        ))}
+      </div>
+      <aside className="da-official-notice">
+        <span><Icon name="alert" size={21}/></span>
+        <div><strong>접수 전에 꼭 확인하세요</strong><p>{structured.notice}</p></div>
+      </aside>
+      <footer>
+        {structured.actions.map((action) => (
+          <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>
+        ))}
+      </footer>
+    </div>
+  )
+
+  if (structured?.type === 'PROCEDURE_PLAN') return (
+    <div className="da-procedure-plan">
+      <header>
+        <span>개인별 사후 절차</span>
+        <strong>지금 자료를 기준으로 정리한 순서야</strong>
+      </header>
+      <div className="da-procedure-steps">
+        {structured.steps.map((step, index) => {
+          const priorityLabel = step.priority === 'URGENT' ? '우선 확인' : step.priority === 'HIGH' ? '중요' : '일반'
+          const statusLabel = step.status === 'IN_PROGRESS' ? '진행 중' : step.status === 'COMPLETED' ? '완료' : step.status === 'NOT_APPLICABLE' ? '해당 없음' : '대기'
+          return (
+            <article className={step.priority === 'URGENT' ? 'urgent' : ''} key={step.taskId}>
+              <span className="da-procedure-number">{index + 1}</span>
+              <div>
+                <strong>{step.title}</strong>
+                <small>{priorityLabel} · {statusLabel} · {step.applicability === 'CONFIRMED' ? '현재 정보로 필요 확인' : '공식 기준 검토 필요'}</small>
+                <p>{step.reason}</p>
+                {step.basisFacts.length > 0 && <em>근거: {step.basisFacts.join(' · ')}</em>}
+                {step.dependencyTitles.length > 0 && <em>먼저 할 일: {step.dependencyTitles.join(', ')}</em>}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+      <button className="da-procedure-next" onClick={c.advanceWorkflow}>가장 먼저 할 일 확인 <Icon name="chevronRight" size={16}/></button>
+    </div>
+  )
+
+  if (structured?.type === 'MISSING_INFORMATION_QUESTION') return (
+    <div className="da-form-card">
+      <strong>{structured.prompt}</strong>
+      {structured.inputType === 'DATE' && (
+        <label><Icon name="calendar"/>날짜 선택<input type="date" value={c.caseState.selectedDate} onChange={(event) => c.setSelectedDate(event.target.value)}/></label>
+      )}
+      <button onClick={c.saveAwarenessDate}>답변 저장</button>
+    </div>
+  )
+
+  if (structured?.type === 'TASK_READINESS') return (
+    <div className="da-checklist">
+      <div><strong>{structured.title}</strong><span>현재 준비도 {structured.readiness}%</span></div>
+      {structured.documents.map((document) => (
+        <div key={document.type}>
+          <strong>{document.label}</strong>
+          <span>{document.status === 'HELD' ? '보유' : document.status === 'NEEDS_REVIEW' ? '확인 필요' : document.status === 'MISSING' ? '부족' : '해당 없음'}</span>
+        </div>
+      ))}
+      <label className="da-mini-upload"><Icon name="upload" size={16}/>부족한 서류 업로드<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={c.upload}/></label>
+      <button onClick={c.advanceWorkflow}>현재 자료로 준비하기</button>
+    </div>
+  )
+
+  if (structured?.type === 'PREPARATION_PACKAGE') return (
+    <div className="da-review">
+      <div className="da-review-head"><GlassIcon icon="file" tone="sage"/><div><small>상담·방문 준비 패키지</small><strong>{structured.title}</strong></div></div>
+      <p>준비도 {structured.readiness}%</p>
+      {structured.confirmedFacts.map((fact) => <p key={fact}>확인 · {fact}</p>)}
+      {structured.unresolvedItems.map((item) => <p key={item}>확인 필요 · {item}</p>)}
+      <strong>전문가에게 물어볼 질문</strong>
+      {structured.questionsForExpert.map((question) => <p key={question}>{question}</p>)}
+      <small>{structured.disclaimer}</small>
+      <button onClick={c.advanceWorkflow}>공식 처리 단계 확인</button>
+    </div>
+  )
+
+  if (structured?.type === 'OFFICIAL_PROCESS') return (
+    <div className="da-institution">
+      <GlassIcon icon="building" tone="blue"/>
+      <div>
+        <small>공식 정보 확인 필요</small>
+        <strong>{structured.institutions[0]?.name ?? '연결할 기관 확인 필요'}</strong>
+        <span>{structured.institutions[0]?.district}</span>
+        {structured.checklist.map((item) => <p key={item}>· {item}</p>)}
+      </div>
+      <button onClick={c.advanceWorkflow}>처리 완료로 기록</button>
+    </div>
+  )
+
+  if (structured?.type === 'COMPLETION_CONFIRMATION') return (
+    <div className="da-complete da-completion-banner">
+      <GlassIcon icon="check" tone="sage"/>
+      <div><small>완료한 업무</small><strong>{structured.title}</strong><span>사건 상태와 진행률에 반영했어.</span></div>
+      {structured.actions.map((action) => (
+        <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>
+      ))}
     </div>
   )
 
@@ -67,7 +200,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div><span>파일</span><strong>{structured.fileName}</strong></div>
       <div><span>예상 문서 종류</span><strong>{structured.suggestedType}</strong></div>
       <div><span>분류 신뢰도</span><strong>{Math.round(structured.confidence * 100)}%</strong></div>
-      <button onClick={() => c.addAgent('문서 종류를 확인했어요.', 'extract')}>문서 종류 확인</button>
+      <button onClick={() => c.addAgent('문서 종류를 확인했어.', 'extract')}>문서 종류 확인</button>
     </div>
   )
 
@@ -76,7 +209,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div><span>{structured.label}</span><strong>{structured.formattedValue}</strong></div>
       <div><span>원문 근거</span><strong>{structured.sourceText || '원문에서 직접 확인 필요'}</strong></div>
       <button onClick={() => c.confirmPipelineField(structured.documentId, structured.fieldKey, structured.value)}>맞아요</button>
-      <button onClick={() => c.addAgent(`${structured.label} 값을 직접 입력해 주세요.`, structured.fieldKey === 'amount' ? 'finance' : 'extract')}>수정할게요</button>
+      <button onClick={() => c.addAgent(`${structured.label} 값을 직접 입력해줘.`, structured.fieldKey === 'amount' ? 'finance' : 'extract')}>수정할게</button>
     </div>
   )
 
@@ -84,7 +217,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className="da-action-card da-coral">
       <GlassIcon icon="alert" tone="coral"/>
       <div><small>문서 간 교차검증</small><strong>{structured.title}</strong>{structured.issues.map((issue) => <span key={issue.code}>{issue.message}</span>)}</div>
-      <button onClick={() => c.addAgent('충돌한 항목을 원문과 함께 하나씩 확인할게요.', 'extract')}>하나씩 확인</button>
+      <button onClick={() => c.addAgent('충돌한 항목을 원문과 함께 하나씩 확인할게.', 'extract')}>하나씩 확인</button>
     </div>
   )
 
@@ -92,15 +225,15 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
 
   if (block === 'choice') return (
     <div className="da-choice">
-      <button onClick={() => c.addAgent('서류 확인부터 진행할게요.', 'upload')}>서류부터 확인</button>
-      <button onClick={() => c.addAgent('자산·채무부터 확인할게요.', 'finance')}>재산·채무 확인</button>
+      <button onClick={() => c.addAgent('서류 확인부터 진행할게.', 'upload')}>서류부터 확인</button>
+      <button onClick={() => c.addAgent('자산·채무부터 확인할게.', 'finance')}>재산·채무 확인</button>
     </div>
   )
 
   if (block === 'date') return (
     <div className="da-form-card">
       <label><Icon name="calendar"/>상담 희망일<input type="date" value={c.caseState.selectedDate} onChange={(e) => c.setSelectedDate(e.target.value)}/></label>
-      <button onClick={() => c.addAgent(`${c.caseState.selectedDate || '선택한 날짜'}로 상담 준비 일정을 저장했어요.`, 'complete')}>날짜 저장</button>
+      <button onClick={() => c.addAgent(`${c.caseState.selectedDate || '선택한 날짜'}로 상담 준비 일정을 저장했어.`, 'complete')}>날짜 저장</button>
     </div>
   )
 
@@ -135,7 +268,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className="da-action-card da-coral">
       <GlassIcon icon="alert" tone="coral"/>
       <div><small>긴급 확인</small><strong>○○은행 채무 금액 확인</strong><span>정확한 상속 방법 판단을 위해 필요해요.</span></div>
-      <button onClick={() => c.addAgent('채무 금액을 입력해 주세요.', 'finance')}>확인하기</button>
+      <button onClick={() => c.addAgent('채무 금액을 입력해줘.', 'finance')}>확인하기</button>
     </div>
   )
 
@@ -144,12 +277,12 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div className="da-action-card da-coral">
         <GlassIcon icon="alert" tone="coral"/>
         <div><small>먼저 확인</small><strong>정확하지 않은 채무 금액 확인</strong><span>준비도 50%</span></div>
-        <button onClick={() => c.addAgent('현재 확인이 필요한 채무 정보를 입력해 주세요.', 'finance')}>이어하기</button>
+        <button onClick={() => c.addAgent('지금 확인이 필요한 채무 정보를 입력해줘.', 'finance')}>이어하기</button>
       </div>
       <div className="da-action-card da-amber">
         <GlassIcon icon="users" tone="amber"/>
         <div><small>다음 단계</small><strong>상속 방법 전문가 상담 준비</strong><span>준비도 60%</span></div>
-        <button onClick={() => c.addAgent('상담 날짜와 준비 서류를 확인할게요.', 'date')}>준비하기</button>
+        <button onClick={() => c.addAgent('상담 날짜와 준비 서류를 확인할게.', 'date')}>준비하기</button>
       </div>
     </div>
   )
@@ -169,7 +302,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className="da-institution">
       <GlassIcon icon="building" tone="blue"/>
       <div><small>부산광역시 연제구</small><strong>부산시청 행복민원실</strong><span>안심상속 원스톱 서비스 · 평일 09:00–18:00</span><p>부산 연제구 중앙대로 1001 · 방문 전 전화 확인 권장</p></div>
-      <button onClick={() => c.addAgent('방문 준비를 위해 필요한 서류 체크리스트를 열었어요.', 'checklist')}>준비 서류</button>
+      <button onClick={() => c.addAgent('방문 준비에 필요한 서류 체크리스트를 열었어.', 'checklist')}>준비 서류</button>
     </div>
   )
 

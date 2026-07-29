@@ -8,9 +8,18 @@ const includesAny = (text: string, patterns: string[]) => patterns.some((pattern
 export function classifyDeterministically(input: string): Classification {
   const text = input.replace(/\s/g, '').toLowerCase()
   let intent: UserIntent = 'UNSUPPORTED'
+  const mentionsDeathReport = text.includes('사망신고')
+  const saysDeathReportIncomplete = mentionsDeathReport
+    && /(아직.*(안했|못했|하지않)|(안했|못했|하지않).*사망신고|사망신고.*(안했|못했|하지않))/.test(text)
+  const saysDeathReportCompleted = mentionsDeathReport
+    && !saysDeathReportIncomplete
+    && /사망신고.*(했|마쳤|끝냈|완료|처리했)/.test(text)
 
   if (includesAny(text, ['나중에할게', '쉬고싶', '잠시쉴', '그만할게'])) intent = 'REQUEST_PAUSE'
+  else if (includesAny(text, ['절차시작', '준비시작', '계속진행', '다음준비단계', '워크플로시작'])) intent = 'CONTINUE_WORKFLOW'
+  else if (saysDeathReportCompleted) intent = 'DEATH_REPORT_COMPLETED'
   else if (includesAny(text, ['상속포기해야', '한정승인해야', '단순승인해야'])) intent = 'ASK_LEGAL_DECISION'
+  else if (includesAny(text, ['사망신고', '사망 신고'])) intent = 'ASK_DEATH_REPORT'
   else if (includesAny(text, ['안녕', '굿굿', '고마워', '알겠어', '감사'])) intent = 'CASUAL_CHAT'
   else if (includesAny(text, ['처음시작', '시작할게'])) intent = 'START_ONBOARDING'
   else if (
@@ -21,7 +30,10 @@ export function classifyDeterministically(input: string): Classification {
   else if (includesAny(text, ['수정할게', '잘못됐'])) intent = 'CORRECT_EXTRACTED_DATA'
   else if (/\d/.test(text) && includesAny(text, ['원', '만원', '억', '금액', '채무', '자산'])) intent = 'ADD_FINANCIAL_INFO'
   else if (includesAny(text, ['진행상황', '현재상태', '어디까지'])) intent = 'ASK_CURRENT_STATUS'
-  else if (includesAny(text, ['뭐부터', '다음에뭐', '다음할일'])) intent = 'ASK_NEXT_ACTION'
+  else if (includesAny(text, [
+    '뭐부터', '무엇부터', '다음에뭐', '다음할일', '어떻게해야', '어떻게하면',
+    '내상황정리', '상황정리해', '먼저해야할일', '처음인데뭘',
+  ])) intent = 'ASK_NEXT_ACTION'
   else if (includesAny(text, ['필요한서류', '준비서류', '부족한서류'])) intent = 'ASK_REQUIRED_DOCUMENTS'
   else if (includesAny(text, ['기한', '며칠남', '언제까지'])) intent = 'ASK_DEADLINE'
   else if (includesAny(text, ['부채가더많', '채무가더많', '금융위험'])) intent = 'ASK_FINANCIAL_RISK'
@@ -41,18 +53,69 @@ export function classifyDeterministically(input: string): Classification {
   }
 }
 
-export async function classifyIntent(input: string, state: CaseState, llm?: AgentLLM): Promise<Classification> {
-  const deterministic = classifyDeterministically(input)
+type RecentMessage = { role: 'agent' | 'user'; text: string }
+
+const isHighPrecisionGuard = (intent: UserIntent) =>
+  intent === 'REQUEST_PAUSE' || intent === 'ASK_LEGAL_DECISION'
+
+const resolveClassification = (
+  llmClassification: Classification,
+  deterministic: Classification,
+): Classification => {
+  // 휴식 요청과 법률 결정 요구는 안전 경계이므로 명확한 코드 신호를 우선합니다.
+  if (isHighPrecisionGuard(deterministic.intent)) {
+    return { ...deterministic, confidence: Math.max(deterministic.confidence, llmClassification.confidence) }
+  }
+
+  // LLM이 충분히 확신하면 문맥 판단을 사용합니다. 정규식은 더 이상 최종 라우터가 아닙니다.
+  if (llmClassification.intent !== 'UNSUPPORTED' && llmClassification.confidence >= 0.62) {
+    return llmClassification
+  }
+
+  // LLM이 판단하지 못했을 때만 결정론적 분류를 폴백으로 사용합니다.
+  if (deterministic.intent !== 'UNSUPPORTED') return deterministic
+  return llmClassification
+}
+
+export async function classifyIntent(
+  input: string,
+  state: CaseState,
+  llm?: AgentLLM,
+  recentMessages: RecentMessage[] = [],
+): Promise<Classification> {
+  const baseDeterministic = classifyDeterministically(input)
+  const compactInput = input.replace(/\s/g, '').toLowerCase()
+  const isDeathReportFollowUp = state.currentFocus.type === 'CONFIRM_DEATH_REPORT'
+    && includesAny(compactInput, ['준비해', '제출해야', '신고하지않았', '아직안했', '필요한서류', '신고서'])
+  const deterministic = baseDeterministic.intent === 'UNSUPPORTED' && isDeathReportFollowUp
+    ? {
+      intent: 'ASK_DEATH_REPORT',
+      emotion: baseDeterministic.emotion,
+      confidence: 0.95,
+    } satisfies Classification
+    : baseDeterministic
   if (!llm) return deterministic
   try {
+    const completedTasks = state.tasks
+      .filter((task) => task.status === 'COMPLETED')
+      .map((task) => ({ type: task.type, title: task.title }))
+    const activeTasks = state.tasks
+      .filter((task) => task.status === 'IN_PROGRESS' || task.status === 'NOT_STARTED')
+      .map((task) => ({ type: task.type, title: task.title, status: task.status }))
     const raw = await llm.complete(
       `${classifyIntentPrompt.template}\n출력 형식: ${classifyIntentPrompt.output}`,
-      JSON.stringify({ input, currentStage: state.stage, currentFocus: state.currentFocus, tonePreference: state.emotionalContext.tonePreference }),
+      JSON.stringify({
+        input,
+        currentStage: state.stage,
+        currentFocus: state.currentFocus,
+        completedTasks,
+        activeTasks,
+        recentMessages: recentMessages.slice(-6),
+        tonePreference: state.emotionalContext.tonePreference,
+      }),
     )
     const classified = classificationSchema.parse(extractJson(raw))
-    // 코드로 명확히 식별된 직접 요청은 LLM이 일반 대화로 잘못 돌리지 않도록 우선합니다.
-    if (deterministic.intent !== 'UNSUPPORTED') return deterministic
-    return classified
+    return resolveClassification(classified, deterministic)
   } catch {
     return deterministic
   }

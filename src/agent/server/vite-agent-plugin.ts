@@ -129,7 +129,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
         const body = await readBody(req) as { messages?: Array<{ role: string; content: string }> }
         const conversation = Array.isArray(body.messages) ? body.messages.slice(-12) : []
         const message = await solar.complete(
-          '따뜻하고 간결한 한국어로 답변하고 법률적 결정을 대신하지 마세요.',
+          '다정하고 차분한 한국어 반말로 답변해. 해요체나 합니다체는 사용하지 말고, 친한 척하거나 가볍게 말하지 마. 법률적 결정을 대신하지 마.',
           JSON.stringify(conversation),
         )
         res.end(JSON.stringify({ message }))
@@ -150,4 +150,3 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
     },
   }
 }
-

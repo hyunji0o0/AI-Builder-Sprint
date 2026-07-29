@@ -112,9 +112,297 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
         result.ui.push({ type: 'COMMUNITY_REVIEW', reviews, disclaimer: '개인의 경험이며 공식 안내나 법률 자문이 아닙니다. 필요한 서류는 공식 기관에도 확인해 주세요.' })
         break
       }
+      case 'SHOW_DEATH_REPORT': {
+        let current = state
+        if (!state.workflow.procedureGenerated) {
+          await run('generatePersonalProcedure', () => tools.generatePersonalProcedure(state.caseId))
+          current = await run('getCaseState', () => tools.getCaseState(state.caseId))
+        }
+        const task = current.tasks.find((item) => item.type === 'CONFIRM_DEATH_REPORT')
+        if (!task) throw new Error('DEATH_REPORT_TASK_NOT_FOUND')
+        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+          currentFocus: { type: task.type, id: task.id },
+        }))
+        const hasDeathCertificate = current.documents.some((document) =>
+          document.type === 'DEATH_CERTIFICATE' && document.status === 'VERIFIED')
+        result.facts = [
+          '사망신고는 방문 또는 우편으로 접수할 수 있습니다.',
+          '사망 사실을 안 날부터 1개월 이내에 신고해야 합니다.',
+          '정부24 공식 안내와 제19호 사망신고서 양식을 바로 연결했습니다.',
+        ]
+        result.ui.push({
+          type: 'DEATH_REPORT_PREPARATION',
+          taskId: task.id,
+          title: '사망신고 방문·우편 접수 준비',
+          deadlineText: '사망 사실을 안 날부터 1개월 이내',
+          submissionMethods: ['방문', '우편'],
+          checklist: [
+            {
+              id: 'death-report-form',
+              label: '제19호 사망신고서',
+              status: 'CHECK_REQUIRED',
+              note: '아래 공식 양식을 내려받아 작성할 수 있어요.',
+            },
+            {
+              id: 'death-certificate',
+              label: '진단서·검안서 등 사망 사실 증명서류',
+              status: hasDeathCertificate ? 'HELD' : 'CHECK_REQUIRED',
+              note: hasDeathCertificate ? '현재 사건에서 확인된 서류예요.' : '원본 등 제출 형태는 접수기관에 확인해 주세요.',
+            },
+            {
+              id: 'reporter-id',
+              label: '신고인 또는 제출인의 신분증명서',
+              status: 'CHECK_REQUIRED',
+              note: '우편 제출 시 신고인의 신분증명서 사본이 필요해요.',
+            },
+            {
+              id: 'basic-certificate',
+              label: '사망자의 기본증명서',
+              status: 'OPTIONAL',
+              note: '가족관계등록 관서에서 전산 확인이 가능하면 생략될 수 있어요.',
+            },
+          ],
+          resources: [
+            {
+              id: 'official-form',
+              label: '공식 사망신고서 내려받기 (HWP)',
+              url: 'https://www.gov.kr/main?SaveFileNM=00000000000000026671.hwp&d=AA020InfoDownloadApp',
+              kind: 'FORM',
+            },
+            {
+              id: 'gov24-guide',
+              label: '정부24 사망신고 안내 보기',
+              url: 'https://www.gov.kr/mw/AA020InfoCappView.do?CappBizCD=12700000059',
+              kind: 'GUIDE',
+            },
+            {
+              id: 'court-guide',
+              label: '법원 사망신고 안내 보기',
+              url: 'https://efamily.scourt.go.kr/cs/CsBltnWrtGuide.do?bltnbordId=0000008&guideCd=0000008006&guideYn=Y',
+              kind: 'GUIDE',
+            },
+          ],
+          notice: '정부24 기준으로 온라인 제출이 아닌 방문·우편 민원입니다. 실제 접수 가능 기관과 서류 원본·사본 요건은 방문 전 해당 기관에 확인해 주세요.',
+          actions: [
+            { id: 'death_report_completed', label: '신고 완료로 기록' },
+            { id: 'later', label: '나중에 이어하기' },
+          ],
+        })
+        result.suggestedActions.push(
+          { id: 'death_report_completed', label: '신고 완료로 기록' },
+          { id: 'later', label: '나중에 이어하기' },
+        )
+        break
+      }
       case 'COMPLETE_TASK': {
         const tasks = await run('getPrioritizedTasks', () => tools.getPrioritizedTasks(state.caseId))
         if (tasks[0]) result.state = await run('updateTaskStatus', () => tools.updateTaskStatus(state.caseId, tasks[0].id, 'COMPLETED'))
+        break
+      }
+      case 'COMPLETE_DEATH_REPORT': {
+        let deathTask = state.tasks.find((task) => task.type === 'CONFIRM_DEATH_REPORT')
+        if (!deathTask) {
+          const generated = await run('generatePersonalProcedure', () => tools.generatePersonalProcedure(state.caseId))
+          deathTask = generated.find((task) => task.type === 'CONFIRM_DEATH_REPORT')
+        }
+        if (!deathTask) throw new Error('DEATH_REPORT_TASK_NOT_FOUND')
+
+        result.state = await run('updateTaskStatus', () => tools.updateTaskStatus(state.caseId, deathTask.id, 'COMPLETED'))
+        const prioritized = await run('getPrioritizedTasks', () => tools.getPrioritizedTasks(state.caseId))
+        const nextTask = prioritized.find((task) => task.type !== 'CONFIRM_DEATH_REPORT')
+
+        result.ui.push({
+          type: 'COMPLETION_CONFIRMATION',
+          taskId: deathTask.id,
+          title: '사망신고 완료',
+          actions: [],
+        })
+        if (nextTask) {
+          result.facts = [nextTask.title]
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: nextTask.id,
+            title: nextTask.title,
+            priority: nextTask.priority,
+            readiness: nextTask.readiness,
+            actions: [{ id: 'continue', label: '이 업무 이어가기' }],
+          })
+          result.suggestedActions.push({ id: 'continue', label: '이 업무 이어가기' })
+        } else {
+          result.facts = ['현재 생성된 업무는 모두 완료 상태입니다.']
+          result.ui.push({
+            type: 'PROGRESS_SUMMARY',
+            progress: calculateProgress(result.state),
+            completedTasks: result.state.tasks.filter((task) => task.status === 'COMPLETED').length,
+            totalTasks: result.state.tasks.length,
+          })
+        }
+        break
+      }
+      case 'ADVANCE_WORKFLOW': {
+        const workflow = state.workflow
+        if (workflow.phase === 'DOCUMENT_REVIEW' || workflow.phase === 'GENERATING_PERSONAL_PROCEDURE') {
+          const tasks = await run('generatePersonalProcedure', () => tools.generatePersonalProcedure(state.caseId))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            stage: 'CHECKING_MISSING_INFO',
+            workflow: {
+              ...workflow,
+              phase: 'SELECTING_PRIORITY_TASK',
+              procedureGenerated: true,
+            },
+          }))
+          result.ui.push({
+            type: 'PROCEDURE_PLAN',
+            steps: tasks.slice(0, 6).map((task) => {
+              const taskTitleById = new Map(tasks.map((item) => [item.id, item.title]))
+              return {
+                taskId: task.id,
+                title: task.title,
+                priority: task.priority,
+                status: task.status,
+                reason: task.reason ?? '현재 사건 상태를 기준으로 확인이 필요한 업무예요.',
+                basisFacts: task.basisFacts ?? [],
+                dependencyTitles: (task.dependsOnTaskIds ?? []).map((id) => taskTitleById.get(id) ?? id),
+                applicability: task.applicability ?? 'REVIEW_REQUIRED',
+              }
+            }),
+          })
+          result.suggestedActions.push({ id: 'select_priority', label: '가장 먼저 할 일 확인' })
+          break
+        }
+        if (workflow.phase === 'SELECTING_PRIORITY_TASK') {
+          const task = await run('selectPriorityTask', () => tools.selectPriorityTask(state.caseId))
+          if (!task) {
+            result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+              stage: 'COMPLETED',
+              workflow: { ...workflow, phase: 'ALL_TASKS_COMPLETED', priorityTaskId: null },
+            }))
+            break
+          }
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            currentFocus: { type: task.type, id: task.id },
+            workflow: { ...workflow, phase: 'COLLECTING_MISSING_DOCUMENTS', priorityTaskId: task.id },
+          }))
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: task.id,
+            title: task.title,
+            priority: task.priority,
+            readiness: task.readiness,
+            actions: [{ id: 'collect_documents', label: '필요 서류 확인' }],
+          })
+          result.suggestedActions.push({ id: 'collect_documents', label: '필요 서류 확인' })
+          break
+        }
+        if (workflow.phase === 'COLLECTING_MISSING_DOCUMENTS') {
+          const missing = await run('detectMissingInformation', () => tools.detectMissingInformation(state.caseId))
+          const awarenessDate = missing.find((field) => field.field === 'deceased.inheritanceAwarenessDate')
+          if (awarenessDate) {
+            result.ui.push({
+              type: 'MISSING_INFORMATION_QUESTION',
+              fieldId: awarenessDate.id,
+              prompt: '관련 기한을 확인하려면, 고인의 사망 사실과 본인이 상속인이 된 사실을 언제 알게 되었는지 알려주세요.',
+              inputType: 'DATE',
+              options: [{ id: 'later', label: '나중에 입력' }],
+            })
+          }
+          const taskId = workflow.priorityTaskId
+          if (!taskId) throw new Error('PRIORITY_TASK_NOT_SELECTED')
+          const readiness = await run('calculateTaskReadiness', () => tools.calculateTaskReadiness(state.caseId, taskId))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            workflow: {
+              ...workflow,
+              phase: 'PREPARING_TASK',
+              missingDocumentTypes: readiness.documents.filter((item) => item.status === 'MISSING').map((item) => item.type),
+            },
+          }))
+          const task = state.tasks.find((item) => item.id === taskId)
+          result.ui.push({
+            type: 'TASK_READINESS',
+            taskId,
+            title: task?.title ?? '현재 업무',
+            readiness: readiness.readiness,
+            documents: readiness.documents,
+          })
+          result.suggestedActions.push({ id: 'prepare_task', label: '현재 자료로 준비하기' })
+          break
+        }
+        if (workflow.phase === 'PREPARING_TASK') {
+          const taskId = workflow.priorityTaskId
+          if (!taskId) throw new Error('PRIORITY_TASK_NOT_SELECTED')
+          const prepared = await run('buildPreparationPackage', () => tools.buildPreparationPackage(state.caseId, taskId))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            stage: 'PREPARING_CONSULTATION',
+            workflow: { ...workflow, phase: 'CONNECTING_OFFICIAL_PROCESS', preparationPackageReady: true },
+          }))
+          result.ui.push({
+            type: 'PREPARATION_PACKAGE',
+            ...prepared,
+            disclaimer: '현재 확인된 자료를 정리한 정보이며 법률 자문이나 제출 서류가 아닙니다.',
+          })
+          result.suggestedActions.push({ id: 'connect_official', label: '공식 처리 단계 확인' })
+          break
+        }
+        if (workflow.phase === 'CONNECTING_OFFICIAL_PROCESS') {
+          const taskId = workflow.priorityTaskId
+          const task = state.tasks.find((item) => item.id === taskId)
+          if (!taskId || !task) throw new Error('PRIORITY_TASK_NOT_SELECTED')
+          const institutions = await run('findLocalInstitutions', () => tools.findLocalInstitutions(state.user.region.district, task.type))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            workflow: { ...workflow, phase: 'CONFIRMING_TASK_COMPLETION', officialConnectionReady: true, completionPending: true },
+          }))
+          result.ui.push({
+            type: 'OFFICIAL_PROCESS',
+            taskId,
+            title: task.title,
+            institutions,
+            checklist: ['공식 기관에 필요 서류 재확인', '보유 서류와 미확인 항목 준비', '방문 또는 상담 후 처리 결과 기록'],
+          })
+          result.suggestedActions.push({ id: 'confirm_completion', label: '처리 완료 확인' })
+          break
+        }
+        if (workflow.phase === 'CONFIRMING_TASK_COMPLETION') {
+          const taskId = workflow.priorityTaskId
+          const task = state.tasks.find((item) => item.id === taskId)
+          if (!taskId || !task) throw new Error('PRIORITY_TASK_NOT_SELECTED')
+          result.state = await run('confirmTaskCompletion', () => tools.confirmTaskCompletion(state.caseId, taskId))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            workflow: { ...workflow, phase: 'GENERATING_NEXT_TASK', completionPending: false },
+          }))
+          result.ui.push({
+            type: 'COMPLETION_CONFIRMATION',
+            taskId,
+            title: task.title,
+            actions: [{ id: 'generate_next', label: '다음 업무 생성' }],
+          })
+          result.suggestedActions.push({ id: 'generate_next', label: '다음 업무 생성' })
+          break
+        }
+        if (workflow.phase === 'GENERATING_NEXT_TASK') {
+          const next = await run('generateNextTask', () => tools.generateNextTask(state.caseId))
+          if (!next) {
+            result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+              stage: 'COMPLETED',
+              currentFocus: { type: null, id: null },
+              workflow: { ...workflow, phase: 'ALL_TASKS_COMPLETED', priorityTaskId: null },
+            }))
+          } else {
+            result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+              stage: 'IN_PROGRESS',
+              currentFocus: { type: next.type, id: next.id },
+              workflow: { ...workflow, phase: 'COLLECTING_MISSING_DOCUMENTS', priorityTaskId: next.id },
+            }))
+            result.ui.push({
+              type: 'TASK_CARD',
+              taskId: next.id,
+              title: next.title,
+              priority: next.priority,
+              readiness: next.readiness,
+              actions: [{ id: 'continue', label: '다음 업무 이어하기' }],
+            })
+          }
+          break
+        }
         break
       }
       case 'PAUSE':

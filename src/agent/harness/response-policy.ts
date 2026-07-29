@@ -30,6 +30,9 @@ export function buildResponsePolicy(
   if (selection.action === 'SHOW_COMMUNITY_REVIEW') {
     requiredMeaningGroups.push(['사용자 경험', '개인 경험'], ['공식', '기관 확인'])
   }
+  if (selection.action === 'SHOW_DEATH_REPORT') {
+    requiredMeaningGroups.push(['사망신고'], ['서류', '양식', '준비'])
+  }
 
   return {
     verifiedFacts: execution.facts,
@@ -53,7 +56,8 @@ export function validateComposedResponse(message: string, policy: ResponsePolicy
   const koreanCount = (message.match(/[가-힣]/g) || []).length
   const latinCount = (message.match(/[A-Za-z]/g) || []).length
   if (koreanCount < 4 || latinCount > koreanCount) return false
+  if (/(습니다|입니다|드립니다|해주세요|하세요|신가요|셔도|실게요|볼까요)/.test(message)) return false
+  if (/\*\*|#{1,6}\s|[1-9]️⃣/.test(message)) return false
   if (policy.prohibitedExpressions.some((expression) => message.includes(expression))) return false
   return policy.requiredMeaningGroups.every((alternatives) => alternatives.some((term) => message.includes(term)))
 }
-

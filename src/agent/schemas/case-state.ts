@@ -7,6 +7,28 @@ export const caseStageSchema = z.enum([
   'IN_PROGRESS', 'COMPLETED',
 ])
 
+export const agentWorkflowPhaseSchema = z.enum([
+  'DOCUMENT_REVIEW',
+  'GENERATING_PERSONAL_PROCEDURE',
+  'SELECTING_PRIORITY_TASK',
+  'COLLECTING_MISSING_DOCUMENTS',
+  'PREPARING_TASK',
+  'CONNECTING_OFFICIAL_PROCESS',
+  'CONFIRMING_TASK_COMPLETION',
+  'GENERATING_NEXT_TASK',
+  'ALL_TASKS_COMPLETED',
+])
+
+export const agentWorkflowSchema = z.object({
+  phase: agentWorkflowPhaseSchema,
+  procedureGenerated: z.boolean(),
+  priorityTaskId: z.string().nullable(),
+  missingDocumentTypes: z.array(z.string()),
+  preparationPackageReady: z.boolean(),
+  officialConnectionReady: z.boolean(),
+  completionPending: z.boolean(),
+})
+
 export const emotionalContextSchema = z.object({
   currentSignal: z.enum(['DISTRESSED', 'NEUTRAL', 'POSITIVE']),
   intensity: z.enum(['LOW', 'MEDIUM', 'HIGH']),
@@ -64,6 +86,11 @@ export const taskStateSchema = z.object({
   readiness: z.number().min(0).max(100),
   requiredDocuments: z.array(requiredDocumentSchema),
   officialSourceIds: z.array(z.string()),
+  category: z.enum(['INFORMATION', 'DOCUMENT', 'FINANCIAL', 'CONSULTATION', 'OFFICIAL_PROCESS']).optional(),
+  reason: z.string().optional(),
+  dependsOnTaskIds: z.array(z.string()).optional(),
+  basisFacts: z.array(z.string()).optional(),
+  applicability: z.enum(['CONFIRMED', 'REVIEW_REQUIRED']).optional(),
 })
 
 export const missingFieldSchema = z.object({
@@ -106,11 +133,21 @@ export const caseStateSchema = z.object({
   warnings: z.array(caseWarningSchema),
   currentFocus: z.object({ type: z.string().nullable(), id: z.string().nullable() }),
   emotionalContext: emotionalContextSchema,
+  workflow: agentWorkflowSchema.default({
+    phase: 'DOCUMENT_REVIEW',
+    procedureGenerated: false,
+    priorityTaskId: null,
+    missingDocumentTypes: [],
+    preparationPackageReady: false,
+    officialConnectionReady: false,
+    completionPending: false,
+  }),
   onboardingCompleted: z.boolean(),
   lastUpdatedAt: z.string(),
 })
 
 export type CaseStage = z.infer<typeof caseStageSchema>
+export type AgentWorkflowPhase = z.infer<typeof agentWorkflowPhaseSchema>
 export type EmotionalContext = z.infer<typeof emotionalContextSchema>
 export type DocumentState = z.infer<typeof documentStateSchema>
 export type FinancialItem = z.infer<typeof financialItemSchema>
