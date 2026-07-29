@@ -13,8 +13,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 CATEGORY = "financial"
-DOCUMENT = "bank"
-DOCUMENT_TYPE = "bank_result"
+DOCUMENT = "financial_investment"
+DOCUMENT_TYPE = "financial_investment_result"
 
 DOCUMENT_DIR = BASE_DIR / "document" / CATEGORY / DOCUMENT
 

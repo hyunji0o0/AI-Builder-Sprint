@@ -1,0 +1,59 @@
+{
+  "success": true,
+  "documentType": "financial_investment_result",
+  "data": {
+    "requestNumber": "20260729-01852",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "message": "접수번호 기준 조회 결과, 아래와 같이 금융투자회사 거래내역이 확인되었습니다.",
+    "isMockSample": true,
+    "records": [
+      {
+        "institutionName": "한국투자증권",
+        "recordType": "예수금",
+        "productName": "",
+        "quantityOrBalance": "",
+        "quantity": 0,
+        "amount": 2830000,
+        "amountType": "deposit_balance",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "미래에셋증권",
+        "recordType": "국내주식",
+        "productName": "삼성전자 보통주",
+        "quantityOrBalance": "15주",
+        "quantity": 15,
+        "amount": 1245000,
+        "amountType": "evaluated_amount",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "삼성증권",
+        "recordType": "CMA",
+        "productName": "CMA 계좌",
+        "quantityOrBalance": "",
+        "quantity": 0,
+        "amount": 980000,
+        "amountType": "account_balance",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      }
+    ],
+    "warnings": [
+      "본 화면은 API 테스트용 모의 샘플입니다.",
+      "성명 불일치, 계좌상태, 잔액 등은 실제 서비스와 차이가 있을 수 있습니다.",
+      "상속인 금융거래 조회 신청 기준으로 조회된 예시 데이터이며, 실제 확인은 해당 금융투자회사에 문의하시기 바랍니다.",
+      "상세 내역 및 증빙서류는 개별 금융투자회사에서 확인하시기 바랍니다.",
+      "금융투자회사별 계좌 상태와 평가금액은 조회 시점에 따라 달라질 수 있습니다.",
+      "폐쇄 계좌 또는 잔고 0원 계좌가 포함될 수 있으며, 실제 거래 여부는 추가 확인이 필요합니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -5,12 +5,12 @@
     "inquiryStatus": "completed",
     "hasRecords": true,
     "recordCount": 6,
-    "message": "총 6 건",
+    "message": "총 6건",
     "records": [
       {
-        "institutionName": "대 구",
-        "recordType": "예 금",
-        "branchName": "부산 동지점",
+        "institutionName": "대구",
+        "recordType": "예금",
+        "branchName": "부산동지점",
         "amount": 128000,
         "repaymentDate": "",
         "institutionContact": "1588-5050",
@@ -19,8 +19,8 @@
       },
       {
         "institutionName": "지역농·축협",
-        "recordType": "예 금",
-        "branchName": "부산 농협",
+        "recordType": "예금",
+        "branchName": "부산농협",
         "amount": 2340000,
         "repaymentDate": "",
         "institutionContact": "1588-2100",
@@ -29,8 +29,8 @@
       },
       {
         "institutionName": "지역농·축협",
-        "recordType": "예 금",
-        "branchName": "부산 금오",
+        "recordType": "예금",
+        "branchName": "부산금오",
         "amount": 85500,
         "repaymentDate": "",
         "institutionContact": "1588-2100",
@@ -39,8 +39,8 @@
       },
       {
         "institutionName": "지역농·축협",
-        "recordType": "예 금",
-        "branchName": "부산 농협",
+        "recordType": "예금",
+        "branchName": "부산농협",
         "amount": 1458423,
         "repaymentDate": "",
         "institutionContact": "1588-2100",
@@ -48,9 +48,9 @@
         "statusMessage": ""
       },
       {
-        "institutionName": "신 한",
+        "institutionName": "신한",
         "recordType": "",
-        "branchName": "성명불일치",
+        "branchName": "",
         "amount": 0,
         "repaymentDate": "",
         "institutionContact": "1577-8000",
@@ -58,9 +58,9 @@
         "statusMessage": "성명불일치"
       },
       {
-        "institutionName": "하 나",
+        "institutionName": "하나",
         "recordType": "",
-        "branchName": "성명불일치",
+        "branchName": "",
         "amount": 0,
         "repaymentDate": "",
         "institutionContact": "1599-1111",
@@ -69,7 +69,8 @@
       }
     ],
     "warnings": [
-      "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.채무금액이 '9,999,999,999'로 나오신 경우는 해당 기관으로 문의하서기 바랍니다.",
+      "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.",
+      "채무금액이 '9,999,999,999'로 나오신 경우는 해당 기관으로 문의하서기 바랍니다.",
       "\"성명불일치\"가 표시되는 경우",
       "- '상속인 금융거래조회(안심상속 원스톱) 서비스' 신청시에 기재한 사망자의 성명과 해당 은행에 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않을 경우입니다.",
       "- '가족관계증명서 등 증빙자료'와 '구비서류'를 문의하신 후 적접 방문하여 금융거래유무에 대하여 확인하셔야 합니다.",

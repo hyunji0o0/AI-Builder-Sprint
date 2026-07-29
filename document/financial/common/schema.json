@@ -1,0 +1,52 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "financial_document_classifier_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "description": "상속인 금융거래 조회 결과 문서이면 financial_inquiry_result를 반환한다. 금융거래 조회 결과 문서가 아니거나 판단할 수 없으면 unknown을 반환한다."
+        },
+        "sourceOrganization": {
+          "type": "string",
+          "description": "상단 제목 영역에 표시된 기관명과 대표 문의 전화번호를 판단 근거로 사용하지 않는다. 결과 표의 열 이름, 조회 결과 문구, 본문 안내사항, 기관 고유 용어를 근거로 은행연합회, 생명보험협회, 손해보험협회, 금융투자협회, 여신금융협회, 우정사업본부, 저축은행중앙회, 새마을금고중앙회, 산림조합중앙회, 신협중앙회, 한국예탁결제원, 대부금융협회, 예금보험공사, 신용정보원 중 하나를 반환한다. 본문 근거가 부족하거나 여러 기관과 충돌하면 unknown을 반환한다."
+        },
+        "organizationKey": {
+          "type": "string",
+          "description": "판별한 기관에 대응하는 폴더 키를 반환한다. 은행연합회는 bank, 생명보험협회는 life_insurance, 손해보험협회는 nonlife_insurance, 금융투자협회는 financial_investment, 여신금융협회는 credit_finance, 우정사업본부는 korea_post, 저축은행중앙회는 savings_bank, 새마을금고중앙회는 community_credit, 산림조합중앙회는 forestry_cooperative, 신협중앙회는 credit_union, 한국예탁결제원은 securities_depository, 대부금융협회는 consumer_finance, 예금보험공사는 deposit_insurance, 신용정보원은 credit_information을 반환한다. 기관을 판별할 수 없으면 unknown을 반환한다."
+        },
+        "organizationEvidence": {
+          "type": "array",
+          "description": "기관 판별에 사용한 본문 근거를 2개 이상 문자열 배열로 반환한다. 표의 열 이름, 조회 결과 제목, 기관 고유 금융 용어, 하단 안내문을 사용한다. 상단 기관명과 상단 대표 문의 전화번호는 절대 포함하지 않는다.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "description": "기관 판별 신뢰도를 0 이상 1 이하의 숫자로 반환한다. 서로 다른 기관 고유 근거가 2개 이상 명확하면 0.9 이상, 일부 근거만 있으면 0.6 이상 0.9 미만, 근거가 부족하거나 충돌하면 0.6 미만으로 반환한다."
+        },
+        "needsConfirmation": {
+          "type": "boolean",
+          "description": "sourceOrganization 또는 organizationKey가 unknown이거나, confidence가 0.8 미만이거나, 서로 다른 기관의 특징이 함께 나타나면 true를 반환한다. 기관이 명확하면 false를 반환한다."
+        },
+        "classificationMessage": {
+          "type": "string",
+          "description": "기관 판별 결과를 간단히 설명한다. 예: 'DCDS 가입여부와 채무금액 항목을 근거로 여신금융협회 문서로 판별했습니다.' 판별하지 못한 경우에는 부족하거나 충돌한 근거를 설명한다."
+        }
+      },
+      "required": [
+        "documentType",
+        "sourceOrganization",
+        "organizationKey",
+        "organizationEvidence",
+        "confidence",
+        "needsConfirmation",
+        "classificationMessage"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
