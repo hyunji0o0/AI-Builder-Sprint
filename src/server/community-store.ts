@@ -1,68 +1,73 @@
-import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
-import { CommunityPost, CreateCommunityPostInput, UpdateCommunityPostInput, communityPostSchema } from '../schemas/community'
+import { CommunityCategory, CommunityPost, CreateCommunityPostInput, UpdateCommunityPostInput } from '../schemas/community'
+import { supabase } from './supabase-client'
 
-const SEED_PATH = path.resolve(process.cwd(), 'data/community-posts.seed.json')
-const RUNTIME_PATH = path.resolve(process.cwd(), 'data/community-posts.runtime.json')
-
-// 데모용 파일 기반 저장소. 실서비스 전환 시 이 파일만 교체하면 됨(Supabase 등).
-async function loadPosts(): Promise<CommunityPost[]> {
-  try {
-    const raw = await readFile(RUNTIME_PATH, 'utf8')
-    return communityPostSchema.array().parse(JSON.parse(raw))
-  } catch {
-    const seedRaw = await readFile(SEED_PATH, 'utf8')
-    const seed = communityPostSchema.array().parse(JSON.parse(seedRaw))
-    await mkdir(path.dirname(RUNTIME_PATH), { recursive: true })
-    await writeFile(RUNTIME_PATH, JSON.stringify(seed, null, 2), 'utf8')
-    return seed
-  }
+// Supabase(Postgres)의 community_posts 테이블을 씀. 이전엔 파일 기반이었는데,
+// 함수 시그니처는 그대로 유지해서 community-server-plugin.ts 쪽은 무변경.
+type PostRow = {
+  id: string
+  nickname: string
+  category: string
+  content: string
+  created_at: string
+  helpful_count: number
 }
 
-async function savePosts(posts: CommunityPost[]): Promise<void> {
-  await mkdir(path.dirname(RUNTIME_PATH), { recursive: true })
-  await writeFile(RUNTIME_PATH, JSON.stringify(posts, null, 2), 'utf8')
+function fromRow(row: PostRow): CommunityPost {
+  return {
+    id: row.id,
+    nickname: row.nickname,
+    category: row.category as CommunityCategory,
+    content: row.content,
+    createdAt: row.created_at,
+    helpfulCount: row.helpful_count,
+  }
 }
 
 export async function listCommunityPosts(category?: string): Promise<CommunityPost[]> {
-  const posts = await loadPosts()
-  const sorted = [...posts].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  if (!category || category === 'ALL') return sorted
-  return sorted.filter((post) => post.category === category)
+  let query = supabase.from('community_posts').select('*').order('created_at', { ascending: false })
+  if (category && category !== 'ALL') query = query.eq('category', category)
+  const { data, error } = await query
+  if (error) throw error
+  return (data as PostRow[]).map(fromRow)
 }
 
 export async function createCommunityPost(input: CreateCommunityPostInput): Promise<CommunityPost> {
-  const posts = await loadPosts()
-  const post: CommunityPost = {
-    id: randomUUID(),
-    createdAt: new Date().toISOString(),
-    helpfulCount: 0,
-    ...input,
-  }
-  await savePosts([post, ...posts])
-  return post
+  const { data, error } = await supabase
+    .from('community_posts')
+    .insert({ nickname: input.nickname, category: input.category, content: input.content })
+    .select()
+    .single()
+  if (error) throw error
+  return fromRow(data as PostRow)
 }
 
 export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost | null> {
-  const posts = await loadPosts()
-  const index = posts.findIndex((post) => post.id === id)
-  if (index === -1) return null
-  const updated: CommunityPost = { ...posts[index], ...input }
-  const next = [...posts]
-  next[index] = updated
-  await savePosts(next)
-  return updated
+  const { data, error } = await supabase
+    .from('community_posts')
+    .update({ category: input.category, content: input.content })
+    .eq('id', id)
+    .select()
+    .maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as PostRow) : null
 }
 
 export async function setCommunityPostHelpful(id: string, liked: boolean): Promise<CommunityPost | null> {
-  const posts = await loadPosts()
-  const index = posts.findIndex((post) => post.id === id)
-  if (index === -1) return null
-  const delta = liked ? 1 : -1
-  const updated: CommunityPost = { ...posts[index], helpfulCount: Math.max(0, posts[index].helpfulCount + delta) }
-  const next = [...posts]
-  next[index] = updated
-  await savePosts(next)
-  return updated
+  const { data: current, error: fetchError } = await supabase
+    .from('community_posts')
+    .select('helpful_count')
+    .eq('id', id)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+  if (!current) return null
+
+  const nextCount = Math.max(0, current.helpful_count + (liked ? 1 : -1))
+  const { data, error } = await supabase
+    .from('community_posts')
+    .update({ helpful_count: nextCount })
+    .eq('id', id)
+    .select()
+    .maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as PostRow) : null
 }

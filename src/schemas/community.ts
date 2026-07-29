@@ -7,16 +7,21 @@ export const communityCategorySchema = z.enum([
   'TRANSFER',
   'INSURANCE',
   'SUBSCRIPTION',
+  'VENT',
   'ETC',
 ])
 export type CommunityCategory = z.infer<typeof communityCategorySchema>
 
+// VENT는 F2 할일 카테고리와 매칭되는 다른 카테고리들과 달리, 특정 할일에 안 묶이는
+// 하소연·감정 나눔용으로 따로 추가함 — 에이전트가 "관련 팁"으로 추천할 때는
+// 자연스럽게 제외되고, 커뮤니티 피드에서만 필터링되는 카테고리.
 export const CATEGORY_LABEL: Record<CommunityCategory, string> = {
   RENOUNCE: '상속포기·한정승인',
   TAX: '상속세',
   TRANSFER: '명의이전',
   INSURANCE: '보험청구',
   SUBSCRIPTION: '통신·구독해지',
+  VENT: '그냥 이야기',
   ETC: '기타',
 }
 

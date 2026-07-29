@@ -12,6 +12,7 @@ const CATEGORY_TONE: Record<CommunityPost['category'], string> = {
   TRANSFER: 'sage',
   INSURANCE: 'blue',
   SUBSCRIPTION: 'peach',
+  VENT: 'lavender',
   ETC: 'blue',
 }
 

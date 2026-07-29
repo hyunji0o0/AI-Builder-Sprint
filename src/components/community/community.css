@@ -12,6 +12,7 @@
 .da-sage{color:#527d69;background:linear-gradient(145deg,#fff,#aed1bc)}
 .da-amber{color:#a27637;background:linear-gradient(145deg,#fff,#edc77b)}
 .da-coral{color:#ad5545;background:linear-gradient(145deg,#fff,#efaa98)}
+.da-lavender{color:#7a5fa3;background:linear-gradient(145deg,#fff,#c4afe0)} /* VENT 카테고리용 새 톤 — merge할 때 dashboard.css에도 추가 필요 */
 
 /* 아래부터는 커뮤니티 화면에서만 쓰는 새 클래스 (cm- 접두사, 합쳐도 충돌 없음) */
 .cm-standalone{display:flex;align-items:flex-start;justify-content:center;padding:24px}
@@ -46,6 +47,7 @@
 .cm-badge.cm-sage{color:#527d69;background:rgba(174,209,188,.28)}
 .cm-badge.cm-blue{color:#6179a8;background:rgba(185,210,239,.28)}
 .cm-badge.cm-peach{color:#9f604f;background:rgba(239,182,155,.28)}
+.cm-badge.cm-lavender{color:#7a5fa3;background:rgba(196,175,224,.3)}
 .cm-card-content{margin:10px 0 0;font-size:13px;line-height:1.6;color:#3f4d61}
 .cm-card-footer{margin-top:10px;display:flex;align-items:center;gap:6px;color:#8e98a6;font-size:11px}
 .cm-card-footer span{display:flex;align-items:center;gap:5px}
