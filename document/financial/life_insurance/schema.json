@@ -1,0 +1,208 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "life_insurance_financial_schema",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "inquiryStatus": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "processing",
+            "failed"
+          ],
+          "description": "조회 결과가 정상적으로 표시되어 있으면 completed, 조회가 진행 중이면 processing, 오류로 인해 조회 결과를 확인할 수 없으면 failed를 반환한다."
+        },
+        "hasRecords": {
+          "type": "boolean",
+          "description": "미청구보험금 또는 휴면보험금 내역이 하나라도 있으면 true, 두 항목 모두 내역이 없으면 false를 반환한다."
+        },
+        "recordCounts": {
+          "type": "object",
+          "description": "미청구보험금과 휴면보험금 조회 결과에 표시된 유형별 내역 수와 전체 내역 수를 반환한다.",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "미청구보험금과 휴면보험금 내역을 합한 전체 건수를 반환한다."
+            },
+            "unclaimedInsurance": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "미청구보험금 조회 결과에 표시된 내역 수를 반환한다."
+            },
+            "dormantInsurance": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "휴면보험금 조회 결과에 표시된 내역 수를 반환한다."
+            }
+          },
+          "required": [
+            "total",
+            "unclaimedInsurance",
+            "dormantInsurance"
+          ],
+          "additionalProperties": false
+        },
+        "messages": {
+          "type": "array",
+          "description": "미청구보험금 및 휴면보험금 조회 결과 표 안에 표시된 결과 안내 문구를 각각 문자열로 반환한다. 안내 문구가 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "records": {
+          "type": "array",
+          "description": "미청구보험금과 휴면보험금 조회 결과의 개별 내역 목록이다. 내역이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "recordCategory": {
+                "type": "string",
+                "enum": [
+                  "unclaimed_insurance",
+                  "dormant_insurance"
+                ],
+                "description": "미청구보험금 내역이면 unclaimed_insurance, 휴면보험금 내역이면 dormant_insurance를 반환한다."
+              },
+              "institutionName": {
+                "type": "string",
+                "description": "표의 보험회사 열에 표시된 보험회사명을 반환한다."
+              },
+              "recordType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "미청구보험금 내역에서는 보험금 유형을 반환하고, 휴면보험금 내역에서는 구분 값을 반환한다. 해당 값이 없으면 null을 반환한다."
+              },
+              "productName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "보험 상품명을 반환한다. 해당 항목이 표에 없거나 값이 표시되지 않으면 null을 반환한다."
+              },
+              "referenceNumber": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "증권번호, 계좌번호 또는 증서번호를 문자열로 반환한다. 값이 없으면 null을 반환한다."
+              },
+              "contractRelationship": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "보험계약 관계를 반환한다. 해당 항목이 표에 없거나 값이 표시되지 않으면 null을 반환한다."
+              },
+              "contractDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "보험 계약일자를 YYYY-MM-DD 형식으로 반환한다. 해당 항목이 표에 없거나 값이 표시되지 않으면 null을 반환한다."
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "KRW",
+                  null
+                ],
+                "description": "금액의 통화가 원화이면 KRW를 반환한다. 통화를 확인할 수 없으면 null을 반환한다."
+              },
+              "amount": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "description": "보험금 또는 휴면보험금 금액을 원 단위 정수로 반환한다. 금액이 명시적으로 0원이면 0, 값이 없거나 확인할 수 없으면 null을 반환한다."
+              },
+              "calculationDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "미청구보험금의 보험금 산출일자를 YYYY-MM-DD 형식으로 반환한다. 휴면보험금 내역처럼 해당 항목이 적용되지 않으면 null을 반환한다."
+              },
+              "additionalInterest": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "description": "가산이자 금액을 원 단위 정수로 반환한다. 가산이자가 명시적으로 0원이면 0, 해당 항목이 표에 없거나 적용되지 않으면 null을 반환한다."
+              },
+              "remainingAnnuityStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "exists",
+                  "none",
+                  null
+                ],
+                "description": "잔여연금이 있으면 exists, 없으면 none을 반환한다. 해당 항목이 표에 없거나 확인할 수 없으면 null을 반환한다."
+              },
+              "institutionContact": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "표 안에 표시된 해당 보험회사의 문의처를 반환한다. 해당 항목이 표에 없거나 값이 표시되지 않으면 null을 반환한다."
+              },
+              "dormantFundTransferOrCalculationDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "휴면보험금 조회 결과의 진흥원 출연일자 또는 휴면보험금 산출일을 YYYY-MM-DD 형식으로 반환한다. 미청구보험금 내역처럼 해당 항목이 적용되지 않으면 null을 반환한다."
+              }
+            },
+            "required": [
+              "recordCategory",
+              "institutionName",
+              "recordType",
+              "productName",
+              "referenceNumber",
+              "contractRelationship",
+              "contractDate",
+              "currency",
+              "amount",
+              "calculationDate",
+              "additionalInterest",
+              "remainingAnnuityStatus",
+              "institutionContact",
+              "dormantFundTransferOrCalculationDate"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "조회 결과 하단에 표시된 문의 방법, 유의사항 등의 안내 문구를 문자열 배열로 반환한다. 안내사항 영역이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "inquiryStatus",
+        "hasRecords",
+        "recordCounts",
+        "messages",
+        "records",
+        "warnings"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,118 +1,108 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "credit_union_financial_schema",
+    "name": "credit_union_financial_result_schema",
     "schema": {
       "type": "object",
       "properties": {
-        "documentType": {
-          "type": "string",
-          "description": "이 문서가 신용정보원 금융거래 조회 결과이면 credit_information_financial_result를 반환한다."
-        },
-        "sourceOrganization": {
-          "type": "string",
-          "description": "조회 결과 제공 기관명인 신용정보원를 반환한다."
-        },
-        "contactNumber": {
-          "type": "string",
-          "description": "문서 상단 또는 안내문에 표시된 대표 문의 전화번호. 확인할 수 없으면 빈 문자열."
-        },
         "inquiryStatus": {
           "type": "string",
-          "description": "조회 상태. complete, processing, no_records, not_found 중 문서 내용에 맞는 값을 반환한다."
+          "description": "조회 결과가 정상적으로 표시되어 있으면 completed, 조회 중이면 processing, 오류가 표시되어 있으면 failed를 반환한다."
         },
         "hasRecords": {
           "type": "boolean",
-          "description": "피상속인의 자산·채무·계약 등 유효한 조회 결과가 하나 이상 있으면 true, 없으면 false."
+          "description": "신협 거래 내역이 하나라도 있으면 true, 거래가 없다는 문구가 표시되어 있으면 false를 반환한다."
         },
         "recordCount": {
           "type": "integer",
-          "description": "records 배열의 항목 수."
+          "description": "조회 결과 표에 표시된 신협 거래 내역의 전체 행 수를 반환한다. 거래가 없으면 0을 반환한다."
+        },
+        "receiptNumber": {
+          "type": "string",
+          "description": "조회 결과 상단의 접수번호를 반환한다. 접수번호가 보이지 않거나 확인할 수 없으면 빈 문자열을 반환한다."
         },
         "message": {
           "type": "string",
-          "description": "조회 상태나 결과 존재 여부를 설명하는 핵심 안내 문구."
-        },
-        "warnings": {
-          "type": "array",
-          "description": "금액 기준일, 직접 문의 필요, 성명 불일치 등 결과 해석에 필요한 안내사항 목록. 없으면 빈 배열.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "requestNumber": {
-          "type": "string",
-          "description": "문서 상단의 접수번호."
+          "description": "조회 결과 표 아래에 표시된 결과 안내 문구를 그대로 반환한다. 예: 신협중앙회 전산망 참가 신협에 대한 조회결과, 신협에 거래가 없습니다."
         },
         "records": {
           "type": "array",
-          "description": "신협별 예금·출자금 및 계좌별 대출거래 결과 목록.",
+          "description": "신협별 금융거래 조회 결과 목록이다. 거래 내역이 없으면 빈 배열을 반환한다.",
           "items": {
             "type": "object",
             "properties": {
+              "rowNumber": {
+                "type": "integer",
+                "description": "표의 NO. 또는 행 번호를 정수로 반환한다. 확인할 수 없으면 0을 반환한다."
+              },
               "authorizationNumber": {
                 "type": "string",
-                "description": "인가번호."
+                "description": "표에 표시된 신협 인가번호를 문자열로 반환한다. 값이 없으면 빈 문자열을 반환한다."
               },
-              "institutionName": {
+              "creditUnionName": {
                 "type": "string",
-                "description": "신협명."
+                "description": "표에 표시된 신협명을 반환한다."
               },
               "phoneNumber": {
                 "type": "string",
-                "description": "신협 전화번호."
+                "description": "해당 신협의 전화번호를 반환한다. 값이 없으면 빈 문자열을 반환한다."
               },
               "postalCode": {
                 "type": "string",
-                "description": "우편번호."
+                "description": "해당 신협의 우편번호를 문자열로 반환한다. 값이 없으면 빈 문자열을 반환한다."
               },
               "address": {
                 "type": "string",
-                "description": "상세주소."
+                "description": "표에 표시된 해당 신협의 상세주소를 반환한다. 값이 없으면 빈 문자열을 반환한다."
               },
-              "loanSequence": {
+              "sequenceNumber": {
                 "type": "integer",
-                "description": "계좌별 대출거래 순번. 없으면 0."
+                "description": "계좌별 대출거래 현황에 표시된 순번을 반환한다. 값이 없으면 0을 반환한다."
               },
               "loanAmount": {
                 "type": "integer",
-                "description": "이자 미포함 대출금액을 원 단위 정수로 반환. 없으면 0."
+                "description": "계좌별 대출거래 현황의 금액을 이자를 제외한 원 단위 정수로 반환한다. 대출 내역이 없거나 금액을 확인할 수 없으면 0을 반환한다."
               },
               "loanMaturityDate": {
                 "type": "string",
-                "description": "대출 만기일을 YYYY-MM-DD 형식으로 반환. 없으면 빈 문자열."
+                "description": "대출 만기일을 YYYY-MM-DD 형식으로 반환한다. 대출 내역이 없거나 날짜를 확인할 수 없으면 빈 문자열을 반환한다."
               },
-              "depositAndShareAmount": {
+              "depositAndContributionAmount": {
                 "type": "integer",
-                "description": "이자 미포함 예금 및 출자금액을 원 단위 정수로 반환. 없으면 0."
+                "description": "예금 및 출자금 금액을 이자를 제외한 원 단위 정수로 반환한다. 값이 없거나 확인할 수 없으면 0을 반환한다."
               }
             },
             "required": [
+              "rowNumber",
               "authorizationNumber",
-              "institutionName",
+              "creditUnionName",
               "phoneNumber",
               "postalCode",
               "address",
-              "loanSequence",
+              "sequenceNumber",
               "loanAmount",
               "loanMaturityDate",
-              "depositAndShareAmount"
+              "depositAndContributionAmount"
             ],
             "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "조회 결과 하단에 표시된 상세 내역 확인 방법, 금액 기준, 문의처 등의 안내 문구를 문자열 배열로 반환한다. 안내 문구가 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
           }
         }
       },
       "required": [
-        "documentType",
-        "sourceOrganization",
-        "contactNumber",
         "inquiryStatus",
         "hasRecords",
         "recordCount",
+        "receiptNumber",
         "message",
-        "warnings",
-        "requestNumber",
-        "records"
+        "records",
+        "warnings"
       ],
       "additionalProperties": false
     }

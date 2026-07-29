@@ -1,0 +1,67 @@
+{
+  "success": true,
+  "documentType": "life_insurance_financial_result",
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "message": "미청구보험금 내역이 1건 있습니다., 휴면보험금 내역이 2건 있습니다.",
+    "records": [
+      {
+        "recordCategory": "unclaimed_insurance",
+        "institutionName": "한빛생명보험(주)",
+        "recordType": "만기보험금",
+        "productName": "(무)행복더드림 종신보험",
+        "referenceNumber": "12345-67890",
+        "contractRelationship": "계약자",
+        "contractDate": "2010-03-15",
+        "currency": "KRW",
+        "amount": 1250000,
+        "calculationDate": "2024-07-10",
+        "additionalInterest": 25300,
+        "remainingAnnuityStatus": "none",
+        "institutionContact": "",
+        "transferOrCalculationDate": ""
+      },
+      {
+        "recordCategory": "dormant_insurance",
+        "institutionName": "한빛생명보험(주)",
+        "recordType": "휴면보험금",
+        "productName": "",
+        "referenceNumber": "987654321",
+        "contractRelationship": "",
+        "contractDate": "",
+        "currency": "KRW",
+        "amount": 320000,
+        "calculationDate": "",
+        "additionalInterest": 0,
+        "remainingAnnuityStatus": "",
+        "institutionContact": "02-1234-5678",
+        "transferOrCalculationDate": "2022-04-01"
+      },
+      {
+        "recordCategory": "dormant_insurance",
+        "institutionName": "드림라이프생명(주)",
+        "recordType": "휴면보험금",
+        "productName": "",
+        "referenceNumber": "A1122334455",
+        "contractRelationship": "",
+        "contractDate": "",
+        "currency": "KRW",
+        "amount": 180000,
+        "calculationDate": "",
+        "additionalInterest": 0,
+        "remainingAnnuityStatus": "",
+        "institutionContact": "02-9876-5432",
+        "transferOrCalculationDate": "2021-08-15"
+      }
+    ],
+    "warnings": [
+      "조회결과 세부사항에 관한 문의는 해당 보험회사(링크 참조)로 연락 주시기 바라며, 이외 기타 문의는 생명보험협회(02-2262-6600)로 연락 주시기 바랍니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "documentType": "korea_post_financial_result",
+  "data": {
+    "requestNumber": "20240221000123",
+    "inquiryDateTime": "2024-02-21T10:25:30",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 5,
+    "message": "",
+    "hasDepositAccount": false,
+    "depositAccountStatus": "none",
+    "depositBalance": 0,
+    "depositLoanAmount": 12450000,
+    "depositLoanRepaymentDate": "",
+    "hasInsuranceAccount": false,
+    "insuranceAccountStatus": "none",
+    "insuranceRefundLoanAmount": 320000,
+    "insuranceRefundLoanMaturityDate": "2026-05-15",
+    "policyholderLoanAmount": 0,
+    "policyholderLoanMaturityDate": "",
+    "hasFund": true,
+    "fundAmount": 1250000,
+    "cardAmount": 540000,
+    "loanAmount": 8000000,
+    "loanExecutionDate": "2022-09-10",
+    "otherAmount": 0,
+    "totalAmount": 22560000,
+    "warnings": []
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "success": true,
+  "documentType": "credit_union_financial_result",
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "receiptNumber": "2025051500001234",
+    "message": "신협중앙회 전산망 참가 신협에 대한 조회결과, 상기와 같이 거래가 있습니다.",
+    "records": [
+      {
+        "rowNumber": 1,
+        "authorizationNumber": "310121",
+        "creditUnionName": "대전둔산신협",
+        "phoneNumber": "042-488-1234",
+        "postalCode": "35235",
+        "address": "대전광역시 서구 둔산로 123, 2층 (둔산동)",
+        "sequenceNumber": 1,
+        "loanAmount": 25000000,
+        "loanMaturityDate": "2027-06-15",
+        "depositAndContributionAmount": 12000000
+      },
+      {
+        "rowNumber": 2,
+        "authorizationNumber": "310045",
+        "creditUnionName": "유성신협",
+        "phoneNumber": "042-824-5678",
+        "postalCode": "34052",
+        "address": "대전광역시 유성구 대학로 55 (궁동)",
+        "sequenceNumber": 1,
+        "loanAmount": 8500000,
+        "loanMaturityDate": "2027-11-30",
+        "depositAndContributionAmount": 4300000
+      },
+      {
+        "rowNumber": 3,
+        "authorizationNumber": "310078",
+        "creditUnionName": "관평신협",
+        "phoneNumber": "042-934-7777",
+        "postalCode": "34118",
+        "address": "대전광역시 유성구 관평로 15 (관평동)",
+        "sequenceNumber": 1,
+        "loanAmount": 15000000,
+        "loanMaturityDate": "2027-09-20",
+        "depositAndContributionAmount": 6700000
+      }
+    ],
+    "warnings": [
+      "※ 상세 예금 및 채무내역은 해당 신협에 연락(필요시류등 확인)후 방문하여 확인해 주십시오.",
+      "※ 예금 및 출자금이 '0'인 경우, 계좌는 개설되어 있으나 원금기준의 잔액이 없음을 의미합니다.(2015.7월부터 잔고통지된 내용에 해당함)",
+      "※ 신협명에 신협공제로 나온 경우, 신협중앙회 공제고객센터(1544-3030)로 연락하셔서 확인해 주십시오."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -13,8 +13,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 CATEGORY = "financial"
-DOCUMENT = "forestry_cooperative"
-DOCUMENT_TYPE = "forestry_cooperative_financial_result"
+DOCUMENT = "bank"
+DOCUMENT_TYPE = "bank_result"
 
 DOCUMENT_DIR = BASE_DIR / "document" / CATEGORY / DOCUMENT
 
