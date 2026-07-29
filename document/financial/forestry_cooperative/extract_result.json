@@ -1,0 +1,23 @@
+{
+  "success": true,
+  "documentType": "forestry_cooperative_financial_result",
+  "data": {
+    "documentType": "forestry_cooperative_financial_inquiry_result",
+    "sourceOrganization": "산림조합중앙회",
+    "hasFinancialRecords": true,
+    "depositAccountCount": 1,
+    "closedDepositCount": 0,
+    "loanCount": 1,
+    "loanAmount": 15000000,
+    "totalPaymentCount": 0,
+    "guaranteeCount": 0,
+    "guaranteeAmount": 0,
+    "balanceReferenceNumber": "1234-5678-9012",
+    "contactNumber": "1544-4200",
+    "requiresInstitutionContact": true
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

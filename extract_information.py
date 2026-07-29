@@ -12,11 +12,11 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# 실행할 문서 유형
-DOCUMENT_TYPE = "death_report"
+CATEGORY = "financial"
+DOCUMENT = "forestry_cooperative"
+DOCUMENT_TYPE = "forestry_cooperative_financial_result"
 
-# death_report 폴더 안의 파일 사용
-DOCUMENT_DIR = BASE_DIR / "document" / DOCUMENT_TYPE
+DOCUMENT_DIR = BASE_DIR / "document" / CATEGORY / DOCUMENT
 
 DOCUMENT_PATH = DOCUMENT_DIR / "sample.png"
 SCHEMA_PATH = DOCUMENT_DIR / "schema.json"
