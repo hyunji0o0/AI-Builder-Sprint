@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { CATEGORY_LABEL, CommunityPost } from '../../schemas/community'
 import { isMyPost } from '../../client/my-community-posts'
+import { forgetLikedPost, hasLikedPost, rememberLikedPost } from '../../client/community-likes'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
+import { CommunityComments } from './CommunityComments'
 
 const CATEGORY_TONE: Record<CommunityPost['category'], string> = {
   RENOUNCE: 'coral',
@@ -19,8 +22,26 @@ function timeAgo(iso: string) {
   return `${Math.floor(days / 7)}주 전`
 }
 
-export function CommunityPostCard({ post, onEdit }: { post: CommunityPost; onEdit: (post: CommunityPost) => void }) {
+export function CommunityPostCard({
+  post,
+  onEdit,
+  onHelpful,
+}: {
+  post: CommunityPost
+  onEdit: (post: CommunityPost) => void
+  onHelpful: (id: string, liked: boolean) => void
+}) {
   const tone = CATEGORY_TONE[post.category]
+  const [liked, setLiked] = useState(() => hasLikedPost(post.id))
+
+  const handleHelpful = () => {
+    const next = !liked
+    setLiked(next)
+    if (next) rememberLikedPost(post.id)
+    else forgetLikedPost(post.id)
+    onHelpful(post.id, next)
+  }
+
   return (
     <article className="cm-card">
       <div className="cm-card-head">
@@ -38,8 +59,17 @@ export function CommunityPostCard({ post, onEdit }: { post: CommunityPost; onEdi
       </div>
       <p className="cm-card-content">{post.content}</p>
       <footer className="cm-card-footer">
-        <span><Icon name="heart" size={14} /> 도움이 됐어요 {post.helpfulCount}</span>
+        <button
+          type="button"
+          className={`cm-helpful-button${liked ? ' liked' : ''}`}
+          onClick={handleHelpful}
+          aria-pressed={liked}
+          aria-label={liked ? `도움이 됐어요 취소 (현재 ${post.helpfulCount}명)` : `도움이 됐어요 (현재 ${post.helpfulCount}명)`}
+        >
+          <Icon name="heart" size={14} /> 도움이 됐어요 {post.helpfulCount}
+        </button>
       </footer>
+      <CommunityComments postId={post.id} />
     </article>
   )
 }

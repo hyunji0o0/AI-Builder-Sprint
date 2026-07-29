@@ -3,4 +3,5 @@ dist
 .env
 .env.local
 data/community-posts.runtime.json
+data/community-comments.runtime.json
 tsconfig.tsbuildinfo

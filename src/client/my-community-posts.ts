@@ -21,3 +21,7 @@ export function rememberMyPost(id: string): void {
 export function isMyPost(id: string): boolean {
   return readIds().includes(id)
 }
+
+export function getMyPostIds(): string[] {
+  return readIds()
+}

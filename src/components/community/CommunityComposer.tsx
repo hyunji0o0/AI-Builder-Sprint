@@ -4,6 +4,8 @@ import { Icon } from '../ui/Icon'
 
 type SubmitInput = { nickname: string; category: CommunityCategory; content: string }
 
+const MAX_CONTENT_LENGTH = 500
+
 // 회원가입 붙기 전까지는 닉네임을 직접 입력받는 스텁.
 // 나중에 로그인 붙이면 nickname state를 로그인 유저 정보로 대체하면 됨 (스키마 변경 없음).
 export function CommunityComposer({
@@ -71,9 +73,12 @@ export function CommunityComposer({
         onChange={(event) => setContent(event.target.value)}
         placeholder="오늘 겪은 일, 도움이 됐던 팁을 나눠주세요"
         className="cm-composer-textarea"
-        maxLength={500}
+        maxLength={MAX_CONTENT_LENGTH}
         rows={5}
       />
+      <span className={`cm-composer-counter${content.length >= MAX_CONTENT_LENGTH ? ' limit' : ''}`}>
+        {content.length}/{MAX_CONTENT_LENGTH}
+      </span>
 
       {error && <p className="cm-composer-error">{error}</p>}
 

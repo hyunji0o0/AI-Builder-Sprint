@@ -54,3 +54,15 @@ export async function updateCommunityPost(id: string, input: UpdateCommunityPost
   await savePosts(next)
   return updated
 }
+
+export async function setCommunityPostHelpful(id: string, liked: boolean): Promise<CommunityPost | null> {
+  const posts = await loadPosts()
+  const index = posts.findIndex((post) => post.id === id)
+  if (index === -1) return null
+  const delta = liked ? 1 : -1
+  const updated: CommunityPost = { ...posts[index], helpfulCount: Math.max(0, posts[index].helpfulCount + delta) }
+  const next = [...posts]
+  next[index] = updated
+  await savePosts(next)
+  return updated
+}
