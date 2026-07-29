@@ -1,0 +1,221 @@
+{
+  "summary": {
+    "totalTestCases": 13,
+    "executed": 13,
+    "passed": 0,
+    "failed": 13,
+    "skipped": 0,
+    "accuracy": 0.0,
+    "accuracyPercent": 0.0
+  },
+  "results": [
+    {
+      "folderName": "bank",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\bank\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "은행연합회",
+      "expectedKey": "bank",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "life_insurance",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\life_insurance\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "생명보험협회",
+      "expectedKey": "life_insurance",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "nonlife_insurance",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\nonlife_insurance\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "손해보험협회",
+      "expectedKey": "nonlife_insurance",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "financial_investment",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\financial_investment\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "금융투자협회",
+      "expectedKey": "financial_investment",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "credit_finance",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_finance\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "여신금융협회",
+      "expectedKey": "credit_finance",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "korea_post",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\korea_post\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "우정사업본부",
+      "expectedKey": "korea_post",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "saving_bank",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\saving_bank\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "저축은행중앙회",
+      "expectedKey": "savings_bank",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "community_credit",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\community_credit\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "새마을금고중앙회",
+      "expectedKey": "community_credit",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "forestry_cooperative",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\forestry_cooperative\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "산림조합중앙회",
+      "expectedKey": "forestry_cooperative",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "credit_union",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_union\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "신협중앙회",
+      "expectedKey": "credit_union",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "korea_security",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\korea_security\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "한국예탁결제원",
+      "expectedKey": "securities_depository",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "deposit",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\deposit\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "예금보험공사",
+      "expectedKey": "deposit_insurance",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    },
+    {
+      "folderName": "credit_information",
+      "samplePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_information\\sample.png",
+      "status": "error",
+      "passed": false,
+      "expectedOrganization": "신용정보원",
+      "expectedKey": "credit_information",
+      "actualOrganization": "",
+      "actualKey": "",
+      "organizationMatched": false,
+      "keyMatched": false,
+      "error": {
+        "code": "UPSTAGE_API_ERROR",
+        "message": "Upstage API 오류 HTTP 400: {\"error\":{\"message\":\"`content` should contain a single item. You can find correct request body form or query parameters at our API reference page (https://console.upstage.ai/api/information-extraction/universal-extraction)\",\"type\":\"validation_error\",\"param\":\"body.messages.0\",\"code\":\"invalid_request\"}}"
+      }
+    }
+  ]
+}

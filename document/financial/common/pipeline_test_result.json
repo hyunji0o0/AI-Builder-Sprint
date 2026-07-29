@@ -1,0 +1,952 @@
+{
+  "summary": {
+    "total": 13,
+    "executed": 13,
+    "passed": 10,
+    "failed": 3,
+    "skipped": 0,
+    "accuracyPercent": 76.92
+  },
+  "results": [
+    {
+      "folderName": "bank",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "은행연합회",
+      "actualOrganization": "은행연합회",
+      "organizationMatched": true,
+      "expectedKey": "bank",
+      "actualKey": "bank",
+      "keyMatched": true,
+      "recordCount": 6,
+      "recordsLength": 6,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "은행연합회",
+        "organizationKey": "bank",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "표의 열 이름에 '은행', '금융거래종류', '담당점포', '상 환 일'이 표시되어 있습니다.",
+            "조회 결과에 '대구', '지역농·축협', '신 한', '하 나' 등 은행명이 나열되어 있습니다.",
+            "안내문에 '해당 은행에 보유하고 있는 사망자의 성명'이라고 되어 있어 은행권 조회 결과임을 보여줍니다.",
+            "안내문에 '상속인 금융거래 조회에 불일치 사항' 및 '금융거래유무' 확인이 언급되어 상속인 금융거래조회 결과 문서임을 보여줍니다."
+          ],
+          "message": "은행명 중심의 결과 표와 '해당 은행에 보유하고 있는 사망자의 성명' 안내문을 근거로 은행연합회 문서로 판별했습니다."
+        },
+        "data": {
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 6,
+          "message": "총 6건",
+          "records": [
+            {
+              "institutionName": "대구",
+              "recordType": "예금",
+              "branchName": "부산동지점",
+              "amount": 128000,
+              "repaymentDate": "",
+              "institutionContact": "1588-5050",
+              "recordStatus": "matched",
+              "statusMessage": ""
+            },
+            {
+              "institutionName": "지역농·축협",
+              "recordType": "예금",
+              "branchName": "부산농협",
+              "amount": 2340000,
+              "repaymentDate": "",
+              "institutionContact": "1588-2100",
+              "recordStatus": "matched",
+              "statusMessage": ""
+            },
+            {
+              "institutionName": "지역농·축협",
+              "recordType": "예금",
+              "branchName": "부산금오",
+              "amount": 85500,
+              "repaymentDate": "",
+              "institutionContact": "1588-2100",
+              "recordStatus": "matched",
+              "statusMessage": ""
+            },
+            {
+              "institutionName": "지역농·축협",
+              "recordType": "예금",
+              "branchName": "부산농협",
+              "amount": 1458423,
+              "repaymentDate": "",
+              "institutionContact": "1588-2100",
+              "recordStatus": "matched",
+              "statusMessage": ""
+            },
+            {
+              "institutionName": "신한",
+              "recordType": "",
+              "branchName": "",
+              "amount": 0,
+              "repaymentDate": "",
+              "institutionContact": "1577-8000",
+              "recordStatus": "name_mismatch",
+              "statusMessage": "성명불일치"
+            },
+            {
+              "institutionName": "하나",
+              "recordType": "",
+              "branchName": "",
+              "amount": 0,
+              "repaymentDate": "",
+              "institutionContact": "1599-1111",
+              "recordStatus": "name_mismatch",
+              "statusMessage": "성명불일치"
+            }
+          ],
+          "warnings": [
+            "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.",
+            "채무금액이 '9,999,999,999'로 나오신 경우는 해당 기관으로 문의하서기 바랍니다.",
+            "\"성명불일치\"가 표시되는 경우",
+            "- '상속인 금융거래조회(안심상속 원스톱) 서비스' 신청시에 기재한 사망자의 성명과 해당 은행에 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않을 경우입니다.",
+            "- '가족관계증명서 등 증빙자료'와 '구비서류'를 문의하신 후 적접 방문하여 금융거래유무에 대하여 확인하셔야 합니다.",
+            "- 상속인 금융거래 조회에 불일치 사항이 있으신 경우, 은행연합회 상속인 금융거래조회 서비스 담당자(02-3705-5044)에게 문의 전화 주시면 감사하겠습니다."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "life_insurance",
+      "status": "failed",
+      "passed": false,
+      "expectedOrganization": "생명보험협회",
+      "actualOrganization": "",
+      "organizationMatched": false,
+      "expectedKey": "life_insurance",
+      "actualKey": "",
+      "keyMatched": false,
+      "recordCount": 0,
+      "recordsLength": 0,
+      "recordCountMatched": true,
+      "result": {
+        "success": false,
+        "error": {
+          "code": "UPSTAGE_API_ERROR",
+          "message": "Upstage API가 오류 응답을 반환했습니다.",
+          "details": {
+            "statusCode": 400,
+            "responseBody": "{\"error\":{\"message\":\"[Input Error] Invalid Schema: The type of first-level properties cannot be 'object'. It must be 'string', 'number', 'integer', 'boolean' or 'array'. If you need object type properties, use them as items of an array.\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":null}}"
+          }
+        }
+      }
+    },
+    {
+      "folderName": "nonlife_insurance",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "손해보험협회",
+      "actualOrganization": "손해보험협회",
+      "organizationMatched": true,
+      "expectedKey": "nonlife_insurance",
+      "actualKey": "nonlife_insurance",
+      "keyMatched": true,
+      "recordCount": 1,
+      "recordsLength": 1,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "손해보험협회",
+        "organizationKey": "nonlife_insurance",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "총 1건 보험가입내역 조회결과",
+            "표의 열 이름에 '보험회사', '보험계약 상태', '보험계약 관계', '보험기간'이 포함됨",
+            "안내사항에 '보험회사에서 제공한 자료를 기초로 작성된 것'이라고 명시됨"
+          ],
+          "message": "보험가입내역 조회결과 문구, 보험회사·보험계약 상태 등 보험 관련 열 이름, 그리고 보험회사 제공 자료라는 안내문을 근거로 손해보험협회 문서로 판별했습니다."
+        },
+        "data": {
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 1,
+          "message": "총 1건 보험가입내역 조회결과",
+          "records": [
+            {
+              "recordCategory": "insurance_policy",
+              "institutionName": "한화손해보험",
+              "recordType": "보험",
+              "productName": "이륜자동차보험",
+              "referenceNumber": "CA2023393696300 0",
+              "status": "active",
+              "relationship": "policyholder",
+              "startDate": "2023-04-03",
+              "endDate": "2024-04-03",
+              "branchName": "서울지점",
+              "institutionContact": "02-1234-5678"
+            }
+          ],
+          "warnings": [
+            "■ 상기 조회결과는 사망일(접수일) 현재 기준이며, 보험회사에서 제공한 자료를 기초로 작성된 것으로 세부내역(유지여부, 보험금액, 보험금 신청방법 등)은 해당회사에 직접 문의하시기 바랍니다."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "financial_investment",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "금융투자협회",
+      "actualOrganization": "금융투자협회",
+      "organizationMatched": true,
+      "expectedKey": "financial_investment",
+      "actualKey": "financial_investment",
+      "keyMatched": true,
+      "recordCount": 3,
+      "recordsLength": 3,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "금융투자협회",
+        "organizationKey": "financial_investment",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "조회 결과 내역",
+            "금융투자회사 거래내역이 확인되었습니다.",
+            "한국투자증권 예수금 2,830,000원(정상)",
+            "미래에셋증권 국내주식 삼성전자 보통주 15주, 평가금액 1,245,000원(정상)",
+            "삼성증권 CMA 계좌 잔액 980,000원(정상)",
+            "실제 확인은 해당 금융투자회사에 문의하시기 바랍니다.",
+            "상세 내역 및 증빙서류는 개별 금융투자회사에서 확인하시기 바랍니다."
+          ],
+          "message": "금융투자회사 거래내역, 증권사명, 예수금·국내주식·CMA·평가금액 등의 금융투자 고유 용어를 근거로 금융투자협회 문서로 판별했습니다."
+        },
+        "data": {
+          "requestNumber": "20260729-01852",
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 3,
+          "message": "접수번호 기준 조회 결과, 아래와 같이 금융투자회사 거래내역이 확인되었습니다.",
+          "isMockSample": true,
+          "records": [
+            {
+              "institutionName": "한국투자증권",
+              "recordType": "예수금",
+              "productName": "",
+              "quantityOrBalance": "",
+              "quantity": 0,
+              "amount": 2830000,
+              "amountType": "deposit_balance",
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            },
+            {
+              "institutionName": "미래에셋증권",
+              "recordType": "국내주식",
+              "productName": "삼성전자 보통주",
+              "quantityOrBalance": "15주",
+              "quantity": 15,
+              "amount": 1245000,
+              "amountType": "evaluated_amount",
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            },
+            {
+              "institutionName": "삼성증권",
+              "recordType": "CMA",
+              "productName": "CMA 계좌",
+              "quantityOrBalance": "",
+              "quantity": 0,
+              "amount": 980000,
+              "amountType": "account_balance",
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            }
+          ],
+          "warnings": [
+            "본 화면은 API 테스트용 모의 샘플입니다.",
+            "성명 불일치, 계좌상태, 잔액 등은 실제 서비스와 차이가 있을 수 있습니다.",
+            "상속인 금융거래 조회 신청 기준으로 조회된 예시 데이터이며, 실제 확인은 해당 금융투자회사에 문의하시기 바랍니다.",
+            "상세 내역 및 증빙서류는 개별 금융투자회사에서 확인하시기 바랍니다.",
+            "금융투자회사별 계좌 상태와 평가금액은 조회 시점에 따라 달라질 수 있습니다.",
+            "폐쇄 계좌 또는 잔고 0원 계좌가 포함될 수 있으며, 실제 거래 여부는 추가 확인이 필요합니다."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "credit_finance",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "여신금융협회",
+      "actualOrganization": "여신금융협회",
+      "organizationMatched": true,
+      "expectedKey": "credit_finance",
+      "actualKey": "credit_finance",
+      "keyMatched": true,
+      "recordCount": 5,
+      "recordsLength": 5,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "여신금융협회",
+        "organizationKey": "credit_finance",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "표의 열 이름에 '채무금액', 'DCDS 가입여부'가 포함되어 있습니다.",
+            "거래내역에 '신용카드', '장기카드대출(카드론)'이 기재되어 있습니다.",
+            "안내문에 '피상속인의 채무면제유예(이하 'DCDS') 상품의 가입 유·무만 안내'라고 되어 있습니다.",
+            "하단 설명에 'DCDS란 신용카드사가 매월 회원으로부터 일정율의 수수료를 받고 ... 카드채무를 면제하거나 결제를 유예해 주는 상품'이라고 되어 있습니다."
+          ],
+          "message": "DCDS 가입여부, 채무금액, 신용카드·카드론 거래내역 및 DCDS 안내문을 근거로 여신금융협회의 상속인 금융거래 조회 결과 문서로 판별했습니다."
+        },
+        "data": {
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 5,
+          "message": "",
+          "records": [
+            {
+              "institutionName": "신한카드(주)",
+              "recordType": "신용카드",
+              "institutionContact": "02-6950-1234",
+              "notificationDate": "2024-07-15",
+              "amount": 1250000,
+              "dcdsEnrollmentStatus": "enrolled"
+            },
+            {
+              "institutionName": "삼성카드(주)",
+              "recordType": "신용카드",
+              "institutionContact": "02-2000-2222",
+              "notificationDate": "2024-06-28",
+              "amount": 850000,
+              "dcdsEnrollmentStatus": "enrolled"
+            },
+            {
+              "institutionName": "현대캐피탈(주)",
+              "recordType": "장기카드대출(카드론)",
+              "institutionContact": "02-3700-1114",
+              "notificationDate": "2024-07-02",
+              "amount": 3200000,
+              "dcdsEnrollmentStatus": "not_enrolled"
+            },
+            {
+              "institutionName": "롯데카드(주)",
+              "recordType": "신용카드",
+              "institutionContact": "02-1588-8100",
+              "notificationDate": "2024-06-30",
+              "amount": 620000,
+              "dcdsEnrollmentStatus": "enrolled"
+            },
+            {
+              "institutionName": "KB국민카드(주)",
+              "recordType": "신용카드",
+              "institutionContact": "02-6300-7300",
+              "notificationDate": "2024-07-10",
+              "amount": 470000,
+              "dcdsEnrollmentStatus": "enrolled"
+            }
+          ],
+          "warnings": [
+            "※ 협회에서는 피상속인의 채무면제유예(이하 'DCDS') * 상품의 가입 유·무만 안내하고 있습니다.",
+            "※ 협회 홈페이지에 게시 된 총채무금액과 DCDS 채무면제 및 결제유예 대상 금액과 동일하지 않으니 착오 없으시길 바랍니다. DCDS와 관련된 채무면제 금액 등 자세한 사항은 해당 카드사에 문의하시기 바랍니다.",
+            "- DCDS란 신용카드사가 매월 회원으로부터 일정율의 수수료를 받고 회원(예:사망, 질병 등 사고가 발생하였을 때) 카드채무를 면제하거나 결제를 유예해 주는 상품"
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "korea_post",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "우정사업본부",
+      "actualOrganization": "우정사업본부",
+      "organizationMatched": true,
+      "expectedKey": "korea_post",
+      "actualKey": "korea_post",
+      "keyMatched": true,
+      "recordCount": 0,
+      "recordsLength": 0,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "우정사업본부",
+        "organizationKey": "korea_post",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "상속인 금융내역조회",
+            "예금금액",
+            "보험환급금 대출금액",
+            "펀드금액",
+            "카드금액"
+          ],
+          "message": "'상속인 금융내역조회' 결과 문서이며, 본문에 예금금액·보험환급금 대출금액·펀드금액·카드금액 등 우체국 금융상품 조회 항목이 함께 나타나 우정사업본부 문서로 판별했습니다."
+        },
+        "data": {
+          "requestNumber": "20240221000123",
+          "inquiryDateTime": "2024-02-21",
+          "inquiryStatus": "completed",
+          "hasRecords": false,
+          "recordCount": 0,
+          "message": "",
+          "hasDepositAccount": false,
+          "depositAccountStatus": "none",
+          "depositBalance": 0,
+          "depositLoanAmount": 12450000,
+          "depositLoanRepaymentDate": "",
+          "hasInsuranceAccount": false,
+          "insuranceAccountStatus": "none",
+          "insuranceRefundLoanAmount": 320000,
+          "insuranceRefundLoanMaturityDate": "2026-05-15",
+          "policyholderLoanAmount": 0,
+          "policyholderLoanMaturityDate": "",
+          "hasFund": true,
+          "fundAmount": 1250000,
+          "cardAmount": 540000,
+          "loanAmount": 8000000,
+          "loanExecutionDate": "2022-09-10",
+          "otherAmount": 0,
+          "totalAmount": 22560000,
+          "warnings": [
+            "추출된 recordCount와 records 배열의 길이가 달라 records 배열 길이를 기준으로 recordCount를 보정했습니다."
+          ],
+          "records": []
+        }
+      }
+    },
+    {
+      "folderName": "saving_bank",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "저축은행중앙회",
+      "actualOrganization": "저축은행중앙회",
+      "organizationMatched": true,
+      "expectedKey": "savings_bank",
+      "actualKey": "savings_bank",
+      "keyMatched": true,
+      "recordCount": 3,
+      "recordsLength": 3,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "저축은행중앙회",
+        "organizationKey": "savings_bank",
+        "classification": {
+          "confidence": 0.98,
+          "needsConfirmation": false,
+          "evidence": [
+            "접수번호 (20260729-01852)에 대한 저축은행 금융거래 조회결과입니다.",
+            "표의 금융기관 항목에 '부산OK저축은행', '부산햇살저축은행', '대구저축은행'이 기재되어 있습니다."
+          ],
+          "message": "'저축은행 금융거래 조회결과' 문구와 결과표의 금융기관명이 모두 저축은행으로 표시되어 있어 저축은행중앙회 문서로 판별했습니다."
+        },
+        "data": {
+          "requestNumber": "20260729-01852",
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 3,
+          "message": "총 3건 조회되었습니다.",
+          "records": [
+            {
+              "institutionName": "부산OK저축은행",
+              "recordType": "예금",
+              "branchName": "부산서면지점",
+              "amount": 3240000,
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            },
+            {
+              "institutionName": "부산햇살저축은행",
+              "recordType": "적금",
+              "branchName": "부산센텀지점",
+              "amount": 1850000,
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            },
+            {
+              "institutionName": "대구저축은행",
+              "recordType": "예금",
+              "branchName": "대구중앙지점",
+              "amount": 12680000,
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    {
+      "folderName": "community_credit",
+      "status": "failed",
+      "passed": false,
+      "expectedOrganization": "새마을금고중앙회",
+      "actualOrganization": "",
+      "organizationMatched": false,
+      "expectedKey": "community_credit",
+      "actualKey": "",
+      "keyMatched": false,
+      "recordCount": 0,
+      "recordsLength": 0,
+      "recordCountMatched": true,
+      "result": {
+        "success": false,
+        "error": {
+          "code": "INVALID_EXTRACTION_RESULT",
+          "message": "기관별 상세 추출 결과가 스키마와 일치하지 않습니다.",
+          "details": {
+            "organizationKey": "community_credit",
+            "schemaPath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\community_credit\\schema.json",
+            "validationErrors": [
+              "$.documentType: 필수 필드가 없습니다.",
+              "$.sourceOrganization: 필수 필드가 없습니다."
+            ],
+            "rawData": {
+              "contactNumber": "02-2145-9247",
+              "inquiryStatus": "complete",
+              "hasRecords": true,
+              "recordCount": 1,
+              "message": "정상조회 되었습니다.",
+              "warnings": [
+                "자세한 사항은 1599-9000으로 문의하시기 바랍니다."
+              ],
+              "requestNumber": "20260729-01852",
+              "deceasedName": "김희수",
+              "residentRegistrationNumber": "900101-1234567",
+              "inquiryDate": "2026-07-29",
+              "requesterName": "김수영",
+              "records": [
+                {
+                  "institutionName": "구미중앙새마을금고",
+                  "hasDeposit": true,
+                  "depositBalance": 3780000,
+                  "hasLoan": false,
+                  "loanBalance": 0,
+                  "hasInsurance": false,
+                  "insuranceBalance": 0,
+                  "phoneNumber": "054-463-8017",
+                  "address": "경북 구미시 아트로 745"
+                }
+              ]
+            },
+            "normalizedData": {
+              "contactNumber": "02-2145-9247",
+              "inquiryStatus": "complete",
+              "hasRecords": true,
+              "recordCount": 1,
+              "message": "정상조회 되었습니다.",
+              "warnings": [
+                "자세한 사항은 1599-9000으로 문의하시기 바랍니다."
+              ],
+              "requestNumber": "20260729-01852",
+              "deceasedName": "김희수",
+              "residentRegistrationNumber": "900101-1234567",
+              "inquiryDate": "2026-07-29",
+              "requesterName": "김수영",
+              "records": [
+                {
+                  "institutionName": "구미중앙새마을금고",
+                  "hasDeposit": true,
+                  "depositBalance": 3780000,
+                  "hasLoan": false,
+                  "loanBalance": 0,
+                  "hasInsurance": false,
+                  "insuranceBalance": 0,
+                  "phoneNumber": "054-463-8017",
+                  "address": "경북 구미시 아트로 745"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "folderName": "forestry_cooperative",
+      "status": "failed",
+      "passed": false,
+      "expectedOrganization": "산림조합중앙회",
+      "actualOrganization": "",
+      "organizationMatched": false,
+      "expectedKey": "forestry_cooperative",
+      "actualKey": "",
+      "keyMatched": false,
+      "recordCount": 0,
+      "recordsLength": 0,
+      "recordCountMatched": true,
+      "result": {
+        "success": false,
+        "error": {
+          "code": "INVALID_EXTRACTION_RESULT",
+          "message": "기관별 상세 추출 결과가 스키마와 일치하지 않습니다.",
+          "details": {
+            "organizationKey": "forestry_cooperative",
+            "schemaPath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\forestry_cooperative\\schema.json",
+            "validationErrors": [
+              "$.documentType: 필수 필드가 없습니다.",
+              "$.sourceOrganization: 필수 필드가 없습니다."
+            ],
+            "rawData": {
+              "hasFinancialRecords": true,
+              "depositAccountCount": 1,
+              "closedDepositCount": 0,
+              "loanCount": 1,
+              "loanAmount": 15000000,
+              "paymentCount": 0,
+              "guaranteeCount": 0,
+              "guaranteeAmount": 0,
+              "balanceNumber": "1234-5678-9012",
+              "contactNumber": "1544-4200",
+              "message": "조회하신 피상속{인의 산림조합 거래내역이 있습니다.",
+              "notice": [
+                "예금에 대한 해지내역은 피상속인의 사망일 이후 해지된 내역입니다. 예금잔액 및 출자금액은 2015년 6월 30일 이후 잔수로에 한하여 정상 조회됩니다 보다 자세한 내역은 해당 조합에 문의 후 소정의 절차에 따르십시오. 상기 조회결과는 산림조합 전산망을 기준으로 각 산림조합에서 조회한 결과를 산림조합중앙회에서 취합하여 제공한 것이므로 자세한 사항은 위 결과의 해당 산림조합 으로 직접 문의하시기 바랍니다. ※ 산림조합중앙회 : 1544-4200"
+              ]
+            },
+            "normalizedData": {
+              "hasFinancialRecords": true,
+              "depositAccountCount": 1,
+              "closedDepositCount": 0,
+              "loanCount": 1,
+              "loanAmount": 15000000,
+              "paymentCount": 0,
+              "guaranteeCount": 0,
+              "guaranteeAmount": 0,
+              "balanceNumber": "1234-5678-9012",
+              "contactNumber": "1544-4200",
+              "message": "조회하신 피상속{인의 산림조합 거래내역이 있습니다.",
+              "notice": [
+                "예금에 대한 해지내역은 피상속인의 사망일 이후 해지된 내역입니다. 예금잔액 및 출자금액은 2015년 6월 30일 이후 잔수로에 한하여 정상 조회됩니다 보다 자세한 내역은 해당 조합에 문의 후 소정의 절차에 따르십시오. 상기 조회결과는 산림조합 전산망을 기준으로 각 산림조합에서 조회한 결과를 산림조합중앙회에서 취합하여 제공한 것이므로 자세한 사항은 위 결과의 해당 산림조합 으로 직접 문의하시기 바랍니다. ※ 산림조합중앙회 : 1544-4200"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "folderName": "credit_union",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "신협중앙회",
+      "actualOrganization": "신협중앙회",
+      "organizationMatched": true,
+      "expectedKey": "credit_union",
+      "actualKey": "credit_union",
+      "keyMatched": true,
+      "recordCount": 3,
+      "recordsLength": 3,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "신협중앙회",
+        "organizationKey": "credit_union",
+        "classification": {
+          "confidence": 0.99,
+          "needsConfirmation": false,
+          "evidence": [
+            "표의 열 이름에 '신협명'이 표시되어 있습니다.",
+            "본문에 '신협중앙회 전산망 참가 신협에 대한 조회결과'라고 되어 있습니다.",
+            "안내문에 '해당 신협에 연락'하여 확인하라고 기재되어 있습니다.",
+            "안내문에 '신협공제' 및 '신협중앙회 공제고객센터'가 언급됩니다."
+          ],
+          "message": "'신협명' 열, '신협중앙회 전산망 참가 신협에 대한 조회결과' 문구, 그리고 신협공제 안내문을 근거로 신협중앙회의 상속인 금융거래 조회 결과 문서로 판별했습니다."
+        },
+        "data": {
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 3,
+          "receiptNumber": "2025051500001234",
+          "message": "신협중앙회 전산망 참가 신협에 대한 조회결과, 상기와 같이 거래가 있습니다.",
+          "records": [
+            {
+              "rowNumber": 1,
+              "authorizationNumber": "310121",
+              "creditUnionName": "대전둔산신협",
+              "phoneNumber": "042-488-1234",
+              "postalCode": "35235",
+              "address": "대전광역시 서구 둔산로 123, 2층 (둔산동)",
+              "sequenceNumber": 1,
+              "loanAmount": 25000000,
+              "loanMaturityDate": "2027-06-15",
+              "depositAndContributionAmount": 12000000
+            },
+            {
+              "rowNumber": 2,
+              "authorizationNumber": "310045",
+              "creditUnionName": "유성신협",
+              "phoneNumber": "042-824-5678",
+              "postalCode": "34052",
+              "address": "대전광역시 유성구 대학로 55 (궁동)",
+              "sequenceNumber": 1,
+              "loanAmount": 8500000,
+              "loanMaturityDate": "2027-11-30",
+              "depositAndContributionAmount": 4300000
+            },
+            {
+              "rowNumber": 3,
+              "authorizationNumber": "310078",
+              "creditUnionName": "관평신협",
+              "phoneNumber": "042-934-7777",
+              "postalCode": "34118",
+              "address": "대전광역시 유성구 관평로 15 (관평동)",
+              "sequenceNumber": 1,
+              "loanAmount": 15000000,
+              "loanMaturityDate": "2027-09-20",
+              "depositAndContributionAmount": 6700000
+            }
+          ],
+          "warnings": [
+            "※ 상세 예금 및 채무내역은 해당 신협에 연락(필요시류등 확인)후 방문하여 확인해 주십시오.",
+            "※ 예금 및 출자금이 '0'인 경우, 계좌는 개설되어 있으나 원금기준의 잔액이 없음을 의미합니다.(2015.7월부터 잔고통지된 내용에 해당함)",
+            "※ 신협명에 신협공제로 나온 경우, 신협중앙회 공제고객센터(1544-3030)로 연락하셔서 확인해 주십시오."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "korea_security",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "한국예탁결제원",
+      "actualOrganization": "한국예탁결제원",
+      "organizationMatched": true,
+      "expectedKey": "securities_depository",
+      "actualKey": "securities_depository",
+      "keyMatched": true,
+      "recordCount": 2,
+      "recordsLength": 2,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "한국예탁결제원",
+        "organizationKey": "securities_depository",
+        "classification": {
+          "confidence": 0.99,
+          "needsConfirmation": false,
+          "evidence": [
+            "상속인 증권거래 조회결과",
+            "금융기관, 상품구분, 계좌/종목명, 수량/잔액, 평가금액(원), 비고",
+            "조회결과에 기재된 상품의 상세내역, 잔고증명서 등 증빙서류는 한국예탁결제원 홈페이지에서 확인 가능합니다.",
+            "신청일로부터 6개월 경과 후 조회시 한국 예탁결제원 명의개서팀으로 문의하여 주시기 바랍니다."
+          ],
+          "message": "'상속인 증권거래 조회결과' 제목, 증권·종목·평가금액 중심의 결과 표, 그리고 한국예탁결제원 홈페이지 및 명의개서팀 안내 문구를 근거로 한국예탁결제원 문서로 판별했습니다."
+        },
+        "data": {
+          "requestNumber": "20260729-01852",
+          "inquiryDate": "2026-07-29",
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 2,
+          "message": "총 2건 조회되었습니다.",
+          "records": [
+            {
+              "institutionName": "한국투자증권",
+              "recordType": "국내주식",
+              "productName": "삼성전자 보통주",
+              "quantityOrBalance": "15주",
+              "quantity": 15,
+              "evaluatedAmount": 1245000,
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            },
+            {
+              "institutionName": "미래에셋증권",
+              "recordType": "예수금",
+              "productName": "종합위탁계좌",
+              "quantityOrBalance": "",
+              "quantity": 0,
+              "evaluatedAmount": 2830000,
+              "recordStatus": "normal",
+              "statusMessage": "정상"
+            }
+          ],
+          "warnings": [
+            "■ 조회결과에 기재된 상품의 상세내역, 잔고증명서 등 증빙서류는 한국예탁결제원 홈페이지에서 확인 가능합니다.",
+            "■ 본 서비스는 조회신청일로부터 7-15일 경과 후 결과조회가 가능하며, 신청일로부터 6개월 경과 후 조회시 한국 예탁결제원 명의개서팀(02-3774-3000)으로 문의하여 주시기 바랍니다."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "deposit",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "예금보험공사",
+      "actualOrganization": "예금보험공사",
+      "organizationMatched": true,
+      "expectedKey": "deposit_insurance",
+      "actualKey": "deposit_insurance",
+      "keyMatched": true,
+      "recordCount": 4,
+      "recordsLength": 4,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "예금보험공사",
+        "organizationKey": "deposit_insurance",
+        "classification": {
+          "confidence": 0.97,
+          "needsConfirmation": false,
+          "evidence": [
+            "상속인 미수령금 조회 결과",
+            "파산금융회사 예금보험금 정산금 파산배당금 파산배당금(예보이관)",
+            "상속인 채무정보 조회 결과",
+            "파산금융회사 파산재단"
+          ],
+          "message": "'예금보험금', '파산배당금(예보이관)', '파산금융회사', '파산재단' 등 예금보험공사 고유 용어와 상속인 조회 결과 구성을 근거로 예금보험공사의 상속인 금융거래 조회 결과 문서로 판별했습니다."
+        },
+        "data": {
+          "requestNumber": "",
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 4,
+          "hasUnclaimedDepositRecords": true,
+          "unclaimedDepositRecordCount": 1,
+          "hasDebtRecords": true,
+          "debtRecordCount": 3,
+          "message": "상속인 미수령금 조회 결과, 상속인 채무정보 조회 결과",
+          "records": [
+            {
+              "recordCategory": "unclaimed_deposit",
+              "institutionName": "(주)제이알앤씨",
+              "estateOrTransferInstitutionName": "",
+              "depositInsuranceAmount": 1250000,
+              "settlementAmount": 0,
+              "bankruptcyDividendAmount": 320000,
+              "heldDividendAmount": 0,
+              "debtType": "",
+              "debtorName": "",
+              "principalBalance": 0,
+              "interestAmount": 0,
+              "extinctionStatus": "unknown",
+              "institutionContact": ""
+            },
+            {
+              "recordCategory": "financial_company_debt",
+              "institutionName": "(주)제이알앤씨",
+              "estateOrTransferInstitutionName": "한국자산관리공사",
+              "depositInsuranceAmount": 0,
+              "settlementAmount": 0,
+              "bankruptcyDividendAmount": 0,
+              "heldDividendAmount": 0,
+              "debtType": "대출금",
+              "debtorName": "홍길동",
+              "principalBalance": 2300000,
+              "interestAmount": 120000,
+              "extinctionStatus": "active",
+              "institutionContact": "1588-3570"
+            },
+            {
+              "recordCategory": "financial_company_debt",
+              "institutionName": "(주)제이알앤씨",
+              "estateOrTransferInstitutionName": "신용회복위원회",
+              "depositInsuranceAmount": 0,
+              "settlementAmount": 0,
+              "bankruptcyDividendAmount": 0,
+              "heldDividendAmount": 0,
+              "debtType": "신용카드채무",
+              "debtorName": "홍길동",
+              "principalBalance": 1200000,
+              "interestAmount": 0,
+              "extinctionStatus": "extinguished",
+              "institutionContact": "1600-5500"
+            },
+            {
+              "recordCategory": "financial_company_debt",
+              "institutionName": "(주)제이알앤씨 파산재단",
+              "estateOrTransferInstitutionName": "",
+              "depositInsuranceAmount": 0,
+              "settlementAmount": 0,
+              "bankruptcyDividendAmount": 0,
+              "heldDividendAmount": 0,
+              "debtType": "대출금",
+              "debtorName": "홍길동",
+              "principalBalance": 8500000,
+              "interestAmount": 320000,
+              "extinctionStatus": "active",
+              "institutionContact": "02-319-0554"
+            }
+          ],
+          "warnings": [
+            "※ 위 조회 결과는 2025년 05월 20일 기준으로 제공된 자료이며, 이후 변동될 수 있습니다."
+          ]
+        }
+      }
+    },
+    {
+      "folderName": "credit_information",
+      "status": "passed",
+      "passed": true,
+      "expectedOrganization": "신용정보원",
+      "actualOrganization": "신용정보원",
+      "organizationMatched": true,
+      "expectedKey": "credit_information",
+      "actualKey": "credit_information",
+      "keyMatched": true,
+      "recordCount": 2,
+      "recordsLength": 2,
+      "recordCountMatched": true,
+      "result": {
+        "success": true,
+        "documentType": "financial_inquiry_result",
+        "sourceOrganization": "신용정보원",
+        "organizationKey": "credit_information",
+        "classification": {
+          "confidence": 0.86,
+          "needsConfirmation": false,
+          "evidence": [
+            "표의 열 이름에 '금융기관', '금융거래종류', '담당점포', '금액(단위: 원)', '상환일'이 포함되어 있습니다.",
+            "본문에 '조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.'라고 되어 있습니다.",
+            "본문에 '채무금액이 9,999,999,999원 을 넘으신 경우'라는 안내가 있어 신용정보 조회 결과 안내 성격이 드러납니다."
+          ],
+          "message": "금융거래 조회 결과 표와 '채무금액' 안내 문구를 근거로 상속인 금융거래 조회 결과 문서이며, 신용정보원 문서로 판별했습니다."
+        },
+        "data": {
+          "inquiryStatus": "completed",
+          "hasRecords": true,
+          "recordCount": 2,
+          "message": "",
+          "records": [
+            {
+              "institutionName": "신한은행",
+              "recordType": "입출금예금",
+              "branchName": "서울역지점",
+              "amount": 1250000,
+              "repaymentDate": "2025-05-15",
+              "institutionContact": "1599-8000"
+            },
+            {
+              "institutionName": "KB국민은행",
+              "recordType": "정기예금",
+              "branchName": "강남역지점",
+              "amount": 5000000,
+              "repaymentDate": "2026-03-21",
+              "institutionContact": "1588-9999"
+            }
+          ],
+          "warnings": [
+            "서민금융진흥원에서 조회되는 내역은 금융회사의 휴면예금 및 휴면보험금 중에서 관련 법률의 규정에 따라 서민금융진흥원에 출연된 것으로, 일부 정보하여 조회할 수 있습니다. 세부 조회내역은 휴면예금찾아줌 (http://sleepmoney.kinfa.or.kr) 사이트를 통해 확인하실 수 있습니다.",
+            "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.",
+            "채무금액이 9,999,999,999원 을 넘으신 경우는 해당 기준으로 문의하시기 바랍니다.",
+            "* 성명불일치가 표시되는 경우",
+            "- '상속인 금융거래 조회(안심상속 원스톱) 서비스' 신청서에 기재한 사망자의 성명과 해당 출연에서 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않은 경우입니다."
+          ]
+        }
+      }
+    }
+  ]
+}

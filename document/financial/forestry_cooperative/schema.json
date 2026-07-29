@@ -5,14 +5,6 @@
     "schema": {
       "type": "object",
       "properties": {
-        "documentType": {
-          "type": "string",
-          "description": "산림조합중앙회 금융조회 결과 문서이면 forestry_cooperative_financial_result를 반환한다."
-        },
-        "sourceOrganization": {
-          "type": "string",
-          "description": "조회 결과를 제공한 기관명."
-        },
         "hasFinancialRecords": {
           "type": "boolean",
           "description": "문서에 거래내역이 있다고 표시되어 있으면 true, 없으면 false를 반환한다."
