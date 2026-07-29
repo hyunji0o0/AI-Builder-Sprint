@@ -12,7 +12,7 @@ create table if not exists community_posts (
   content text not null,
   created_at timestamptz not null default now(),
   helpful_count int not null default 0,
-  embedding vector(1536)
+  embedding vector(4096) -- Upstage solar-embedding-1-large 차원
 );
 
 create table if not exists community_comments (
@@ -22,9 +22,38 @@ create table if not exists community_comments (
   nickname text not null,
   content text not null,
   created_at timestamptz not null default now(),
-  embedding vector(1536)
+  embedding vector(4096)
 );
 
 create index if not exists community_posts_category_idx on community_posts(category);
 create index if not exists community_comments_post_id_idx on community_comments(post_id);
 create index if not exists community_comments_parent_id_idx on community_comments(parent_id);
+
+-- 카테고리로 먼저 좁히고, 그 안에서 코사인 유사도로 정렬해 상위 N개를 돌려주는 함수.
+-- 지금 규모(수십~수백 개)에서는 별도 ivfflat/hnsw 인덱스 없이 순차 스캔으로 충분히
+-- 빠름 — 나중에 데이터가 수만 건 이상으로 커지면 그때 인덱스 추가 고려.
+create or replace function match_community_posts(
+  query_embedding vector(4096),
+  match_category text default null,
+  match_count int default 5
+)
+returns table (
+  id uuid,
+  nickname text,
+  category text,
+  content text,
+  created_at timestamptz,
+  helpful_count int,
+  similarity float
+)
+language sql stable
+as $$
+  select
+    id, nickname, category, content, created_at, helpful_count,
+    1 - (embedding <=> query_embedding) as similarity
+  from community_posts
+  where embedding is not null
+    and (match_category is null or category = match_category)
+  order by embedding <=> query_embedding
+  limit match_count;
+$$;

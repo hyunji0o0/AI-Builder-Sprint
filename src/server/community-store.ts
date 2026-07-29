@@ -1,5 +1,6 @@
 import { CommunityCategory, CommunityPost, CreateCommunityPostInput, UpdateCommunityPostInput } from '../schemas/community'
 import { supabase } from './supabase-client'
+import { embedPassage } from './upstage-client'
 
 // Supabase(Postgres)의 community_posts 테이블을 씀. 이전엔 파일 기반이었는데,
 // 함수 시그니처는 그대로 유지해서 community-server-plugin.ts 쪽은 무변경.
@@ -38,7 +39,14 @@ export async function createCommunityPost(input: CreateCommunityPostInput): Prom
     .select()
     .single()
   if (error) throw error
-  return fromRow(data as PostRow)
+  const post = fromRow(data as PostRow)
+
+  // 임베딩은 백그라운드로 채움 — 글 등록 응답을 늦추거나 Upstage 장애로 실패하면 안 됨.
+  embedPassage(input.content)
+    .then((embedding) => supabase.from('community_posts').update({ embedding }).eq('id', post.id))
+    .catch((err) => console.error('글 임베딩 생성 실패:', err))
+
+  return post
 }
 
 export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost | null> {
@@ -50,6 +58,24 @@ export async function updateCommunityPost(id: string, input: UpdateCommunityPost
     .maybeSingle()
   if (error) throw error
   return data ? fromRow(data as PostRow) : null
+}
+
+export type CommunityPostMatch = CommunityPost & { similarity: number }
+
+// query_embedding으로 카테고리 필터 + 코사인 유사도 정렬해 상위 N개를 가져옴.
+// supabase/schema.sql의 match_community_posts() Postgres 함수를 그대로 호출.
+export async function searchCommunityPosts(
+  queryEmbedding: number[],
+  category?: string,
+  limit = 5,
+): Promise<CommunityPostMatch[]> {
+  const { data, error } = await supabase.rpc('match_community_posts', {
+    query_embedding: queryEmbedding,
+    match_category: category && category !== 'ALL' ? category : null,
+    match_count: limit,
+  })
+  if (error) throw error
+  return (data as (PostRow & { similarity: number })[]).map((row) => ({ ...fromRow(row), similarity: row.similarity }))
 }
 
 export async function setCommunityPostHelpful(id: string, liked: boolean): Promise<CommunityPost | null> {

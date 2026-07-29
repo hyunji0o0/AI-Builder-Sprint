@@ -2,6 +2,7 @@ import type { Connect, Plugin } from 'vite'
 import { createCommunityCommentSchema, createCommunityPostSchema, updateCommunityPostSchema } from '../schemas/community'
 import { createCommunityComment, listCommunityComments } from './community-comment-store'
 import { createCommunityPost, listCommunityPosts, setCommunityPostHelpful, updateCommunityPost } from './community-store'
+import { recommendCommunityTips } from './community-recommend'
 
 // agent_and_ui의 vite-agent-plugin.ts와 동일한 패턴(Vite dev 서버에 미들웨어로
 // API를 붙이는 방식)을 그대로 따름. 합칠 때 vite.config.ts의 plugins 배열에
@@ -124,6 +125,32 @@ export function createCommunityServerPlugin(): Plugin {
 
       res.statusCode = 404
       res.end(JSON.stringify({ error: '알 수 없는 요청이에요.' }))
+    })
+
+    // /api/community/recommend — 사용자 상황을 근거로 관련 커뮤니티 경험담을 검색해서
+    // Solar Pro 3가 종합한 답을 돌려줌. merge 후 메인 챗 에이전트가 이 라우트를 호출.
+    middlewares.use('/api/community/recommend', async (req, res) => {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end(JSON.stringify({ error: 'POST 요청만 지원합니다.' }))
+        return
+      }
+
+      try {
+        const body = (await readBody(req)) as { query?: string; category?: string; limit?: number }
+        if (!body.query || !body.query.trim()) {
+          res.statusCode = 422
+          res.end(JSON.stringify({ error: 'query가 필요합니다.' }))
+          return
+        }
+        const result = await recommendCommunityTips(body.query.trim(), body.category, body.limit)
+        res.end(JSON.stringify(result))
+      } catch (error) {
+        res.statusCode = 500
+        res.end(JSON.stringify({ error: '추천을 생성하지 못했어요.', detail: `${error}` }))
+      }
     })
   }
 

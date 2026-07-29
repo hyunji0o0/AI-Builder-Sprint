@@ -9,6 +9,15 @@
 정리했고, 다른 브랜치(main/agent_and_ui/document-parser)에는 아직 없음 —
 팀 전체가 보게 하려면 별도로 main에도 올리는 게 좋음.
 
+## Git 작업 규칙
+
+이 저장소(`hyunji0o0/AI-Builder-Sprint`, 현재 `origin`)는 **포크**입니다.
+원본은 `ApptiveDev/AI-Builder-Sprint`(대회 템플릿 레포). **PR, 이슈, 커밋은
+전부 이 포크 레포에서만 진행**하고, 원본 레포로는 절대 올리지 않습니다.
+특히 `gh pr create`는 포크 관계를 인식하면 기본적으로 원본(upstream) 쪽으로
+PR을 만들려고 하는 경우가 있으니, PR 만들 때는 `--repo hyunji0o0/AI-Builder-Sprint`를
+명시하거나 생성 후 대상 저장소를 꼭 확인할 것.
+
 ## 브랜치 구조
 
 - `main` — 대회 템플릿 README만 있음. 아직 아무것도 merge 안 됨.
