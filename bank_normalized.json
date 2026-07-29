@@ -1,0 +1,140 @@
+{
+  "success": true,
+  "stage": "normalization",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\bank\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "은행연합회",
+  "organizationKey": "bank",
+  "schema": {
+    "name": "bank_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\bank\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "상속인금융거래조회",
+      "금융거래조회",
+      "금융기관",
+      "금융거래종류",
+      "예금",
+      "채무"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 2,
+      "financial_inquiry_result": 18,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "은행연합회",
+      "organizationKey": "bank",
+      "organizationEvidence": [
+        "표의 열 이름에 '은행', '금융거래종류', '담당점포'가 표시됨",
+        "조회 결과 항목으로 '예 금'이 반복되어 은행 거래 조회 결과 형식임",
+        "안내문에 '해당 은행에 보유하고 있는 사망자의 성명'이라고 기재되어 있음",
+        "하단 안내에 '상속인 금융거래 조회' 및 '은행연합회 상속인 금융거래조회 서비스 담당자'가 언급됨"
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "은행, 금융거래종류, 담당점포 등의 표 구성과 예금 조회 결과, 그리고 하단의 상속인 금융거래조회 안내문을 근거로 은행연합회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 7851,
+      "completion_tokens": 580,
+      "total_tokens": 8431
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 6,
+    "message": "총 6건",
+    "records": [
+      {
+        "institutionName": "대구",
+        "recordType": "예금",
+        "branchName": "부산동지점",
+        "amount": 128000,
+        "repaymentDate": "",
+        "institutionContact": "1588-5050",
+        "recordStatus": "matched",
+        "statusMessage": ""
+      },
+      {
+        "institutionName": "지역농·축협",
+        "recordType": "예금",
+        "branchName": "부산농협",
+        "amount": 2340000,
+        "repaymentDate": "",
+        "institutionContact": "1588-2100",
+        "recordStatus": "matched",
+        "statusMessage": ""
+      },
+      {
+        "institutionName": "지역농·축협",
+        "recordType": "예금",
+        "branchName": "부산금오",
+        "amount": 85500,
+        "repaymentDate": "",
+        "institutionContact": "1588-2100",
+        "recordStatus": "matched",
+        "statusMessage": ""
+      },
+      {
+        "institutionName": "지역농·축협",
+        "recordType": "예금",
+        "branchName": "부산농협",
+        "amount": 1458423,
+        "repaymentDate": "",
+        "institutionContact": "1588-2100",
+        "recordStatus": "matched",
+        "statusMessage": ""
+      },
+      {
+        "institutionName": "신한",
+        "recordType": "",
+        "branchName": "",
+        "amount": 0,
+        "repaymentDate": "",
+        "institutionContact": "1577-8000",
+        "recordStatus": "name_mismatch",
+        "statusMessage": "성명불일치"
+      },
+      {
+        "institutionName": "하나",
+        "recordType": "",
+        "branchName": "",
+        "amount": 0,
+        "repaymentDate": "",
+        "institutionContact": "1599-1111",
+        "recordStatus": "name_mismatch",
+        "statusMessage": "성명불일치"
+      }
+    ],
+    "warnings": [
+      "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.",
+      "채무금액이 '9,999,999,999'로 나오신 경우는 해당 기관으로 문의하서기 바랍니다.",
+      "\"성명불일치\"가 표시되는 경우",
+      "- '상속인 금융거래조회(안심상속 원스톱) 서비스' 신청시에 기재한 사망자의 성명과 해당 은행에 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않을 경우입니다.",
+      "- '가족관계증명서 등 증빙자료'와 '구비서류'를 문의하신 후 적접 방문하여 금융거래유무에 대하여 확인하셔야 합니다.",
+      "- 상속인 금융거래 조회에 불일치 사항이 있으신 경우, 은행연합회 상속인 금융거래조회 서비스 담당자(02-3705-5044)에게 문의 전화 주시면 감사하겠습니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  }
+}
