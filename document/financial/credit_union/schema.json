@@ -1,7 +1,7 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "bank_financial_schema",
+    "name": "credit_union_financial_schema",
     "schema": {
       "type": "object",
       "properties": {
@@ -40,49 +40,63 @@
             "type": "string"
           }
         },
+        "requestNumber": {
+          "type": "string",
+          "description": "문서 상단의 접수번호."
+        },
         "records": {
           "type": "array",
-          "description": "은행별 금융거래 결과 행 목록.",
+          "description": "신협별 예금·출자금 및 계좌별 대출거래 결과 목록.",
           "items": {
             "type": "object",
             "properties": {
+              "authorizationNumber": {
+                "type": "string",
+                "description": "인가번호."
+              },
               "institutionName": {
                 "type": "string",
-                "description": "은행 또는 금융기관명."
-              },
-              "transactionType": {
-                "type": "string",
-                "description": "금융거래종류. 예금, 대출 등 문서 표기를 그대로 반환."
-              },
-              "branchName": {
-                "type": "string",
-                "description": "담당점포명. 확인할 수 없으면 빈 문자열."
-              },
-              "amount": {
-                "type": "integer",
-                "description": "금액을 원 단위 정수로 반환. 공란이면 0."
-              },
-              "repaymentDate": {
-                "type": "string",
-                "description": "상환일을 YYYY-MM-DD 형식으로 반환. 공란 또는 0000-00-00이면 빈 문자열."
+                "description": "신협명."
               },
               "phoneNumber": {
                 "type": "string",
-                "description": "은행 대표번호."
+                "description": "신협 전화번호."
               },
-              "isNameMismatch": {
-                "type": "boolean",
-                "description": "해당 행에 성명불일치가 표시되어 있으면 true, 아니면 false."
+              "postalCode": {
+                "type": "string",
+                "description": "우편번호."
+              },
+              "address": {
+                "type": "string",
+                "description": "상세주소."
+              },
+              "loanSequence": {
+                "type": "integer",
+                "description": "계좌별 대출거래 순번. 없으면 0."
+              },
+              "loanAmount": {
+                "type": "integer",
+                "description": "이자 미포함 대출금액을 원 단위 정수로 반환. 없으면 0."
+              },
+              "loanMaturityDate": {
+                "type": "string",
+                "description": "대출 만기일을 YYYY-MM-DD 형식으로 반환. 없으면 빈 문자열."
+              },
+              "depositAndShareAmount": {
+                "type": "integer",
+                "description": "이자 미포함 예금 및 출자금액을 원 단위 정수로 반환. 없으면 0."
               }
             },
             "required": [
+              "authorizationNumber",
               "institutionName",
-              "transactionType",
-              "branchName",
-              "amount",
-              "repaymentDate",
               "phoneNumber",
-              "isNameMismatch"
+              "postalCode",
+              "address",
+              "loanSequence",
+              "loanAmount",
+              "loanMaturityDate",
+              "depositAndShareAmount"
             ],
             "additionalProperties": false
           }
@@ -97,6 +111,7 @@
         "recordCount",
         "message",
         "warnings",
+        "requestNumber",
         "records"
       ],
       "additionalProperties": false

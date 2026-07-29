@@ -1,7 +1,7 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "bank_financial_schema",
+    "name": "community_credit_financial_schema",
     "schema": {
       "type": "object",
       "properties": {
@@ -40,49 +40,79 @@
             "type": "string"
           }
         },
+        "requestNumber": {
+          "type": "string",
+          "description": "접수번호."
+        },
+        "deceasedName": {
+          "type": "string",
+          "description": "조회대상자 성명."
+        },
+        "residentRegistrationNumber": {
+          "type": "string",
+          "description": "조회대상자 주민등록번호. 문서에 마스킹된 형태 그대로 반환."
+        },
+        "inquiryDate": {
+          "type": "string",
+          "description": "조사기준일을 YYYY-MM-DD 형식으로 반환."
+        },
+        "requesterName": {
+          "type": "string",
+          "description": "의뢰인 성명."
+        },
         "records": {
           "type": "array",
-          "description": "은행별 금융거래 결과 행 목록.",
+          "description": "새마을금고별 예금·대출·보험 관련 결과 목록.",
           "items": {
             "type": "object",
             "properties": {
               "institutionName": {
                 "type": "string",
-                "description": "은행 또는 금융기관명."
+                "description": "금고명."
               },
-              "transactionType": {
-                "type": "string",
-                "description": "금융거래종류. 예금, 대출 등 문서 표기를 그대로 반환."
+              "hasDeposit": {
+                "type": "boolean",
+                "description": "예금관련 항목이 O 또는 보유로 표시되면 true, X·공란·해당없음이면 false."
               },
-              "branchName": {
-                "type": "string",
-                "description": "담당점포명. 확인할 수 없으면 빈 문자열."
-              },
-              "amount": {
+              "depositBalance": {
                 "type": "integer",
-                "description": "금액을 원 단위 정수로 반환. 공란이면 0."
+                "description": "예금 총잔액을 원 단위 정수로 반환. 없으면 0."
               },
-              "repaymentDate": {
-                "type": "string",
-                "description": "상환일을 YYYY-MM-DD 형식으로 반환. 공란 또는 0000-00-00이면 빈 문자열."
+              "hasLoan": {
+                "type": "boolean",
+                "description": "대출관련 항목이 O 또는 보유로 표시되면 true, X·공란·해당없음이면 false."
+              },
+              "loanBalance": {
+                "type": "integer",
+                "description": "대출 관련 금액을 원 단위 정수로 반환. 없으면 0."
+              },
+              "hasInsurance": {
+                "type": "boolean",
+                "description": "보험관련 항목이 O 또는 보유로 표시되면 true, X·공란·해당없음이면 false."
+              },
+              "insuranceBalance": {
+                "type": "integer",
+                "description": "보험 관련 금액을 원 단위 정수로 반환. 없으면 0."
               },
               "phoneNumber": {
                 "type": "string",
-                "description": "은행 대표번호."
+                "description": "금고 전화번호."
               },
-              "isNameMismatch": {
-                "type": "boolean",
-                "description": "해당 행에 성명불일치가 표시되어 있으면 true, 아니면 false."
+              "address": {
+                "type": "string",
+                "description": "금고 주소."
               }
             },
             "required": [
               "institutionName",
-              "transactionType",
-              "branchName",
-              "amount",
-              "repaymentDate",
+              "hasDeposit",
+              "depositBalance",
+              "hasLoan",
+              "loanBalance",
+              "hasInsurance",
+              "insuranceBalance",
               "phoneNumber",
-              "isNameMismatch"
+              "address"
             ],
             "additionalProperties": false
           }
@@ -97,6 +127,11 @@
         "recordCount",
         "message",
         "warnings",
+        "requestNumber",
+        "deceasedName",
+        "residentRegistrationNumber",
+        "inquiryDate",
+        "requesterName",
         "records"
       ],
       "additionalProperties": false
