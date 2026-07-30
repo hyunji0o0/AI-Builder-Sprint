@@ -39,11 +39,12 @@
       "organizationEvidence": [
         "표의 열 이름에 '금융기관', '금융거래종류', '담당점포', '금액(단위: 원)', '상환일'이 포함되어 있습니다.",
         "본문에 '조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.'라고 안내되어 있습니다.",
-        "본문에 '채무금액이 9,999,999,999원 을 넘으신 경우'라는 문구가 있어 신용정보 조회 결과 안내 성격을 보입니다."
+        "본문에 '채무금액이 9,999,999,999원 을 넘으신 경우'라는 문구가 있어 신용정보 조회 결과 안내 성격이 드러납니다.",
+        "본문에 ''상속인 금융거래 조회(안심상속 원스톱) 서비스' 신청서' 문구가 있어 상속인 금융거래 조회 결과 문서임을 확인할 수 있습니다."
       ],
       "organizationConfidence": 0.92,
       "organizationNeedsConfirmation": false,
-      "organizationMessage": "금융거래 조회 결과 형식의 표와 '채무금액' 안내 문구를 근거로 신용정보원 문서로 판별했습니다.",
+      "organizationMessage": "금융기관별 금융거래 조회 결과 표, 채무금액 안내, 상속인 금융거래 조회 서비스 안내 문구를 근거로 신용정보원 문서로 판별했습니다.",
       "method": "information_extract_schema"
     }
   },
@@ -113,27 +114,27 @@
       "normalization",
       "schema_validation"
     ],
-    "totalDurationMs": 30464,
+    "totalDurationMs": 22116,
     "stages": {
       "document_parse": {
         "success": true,
-        "durationMs": 6330
+        "durationMs": 3582
       },
       "document_classification": {
         "success": true,
-        "durationMs": 12282
+        "durationMs": 9171
       },
       "information_extract": {
         "success": true,
-        "durationMs": 11837
+        "durationMs": 9341
       },
       "normalization": {
         "success": true,
-        "durationMs": 2
+        "durationMs": 3
       },
       "schema_validation": {
         "success": true,
-        "durationMs": 11
+        "durationMs": 20
       }
     }
   }

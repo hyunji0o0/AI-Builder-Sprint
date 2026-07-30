@@ -37,13 +37,13 @@
       "organizationKey": "deposit_insurance",
       "organizationEvidence": [
         "상속인 미수령금 조회 결과",
-        "파산금융회사 예금보험금 정산금 파산배당금 파산배당금(예보이관)",
+        "파산금융회사, 예금보험금, 정산금, 파산배당금, 파산배당금(예보이관)",
         "상속인 채무정보 조회 결과",
         "파산금융회사 파산재단"
       ],
-      "organizationConfidence": 0.96,
+      "organizationConfidence": 0.97,
       "organizationNeedsConfirmation": false,
-      "organizationMessage": "'예금보험금', '파산배당금', '예보이관', '파산재단' 등 예금보험공사 고유 용어와 상속인 미수령금·채무정보 조회 결과 구성을 근거로 예금보험공사 문서로 판별했습니다.",
+      "organizationMessage": "'상속인 미수령금 조회 결과'와 '상속인 채무정보 조회 결과' 문구, 그리고 '예금보험금', '파산배당금(예보이관)', '파산금융회사 파산재단' 등 예금보험공사 고유 성격의 항목을 근거로 예금보험공사 문서로 판별했습니다.",
       "method": "information_extract_schema"
     }
   },
@@ -51,21 +51,21 @@
     "api": "information-extraction",
     "model": "information-extract",
     "usage": {
-      "prompt_tokens": 8233,
-      "completion_tokens": 560,
-      "total_tokens": 8793
+      "prompt_tokens": 8127,
+      "completion_tokens": 380,
+      "total_tokens": 8507
     }
   },
   "data": {
     "requestNumber": "",
     "inquiryStatus": "completed",
     "hasRecords": true,
-    "recordCount": 4,
+    "recordCount": 2,
     "hasUnclaimedDepositRecords": true,
     "unclaimedDepositRecordCount": 1,
     "hasDebtRecords": true,
-    "debtRecordCount": 3,
-    "message": "상속인 미수령금 조회 결과, 상속인 채무정보 조회 결과",
+    "debtRecordCount": 1,
+    "message": "상속인 미수령금 조회 결과 총 1건 / 총 금액 1,570,000원, 상속인 채무정보 조회 결과 총 1건 / 총 원금잔액 8,500,000원, 총 이자 320,000원",
     "records": [
       {
         "recordCategory": "unclaimed_deposit",
@@ -84,38 +84,8 @@
       },
       {
         "recordCategory": "financial_company_debt",
-        "institutionName": "(주)제이알앤씨",
-        "estateOrTransferInstitutionName": "한국자산관리공사",
-        "depositInsuranceAmount": 0,
-        "settlementAmount": 0,
-        "bankruptcyDividendAmount": 0,
-        "heldDividendAmount": 0,
-        "debtType": "대출금",
-        "debtorName": "홍길동",
-        "principalBalance": 2300000,
-        "interestAmount": 120000,
-        "extinctionStatus": "active",
-        "institutionContact": "1588-3570"
-      },
-      {
-        "recordCategory": "financial_company_debt",
-        "institutionName": "(주)제이알앤씨",
-        "estateOrTransferInstitutionName": "신용회복위원회",
-        "depositInsuranceAmount": 0,
-        "settlementAmount": 0,
-        "bankruptcyDividendAmount": 0,
-        "heldDividendAmount": 0,
-        "debtType": "신용카드채무",
-        "debtorName": "홍길동",
-        "principalBalance": 1200000,
-        "interestAmount": 0,
-        "extinctionStatus": "extinguished",
-        "institutionContact": "1600-5500"
-      },
-      {
-        "recordCategory": "financial_company_debt",
-        "institutionName": "(주)제이알앤씨",
-        "estateOrTransferInstitutionName": "파산재단",
+        "institutionName": "(주)제이알앤씨 파산재단",
+        "estateOrTransferInstitutionName": "",
         "depositInsuranceAmount": 0,
         "settlementAmount": 0,
         "bankruptcyDividendAmount": 0,
@@ -159,19 +129,19 @@
       "normalization",
       "schema_validation"
     ],
-    "totalDurationMs": 28789,
+    "totalDurationMs": 28488,
     "stages": {
       "document_parse": {
         "success": true,
-        "durationMs": 5328
+        "durationMs": 4678
       },
       "document_classification": {
         "success": true,
-        "durationMs": 12799
+        "durationMs": 12389
       },
       "information_extract": {
         "success": true,
-        "durationMs": 10642
+        "durationMs": 11389
       },
       "normalization": {
         "success": true,
@@ -179,7 +149,7 @@
       },
       "schema_validation": {
         "success": true,
-        "durationMs": 17
+        "durationMs": 27
       }
     }
   }

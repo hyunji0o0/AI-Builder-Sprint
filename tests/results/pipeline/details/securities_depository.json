@@ -40,7 +40,7 @@
       ],
       "organizationConfidence": 0.98,
       "organizationNeedsConfirmation": false,
-      "organizationMessage": "'상속인 증권거래 조회결과' 제목, 증권·종목 중심의 결과 표, 그리고 하단의 한국예탁결제원 홈페이지 안내를 근거로 한국예탁결제원 문서로 판별했습니다.",
+      "organizationMessage": "'상속인 증권거래 조회결과' 제목, 증권·주식 중심의 결과 표 항목, 그리고 상세내역을 한국예탁결제원 홈페이지에서 확인 가능하다는 안내를 근거로 한국예탁결제원 문서로 판별했습니다.",
       "method": "information_extract_schema"
     }
   },
@@ -49,8 +49,8 @@
     "model": "information-extract",
     "usage": {
       "prompt_tokens": 6485,
-      "completion_tokens": 306,
-      "total_tokens": 6791
+      "completion_tokens": 307,
+      "total_tokens": 6792
     }
   },
   "data": {
@@ -83,8 +83,8 @@
       }
     ],
     "warnings": [
-      "조회결과에 기재된 상품의 상세내역, 잔고증명서 등 증빙서류는 한국예탁결제원 홈페이지에서 확인 가능합니다.",
-      "본 서비스는 조회신청일로부터 7-15일 경과 후 결과조회가 가능하며, 신청일로부터 6개월 경과 후 조회시 한국 예탁결제원 명의개서팀(02-3774-3000)으로 문의하여 주시기 바랍니다."
+      "■ 조회결과에 기재된 상품의 상세내역, 잔고증명서 등 증빙서류는 한국예탁결제원 홈페이지에서 확인 가능합니다.",
+      "■ 본 서비스는 조회신청일로부터 7-15일 경과 후 결과조회가 가능하며, 신청일로부터 6개월 경과 후 조회시 한국 예탁결제원 명의개서팀(02-3774-3000)으로 문의하여주시기 바랍니다."
     ]
   },
   "warnings": [
@@ -116,27 +116,27 @@
       "normalization",
       "schema_validation"
     ],
-    "totalDurationMs": 18325,
+    "totalDurationMs": 21398,
     "stages": {
       "document_parse": {
         "success": true,
-        "durationMs": 3226
+        "durationMs": 4780
       },
       "document_classification": {
         "success": true,
-        "durationMs": 6155
+        "durationMs": 8501
       },
       "information_extract": {
         "success": true,
-        "durationMs": 8905
+        "durationMs": 8092
       },
       "normalization": {
         "success": true,
-        "durationMs": 6
+        "durationMs": 3
       },
       "schema_validation": {
         "success": true,
-        "durationMs": 33
+        "durationMs": 20
       }
     }
   }

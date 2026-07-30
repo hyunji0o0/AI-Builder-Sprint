@@ -35,14 +35,14 @@
       "sourceOrganization": "신협중앙회",
       "organizationKey": "credit_union",
       "organizationEvidence": [
-        "표에 '신협명', '계좌별 대출거래현황', '예금 및 출자금' 항목이 표시됨",
-        "'신협중앙회 전산망 참가 신협에 대한 조회결과, 상기와 같이 거래가 있습니다.' 문구가 있음",
-        "'※ 상세 예금 및 채무내역은 해당 신협에 연락... 확인해 주십시오.' 안내문이 있음",
-        "'※ 신협명에 신협공제로 나온 경우, 신협중앙회 공제고객센터(1544-3030)로 연락하셔서 확인해 주십시오.' 안내문이 있음"
+        "표의 열 이름에 \"신협명\"이 포함되어 있습니다.",
+        "본문에 \"신협중앙회 전산망 참가 신협에 대한 조회결과\"라고 기재되어 있습니다.",
+        "안내문에 \"해당 신협에 연락\"하여 확인하라고 되어 있습니다.",
+        "안내문에 \"신협공제\" 및 \"신협중앙회 공제고객센터\"가 언급됩니다."
       ],
       "organizationConfidence": 0.99,
       "organizationNeedsConfirmation": false,
-      "organizationMessage": "신협명, 계좌별 대출거래현황, 예금 및 출자금 항목과 신협 전산망 참가 신협 조회결과 및 신협공제 안내문을 근거로 신협중앙회의 상속인 금융거래 조회 결과 문서로 판별했습니다.",
+      "organizationMessage": "\"신협명\" 열, \"신협중앙회 전산망 참가 신협에 대한 조회결과\" 문구, 그리고 신협·신협공제 관련 안내문을 근거로 신협중앙회 문서로 판별했습니다.",
       "method": "information_extract_schema"
     }
   },
@@ -132,19 +132,19 @@
       "normalization",
       "schema_validation"
     ],
-    "totalDurationMs": 38767,
+    "totalDurationMs": 27134,
     "stages": {
       "document_parse": {
         "success": true,
-        "durationMs": 9615
+        "durationMs": 5607
       },
       "document_classification": {
         "success": true,
-        "durationMs": 15558
+        "durationMs": 9520
       },
       "information_extract": {
         "success": true,
-        "durationMs": 13577
+        "durationMs": 11982
       },
       "normalization": {
         "success": true,
@@ -152,7 +152,7 @@
       },
       "schema_validation": {
         "success": true,
-        "durationMs": 13
+        "durationMs": 21
       }
     }
   }
