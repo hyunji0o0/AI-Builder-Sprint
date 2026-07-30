@@ -1721,19 +1721,72 @@ def classify_document(
             organization_key=organization_key,
         )
 
+        schema_exists = bool(
+            schema_path
+            and schema_path.exists()
+        )
+
+        organization_confidence = 0.0
+        organization_needs_confirmation = False
+
+        if organization_classification:
+            organization_confidence = (
+                normalize_confidence(
+                    organization_classification.get(
+                        "organizationConfidence",
+                        0.0,
+                    )
+                )
+            )
+
+            organization_needs_confirmation = (
+                normalize_boolean(
+                    organization_classification.get(
+                        "organizationNeedsConfirmation",
+                        False,
+                    )
+                )
+            )
+
+        # 대분류 신뢰도가 조금 낮더라도 금융기관 세부 분류가
+        # 충분히 신뢰할 수 있고 실제 스키마까지 연결되면,
+        # 두 분류 결과가 서로 보완한다고 보고 자동 진행한다.
+        financial_subtype_resolved = (
+            document_type
+            == "financial_inquiry_result"
+            and organization_key
+            not in {
+                "",
+                "unknown",
+            }
+            and schema_exists
+            and organization_confidence >= 0.8
+            and not organization_needs_confirmation
+        )
+
         overall_needs_confirmation = (
             top_level[
                 "needsConfirmation"
             ]
         )
 
-        if organization_classification:
+        if financial_subtype_resolved:
+            if overall_needs_confirmation:
+                warnings.append(
+                    (
+                        "문서 대분류 신뢰도는 기준보다 "
+                        "낮았지만 금융기관 세부 분류와 "
+                        "스키마 연결이 확인되어 자동으로 "
+                        "정보 추출을 진행합니다."
+                    )
+                )
+
+            overall_needs_confirmation = False
+
+        elif organization_classification:
             overall_needs_confirmation = (
                 overall_needs_confirmation
-                or organization_classification.get(
-                    "organizationNeedsConfirmation",
-                    False,
-                )
+                or organization_needs_confirmation
             )
 
         if document_type == "unknown":
@@ -1765,11 +1818,7 @@ def classify_document(
                 if schema_path
                 else ""
             ),
-            "schemaExists": (
-                schema_path.exists()
-                if schema_path
-                else False
-            ),
+            "schemaExists": schema_exists,
             "classification": {
                 "confidence": top_level[
                     "confidence"

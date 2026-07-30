@@ -1,6 +1,6 @@
 {
   "success": true,
-  "stage": "information_extract",
+  "stage": "completed",
   "fileName": "sample.png",
   "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\death_certificate\\sample.png",
   "documentType": "death_certificate",
@@ -56,5 +56,55 @@
     "issuingInstitution": "부산대학교병원",
     "issuedDate": "2026-07-08"
   },
-  "warnings": []
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 11
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 16720,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 6915
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 61
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 9718
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 13
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 12
+      }
+    }
+  }
 }

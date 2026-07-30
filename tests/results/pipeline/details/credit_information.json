@@ -1,0 +1,140 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_information\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "신용정보원",
+  "organizationKey": "credit_information",
+  "schema": {
+    "name": "credit_information_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_information\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "상속인금융거래조회",
+      "금융거래조회",
+      "금융기관",
+      "금융거래종류",
+      "예금",
+      "보험",
+      "채무"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 2,
+      "financial_inquiry_result": 20,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "신용정보원",
+      "organizationKey": "credit_information",
+      "organizationEvidence": [
+        "표의 열 이름에 '금융기관', '금융거래종류', '담당점포', '금액(단위: 원)', '상환일'이 포함되어 있습니다.",
+        "본문에 '조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다.'라고 안내되어 있습니다.",
+        "본문에 '채무금액이 9,999,999,999원 을 넘으신 경우'라는 문구가 있어 신용정보 조회 결과 안내 성격을 보입니다."
+      ],
+      "organizationConfidence": 0.92,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "금융거래 조회 결과 형식의 표와 '채무금액' 안내 문구를 근거로 신용정보원 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 4738,
+      "completion_tokens": 372,
+      "total_tokens": 5110
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 2,
+    "message": "",
+    "records": [
+      {
+        "institutionName": "신한은행",
+        "recordType": "입출금예금",
+        "branchName": "서울역지점",
+        "amount": 1250000,
+        "repaymentDate": "2025-05-15",
+        "institutionContact": "1599-8000"
+      },
+      {
+        "institutionName": "KB국민은행",
+        "recordType": "정기예금",
+        "branchName": "강남역지점",
+        "amount": 5000000,
+        "repaymentDate": "2026-03-21",
+        "institutionContact": "1588-9999"
+      }
+    ],
+    "warnings": [
+      "서민금융진흥원에서 조회되는 내역은 금융회사의 휴면예금 및 휴면보험금 중에서 관련 법률의 규정에 따라 서민금융진흥원에 출연된 것으로, 일부 정보하여 조회할 수 있습니다. 세부 조회내역은 휴면예금찾아줌 (http://sleepmoney.kinfa.or.kr) 사이트를 통해 확인하실 수 있습니다.",
+      "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다. 채무금액이 9,999,999,999원 을 넘으신 경우는 해당 기준으로 문의하시기 바랍니다.",
+      "* 성명불일치가 표시되는 경우",
+      "- '상속인 금융거래 조회(안심상속 원스톱) 서비스' 신청서에 기재한 사망자의 성명과 해당 출연에서 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않은 경우입니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 6
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 30464,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 6330
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 12282
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 11837
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 2
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 11
+      }
+    }
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\death_report\\sample.png",
+  "documentType": "death_report",
+  "resultCategory": "death_document",
+  "sourceOrganization": "",
+  "organizationKey": "",
+  "schema": {
+    "name": "death_report_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\death_report\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.925,
+    "needsConfirmation": false,
+    "evidence": [
+      "사망신고서",
+      "신고인",
+      "사망일시",
+      "사망장소"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 2,
+      "death_report": 11,
+      "financial_inquiry_result": 0,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": null
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 8028,
+      "completion_tokens": 398,
+      "total_tokens": 8426
+    }
+  },
+  "data": {
+    "documentType": "death_report",
+    "reportDate": "2026-07-29",
+    "deceasedName": "김민수",
+    "deceasedHanjaName": "金旻洙",
+    "deceasedGender": "male",
+    "deceasedResidentNumber": "900101-1234567",
+    "deceasedBirthDate": "1990-01-01",
+    "deceasedRegisteredDomicile": "부산광역시 금정구 장전동 123-4",
+    "deceasedAddress": "부산광역시 금정구 부산대학교 63번길 2",
+    "deathDateTime": "2026-07-27T14:35",
+    "deathPlaceCategory": "medical_institution",
+    "deathPlaceAddress": "부산광역시 금정구 중앙대로 1777, 부산새빛병원",
+    "remarks": "",
+    "reporterName": "김수영",
+    "reporterResidentNumber": "950505-2345678",
+    "reporterQualification": "non_cohabiting_relative",
+    "reporterRelationship": "배우자",
+    "reporterAddress": "부산광역시 금정구 금강로 321, 101동 1203호",
+    "reporterPhone": "010-2345-6789",
+    "reporterEmail": "sooyoungkim@example.com",
+    "directCause": "패혈",
+    "causeB": "패혈중",
+    "causeC": "당뇨병",
+    "directCauseDuration": "7일",
+    "causeBDuration": "14일",
+    "causeCDuration": "5년",
+    "otherPhysicalCondition": "",
+    "diagnoserName": "이새빛",
+    "diagnoserLicenseNumber": "12345",
+    "deathType": "disease",
+    "accidentType": "not_applicable",
+    "accidentDateTime": "",
+    "accidentAreaCategory": "not_applicable",
+    "accidentPlaceCategory": "medical_institution",
+    "nationality": "대한민국",
+    "educationLevel": "대학교",
+    "occupation": "대학생",
+    "maritalStatus": "spouse_present"
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 10
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 18287,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 5847
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 58
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 12343
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 6
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 33
+      }
+    }
+  }
+}

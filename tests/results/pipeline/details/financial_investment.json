@@ -1,0 +1,159 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\financial_investment\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "금융투자협회",
+  "organizationKey": "financial_investment",
+  "schema": {
+    "name": "financial_investment_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\financial_investment\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "상속인금융거래조회",
+      "금융거래조회",
+      "거래내역",
+      "조회결과",
+      "접수번호"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 16,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "금융투자협회",
+      "organizationKey": "financial_investment",
+      "organizationEvidence": [
+        "조회 결과 내역: \"금융투자회사 거래내역이 확인되었습니다.\"",
+        "안내문: \"실제 확인은 해당 금융투자회사에 문의하시기 바랍니다.\"",
+        "거래내역에 \"한국투자증권\", \"미래에셋증권\", \"삼성증권 CMA 계좌\"가 기재되어 있습니다."
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "금융투자회사 거래내역, 금융투자회사 문의 안내, 증권사 및 CMA 계좌 내역을 근거로 금융투자협회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 6769,
+      "completion_tokens": 421,
+      "total_tokens": 7190
+    }
+  },
+  "data": {
+    "requestNumber": "20260729-01852",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "message": "접수번호 기준 조회 결과, 아래와 같이 금융투자회사 거래내역이 확인되었습니다.",
+    "isMockSample": true,
+    "records": [
+      {
+        "institutionName": "한국투자증권",
+        "recordType": "예수금",
+        "productName": "",
+        "quantityOrBalance": "",
+        "quantity": 0,
+        "amount": 2830000,
+        "amountType": "deposit_balance",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "미래에셋증권",
+        "recordType": "국내주식",
+        "productName": "삼성전자 보통주",
+        "quantityOrBalance": "15주",
+        "quantity": 15,
+        "amount": 1245000,
+        "amountType": "evaluated_amount",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "삼성증권",
+        "recordType": "CMA",
+        "productName": "CMA 계좌",
+        "quantityOrBalance": "",
+        "quantity": 0,
+        "amount": 980000,
+        "amountType": "account_balance",
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      }
+    ],
+    "warnings": [
+      "본 화면은 API 테스트용 모의 샘플입니다.",
+      "성명 불일치, 계좌상태, 잔액 등은 실제 서비스와 차이가 있을 수 있습니다.",
+      "상속인 금융거래 조회 신청 기준으로 조회된 예시 데이터이며, 실제 확인은 해당 금융투자회사에 문의하시기 바랍니다.",
+      "상세 내역 및 증빙서류는 개별 금융투자회사에서 확인하시기 바랍니다.",
+      "금융투자회사별 계좌 상태와 평가금액은 조회 시점에 따라 달라질 수 있습니다.",
+      "폐쇄 계좌 또는 잔고 0원 계좌가 포함될 수 있으며, 실제 거래 여부는 추가 확인이 필요합니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 5
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 26911,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4478
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 9321
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 13087
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 3
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 21
+      }
+    }
+  }
+}

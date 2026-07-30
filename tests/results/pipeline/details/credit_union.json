@@ -1,0 +1,159 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_union\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "신협중앙회",
+  "organizationKey": "credit_union",
+  "schema": {
+    "name": "credit_union_financial_result_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_union\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.85,
+    "needsConfirmation": false,
+    "evidence": [
+      "예금",
+      "대출",
+      "채무",
+      "조회결과",
+      "접수번호"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 10,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "신협중앙회",
+      "organizationKey": "credit_union",
+      "organizationEvidence": [
+        "표에 '신협명', '계좌별 대출거래현황', '예금 및 출자금' 항목이 표시됨",
+        "'신협중앙회 전산망 참가 신협에 대한 조회결과, 상기와 같이 거래가 있습니다.' 문구가 있음",
+        "'※ 상세 예금 및 채무내역은 해당 신협에 연락... 확인해 주십시오.' 안내문이 있음",
+        "'※ 신협명에 신협공제로 나온 경우, 신협중앙회 공제고객센터(1544-3030)로 연락하셔서 확인해 주십시오.' 안내문이 있음"
+      ],
+      "organizationConfidence": 0.99,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "신협명, 계좌별 대출거래현황, 예금 및 출자금 항목과 신협 전산망 참가 신협 조회결과 및 신협공제 안내문을 근거로 신협중앙회의 상속인 금융거래 조회 결과 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 6214,
+      "completion_tokens": 506,
+      "total_tokens": 6720
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "receiptNumber": "2025051500001234",
+    "message": "신협중앙회 전산망 참가 신협에 대한 조회결과, 상기와 같이 거래가 있습니다.",
+    "records": [
+      {
+        "rowNumber": 1,
+        "authorizationNumber": "310121",
+        "creditUnionName": "대전둔산신협",
+        "phoneNumber": "042-488-1234",
+        "postalCode": "35235",
+        "address": "대전광역시 서구 둔산로 123, 2층 (둔산동)",
+        "sequenceNumber": 1,
+        "loanAmount": 25000000,
+        "loanMaturityDate": "2027-06-15",
+        "depositAndContributionAmount": 12000000
+      },
+      {
+        "rowNumber": 2,
+        "authorizationNumber": "310045",
+        "creditUnionName": "유성신협",
+        "phoneNumber": "042-824-5678",
+        "postalCode": "34052",
+        "address": "대전광역시 유성구 대학로 55 (궁동)",
+        "sequenceNumber": 1,
+        "loanAmount": 8500000,
+        "loanMaturityDate": "2027-11-30",
+        "depositAndContributionAmount": 4300000
+      },
+      {
+        "rowNumber": 3,
+        "authorizationNumber": "310078",
+        "creditUnionName": "관평신협",
+        "phoneNumber": "042-934-7777",
+        "postalCode": "34118",
+        "address": "대전광역시 유성구 관평로 15 (관평동)",
+        "sequenceNumber": 1,
+        "loanAmount": 15000000,
+        "loanMaturityDate": "2027-09-20",
+        "depositAndContributionAmount": 6700000
+      }
+    ],
+    "warnings": [
+      "※ 상세 예금 및 채무내역은 해당 신협에 연락(필요시류등 확인)후 방문하여 확인해 주십시오.",
+      "※ 예금 및 출자금이 '0'인 경우, 계좌는 개설되어 있으나 원금기준의 잔액이 없음을 의미합니다.(2015.7월부터 잔고통지된 내용에 해당함)",
+      "※ 신협명에 신협공제로 나온 경우, 신협중앙회 공제고객센터(1544-3030)로 연락하셔서 확인해 주십시오."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 9
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 38767,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 9615
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 15558
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 13577
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 3
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 13
+      }
+    }
+  }
+}

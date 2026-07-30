@@ -1328,8 +1328,11 @@ def synchronize_record_fields(
     warnings: list[str],
 ) -> None:
     """
-    records 배열과 recordCount / hasRecords가 함께 있는 경우
+    records 배열과 recordCount / hasRecords를
     서로 일치하도록 보정한다.
+
+    recordCount가 정수인 일반 금융 스키마와
+    객체인 생명보험 스키마를 모두 지원한다.
     """
 
     properties = schema.get(
@@ -1340,39 +1343,139 @@ def synchronize_record_fields(
     if not isinstance(properties, dict):
         return
 
-    records = data.get(
-        "records"
-    )
+    records = data.get("records")
 
     if not isinstance(records, list):
         return
 
-    actual_count = len(
-        records
+    actual_count = len(records)
+
+    # --------------------------------------------------------
+    # recordCount 보정
+    # --------------------------------------------------------
+
+    record_count_schema = properties.get(
+        "recordCount"
     )
 
-    if "recordCount" in properties:
-        previous_count = data.get(
-            "recordCount"
+    if isinstance(record_count_schema, dict):
+        record_count_type = get_schema_type(
+            record_count_schema
         )
 
-        if previous_count != actual_count:
-            data["recordCount"] = (
-                actual_count
+        # 일반 금융 문서:
+        # recordCount가 정수인 경우
+        if record_count_type == "integer":
+            previous_count = data.get(
+                "recordCount"
             )
 
-            warnings.append(
-                "recordCount: records 배열 길이에 "
-                f"맞춰 {actual_count}으로 보정했습니다."
+            if previous_count != actual_count:
+                data["recordCount"] = actual_count
+
+                warnings.append(
+                    "recordCount: records 배열 길이에 "
+                    f"맞춰 {actual_count}으로 "
+                    "보정했습니다."
+                )
+
+        # 생명보험 문서:
+        # recordCount가 객체인 경우
+        elif record_count_type == "object":
+            previous_counts = data.get(
+                "recordCount"
             )
+
+            if not isinstance(
+                previous_counts,
+                dict,
+            ):
+                previous_counts = {}
+
+            count_properties = (
+                record_count_schema.get(
+                    "properties",
+                    {},
+                )
+            )
+
+            if not isinstance(
+                count_properties,
+                dict,
+            ):
+                count_properties = {}
+
+            unclaimed_count = sum(
+                1
+                for record in records
+                if (
+                    isinstance(record, dict)
+                    and record.get(
+                        "recordCategory"
+                    )
+                    == "unclaimed_insurance"
+                )
+            )
+
+            dormant_count = sum(
+                1
+                for record in records
+                if (
+                    isinstance(record, dict)
+                    and record.get(
+                        "recordCategory"
+                    )
+                    == "dormant_insurance"
+                )
+            )
+
+            normalized_counts = dict(
+                previous_counts
+            )
+
+            if "total" in count_properties:
+                normalized_counts["total"] = (
+                    actual_count
+                )
+
+            if (
+                "unclaimedInsurance"
+                in count_properties
+            ):
+                normalized_counts[
+                    "unclaimedInsurance"
+                ] = unclaimed_count
+
+            if (
+                "dormantInsurance"
+                in count_properties
+            ):
+                normalized_counts[
+                    "dormantInsurance"
+                ] = dormant_count
+
+            if normalized_counts != previous_counts:
+                warnings.append(
+                    "recordCount: records의 "
+                    "recordCategory를 기준으로 "
+                    "유형별 건수를 보정했습니다."
+                )
+
+            data["recordCount"] = (
+                normalized_counts
+            )
+
+    # --------------------------------------------------------
+    # hasRecords 보정
+    # --------------------------------------------------------
 
     if "hasRecords" in properties:
         actual_has_records = (
             actual_count > 0
         )
 
-        previous_has_records = (
-            data.get("hasRecords")
+        previous_has_records = data.get(
+            "hasRecords"
         )
 
         if (

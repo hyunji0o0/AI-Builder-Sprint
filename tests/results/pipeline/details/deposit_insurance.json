@@ -1,0 +1,186 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\deposit\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "예금보험공사",
+  "organizationKey": "deposit_insurance",
+  "schema": {
+    "name": "deposit_insurance_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\deposit\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.9,
+    "needsConfirmation": false,
+    "evidence": [
+      "예금",
+      "대출",
+      "보험",
+      "채무",
+      "조회결과",
+      "접수번호"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 12,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "예금보험공사",
+      "organizationKey": "deposit_insurance",
+      "organizationEvidence": [
+        "상속인 미수령금 조회 결과",
+        "파산금융회사 예금보험금 정산금 파산배당금 파산배당금(예보이관)",
+        "상속인 채무정보 조회 결과",
+        "파산금융회사 파산재단"
+      ],
+      "organizationConfidence": 0.96,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "'예금보험금', '파산배당금', '예보이관', '파산재단' 등 예금보험공사 고유 용어와 상속인 미수령금·채무정보 조회 결과 구성을 근거로 예금보험공사 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 8233,
+      "completion_tokens": 560,
+      "total_tokens": 8793
+    }
+  },
+  "data": {
+    "requestNumber": "",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 4,
+    "hasUnclaimedDepositRecords": true,
+    "unclaimedDepositRecordCount": 1,
+    "hasDebtRecords": true,
+    "debtRecordCount": 3,
+    "message": "상속인 미수령금 조회 결과, 상속인 채무정보 조회 결과",
+    "records": [
+      {
+        "recordCategory": "unclaimed_deposit",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "",
+        "depositInsuranceAmount": 1250000,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 320000,
+        "heldDividendAmount": 0,
+        "debtType": "",
+        "debtorName": "",
+        "principalBalance": 0,
+        "interestAmount": 0,
+        "extinctionStatus": "unknown",
+        "institutionContact": ""
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "한국자산관리공사",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "대출금",
+        "debtorName": "홍길동",
+        "principalBalance": 2300000,
+        "interestAmount": 120000,
+        "extinctionStatus": "active",
+        "institutionContact": "1588-3570"
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "신용회복위원회",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "신용카드채무",
+        "debtorName": "홍길동",
+        "principalBalance": 1200000,
+        "interestAmount": 0,
+        "extinctionStatus": "extinguished",
+        "institutionContact": "1600-5500"
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "파산재단",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "대출금",
+        "debtorName": "홍길동",
+        "principalBalance": 8500000,
+        "interestAmount": 320000,
+        "extinctionStatus": "active",
+        "institutionContact": "02-319-0554"
+      }
+    ],
+    "warnings": [
+      "※ 위 조회 결과는 2025년 05월 20일 기준으로 제공된 자료이며, 이후 변동될 수 있습니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 11
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 28789,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 5328
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 12799
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 10642
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 3
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 17
+      }
+    }
+  }
+}

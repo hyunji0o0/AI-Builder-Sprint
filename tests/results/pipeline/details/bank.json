@@ -1,6 +1,6 @@
 {
   "success": true,
-  "stage": "information_extract",
+  "stage": "completed",
   "fileName": "sample.png",
   "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\bank\\sample.png",
   "documentType": "financial_inquiry_result",
@@ -36,14 +36,14 @@
       "sourceOrganization": "은행연합회",
       "organizationKey": "bank",
       "organizationEvidence": [
-        "표의 열 이름에 '은행', '금융거래종류', '담당점포'가 표시됨",
-        "조회 결과 항목으로 '예 금'이 반복되어 은행 거래 조회 결과 형식임",
-        "안내문에 '해당 은행에 보유하고 있는 사망자의 성명'이라고 기재되어 있음",
-        "하단 안내에 '상속인 금융거래 조회' 및 '은행연합회 상속인 금융거래조회 서비스 담당자'가 언급됨"
+        "표의 열 이름에 '은행', '금융거래종류', '담당점포', '상환일'이 표시되어 있습니다.",
+        "조회 결과가 대구, 지역농·축협, 신한, 하나 등 은행명 중심으로 구성되어 있습니다.",
+        "안내문에 '해당 은행에 보유하고 있는 사망자의 성명'과 '은행에 문의하셔야 합니다'라고 되어 있습니다.",
+        "본문에 '상속인 금융거래조회(안심상속 원스톱) 서비스' 및 '상속인 금융거래 조회' 안내가 있습니다."
       ],
       "organizationConfidence": 0.98,
       "organizationNeedsConfirmation": false,
-      "organizationMessage": "은행, 금융거래종류, 담당점포 등의 표 구성과 예금 조회 결과, 그리고 하단의 상속인 금융거래조회 안내문을 근거로 은행연합회 문서로 판별했습니다.",
+      "organizationMessage": "은행, 금융거래종류, 담당점포 등 은행권 결과표와 은행 문의 안내 문구를 근거로 은행연합회 문서로 판별했습니다.",
       "method": "information_extract_schema"
     }
   },
@@ -132,5 +132,55 @@
       "- 상속인 금융거래 조회에 불일치 사항이 있으신 경우, 은행연합회 상속인 금융거래조회 서비스 담당자(02-3705-5044)에게 문의 전화 주시면 감사하겠습니다."
     ]
   },
-  "warnings": []
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 8
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 25941,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4601
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 10065
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 11253
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 4
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 17
+      }
+    }
+  }
 }

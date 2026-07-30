@@ -1,0 +1,138 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\korea_post\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "우정사업본부",
+  "organizationKey": "korea_post",
+  "schema": {
+    "name": "korea_post_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\korea_post\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "금융내역조회",
+      "거래내역",
+      "예금",
+      "대출",
+      "보험",
+      "접수번호"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 15,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "우정사업본부",
+      "organizationKey": "korea_post",
+      "organizationEvidence": [
+        "상속인 금융내역조회",
+        "우체국 예금",
+        "펀드금액",
+        "카드금액",
+        "예금 대출금액"
+      ],
+      "organizationConfidence": 0.97,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "'상속인 금융내역조회' 결과 문서이며, 본문에 '우체국 예금'과 함께 '펀드금액', '카드금액', '예금 대출금액' 등 우정사업본부 금융조회 결과 항목이 확인되어 우정사업본부 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 7199,
+      "completion_tokens": 188,
+      "total_tokens": 7387
+    }
+  },
+  "data": {
+    "requestNumber": "20240221000123",
+    "inquiryDateTime": "2024-02-21T10:25:30",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 5,
+    "message": "",
+    "hasDepositAccount": false,
+    "depositAccountStatus": "",
+    "depositBalance": 0,
+    "depositLoanAmount": 12450000,
+    "depositLoanRepaymentDate": "",
+    "hasInsuranceAccount": false,
+    "insuranceAccountStatus": "",
+    "insuranceRefundLoanAmount": 320000,
+    "insuranceRefundLoanMaturityDate": "2026-05-15",
+    "policyholderLoanAmount": 0,
+    "policyholderLoanMaturityDate": "",
+    "hasFund": true,
+    "fundAmount": 1250000,
+    "cardAmount": 540000,
+    "loanAmount": 8000000,
+    "loanExecutionDate": "2022-09-10",
+    "otherAmount": 0,
+    "totalAmount": 22560000,
+    "warnings": []
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 15
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 23732,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4699
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 10646
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 8356
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 5
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 26
+      }
+    }
+  }
+}

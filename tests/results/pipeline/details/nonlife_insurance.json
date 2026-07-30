@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\nonlife_insurance\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "손해보험협회",
+  "organizationKey": "nonlife_insurance",
+  "schema": {
+    "name": "nonlife_insurance_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\nonlife_insurance\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "보험가입내역",
+      "보험기간",
+      "증권계좌번호",
+      "보험계약상태"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 4,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 2,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "손해보험협회",
+      "organizationKey": "nonlife_insurance",
+      "organizationEvidence": [
+        "총 1건 보험가입내역 조회결과",
+        "보험회사, 상품명, 증권(계좌) 번호, 보험계약 상태, 보험계약 관계, 보험기간",
+        "상기 조회결과는 사망일(접수일) 현재 기준이며, 보험회사에서 제공한 자료를 기초로 작성된 것으로",
+        "세부내역(유지여부, 보험금액, 보험금 신청방법 등)은 해당회사에 직접 문의하시기 바랍니다."
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "보험가입내역 조회결과 문구와 보험회사·증권(계좌) 번호·보험계약 상태 등 보험 관련 항목, 그리고 보험회사 제공 자료 및 보험금 신청방법 안내를 근거로 손해보험협회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 5618,
+      "completion_tokens": 224,
+      "total_tokens": 5842
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 1,
+    "message": "총 1건 보험가입내역 조회결과",
+    "records": [
+      {
+        "recordCategory": "insurance_policy",
+        "institutionName": "한화손해보험",
+        "recordType": "보험",
+        "productName": "이륜자동차보험",
+        "referenceNumber": "CA2023393696300 0",
+        "status": "active",
+        "relationship": "policyholder",
+        "startDate": "2023-04-03",
+        "endDate": "2024-04-03",
+        "branchName": "서울지점",
+        "institutionContact": "02-1234-5678"
+      }
+    ],
+    "warnings": [
+      "상기 조회결과는 사망일(접수일) 현재 기준이며, 보험회사에서 제공한 자료를 기초로 작성된 것으로 세부내역(유지여부, 보험금액, 보험금 신청방법 등)은 해당회사에 직접 문의하시기 바랍니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 4
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 20176,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4284
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 8294
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 7577
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 3
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 18
+      }
+    }
+  }
+}

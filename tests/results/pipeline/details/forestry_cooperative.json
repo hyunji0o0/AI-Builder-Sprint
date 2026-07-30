@@ -1,0 +1,123 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\forestry_cooperative\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "산림조합중앙회",
+  "organizationKey": "forestry_cooperative",
+  "schema": {
+    "name": "forestry_cooperative_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\forestry_cooperative\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.8,
+    "needsConfirmation": false,
+    "evidence": [
+      "거래내역",
+      "예금",
+      "대출",
+      "조회결과"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 8,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "산림조합중앙회",
+      "organizationKey": "forestry_cooperative",
+      "organizationEvidence": [
+        "조회하신 피상속{인의 산림조합 거래내역이 있습니다.",
+        "상기 조회결과는 산림조합 전산망을 기준으로 각 산림조합에서 조회한 결과를 산림조합중앙회에서 취합하여 제공한 것이므로 자세한 사항은 위 결과의 해당 산림조합 으로 직접 문의하시기 바랍니다.",
+        "예금잔액 및 출자금액은 2015년 6월 30일 이후 해지된 계좌에 한하여 정상 조회됩니다."
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "산림조합 거래내역, 산림조합 전산망, 산림조합중앙회에서 취합하여 제공한다는 안내문을 근거로 산림조합중앙회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 2105,
+      "completion_tokens": 262,
+      "total_tokens": 2367
+    }
+  },
+  "data": {
+    "hasFinancialRecords": true,
+    "depositAccountCount": 1,
+    "closedDepositCount": 0,
+    "loanCount": 1,
+    "loanAmount": 15000000,
+    "paymentCount": 0,
+    "guaranteeCount": 0,
+    "guaranteeAmount": 0,
+    "balanceNumber": "1234-5678-9012",
+    "contactNumber": "1544-4200",
+    "message": "조회하신 피상속{인의 산림조합 거래내역이 있습니다.",
+    "notice": [
+      "예금에 대한 해지내역은 피상속인의 사망일 이후 해지된 내역입니다. 예금잔액 및 출자금액은 2015년 6월 30일 이후 잔수로에 한하여 정상 조회됩니다 보다 자세한 내역은 해당 조합에 문의 후 소정의 절차에 따르십시오. 상기 조회결과는 산림조합 전산망을 기준으로 각 산림조합에서 조회한 결과를 산림조합중앙회에서 취합하여 제공한 것이므로 자세한 사항은 위 결과의 해당 산림조합 으로 직접 문의하시기 바랍니다. ※ 산림조합중앙회 : 1544-4200"
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 3
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 22011,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4609
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 9701
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 7681
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 2
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 16
+      }
+    }
+  }
+}

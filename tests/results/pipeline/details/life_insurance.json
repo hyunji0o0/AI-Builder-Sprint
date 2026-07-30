@@ -1,0 +1,175 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\life_insurance\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "생명보험협회",
+  "organizationKey": "life_insurance",
+  "schema": {
+    "name": "life_insurance_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\life_insurance\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "미청구보험금",
+      "휴면보험금",
+      "진흥원출연일자",
+      "가산이자",
+      "잔여연금",
+      "보험계약관계"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 4,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "생명보험협회",
+      "organizationKey": "life_insurance",
+      "organizationEvidence": [
+        "미청구보험금 조회결과",
+        "휴면보험금 조회결과",
+        "보험회사, 보험금 유형, 상품명, 증권(계좌) 번호, 보험계약 관계, 계약일자, 보험금(유무), 가산이자, 잔여연금 유무",
+        "휴면보험금 내역이 2건 있습니다.",
+        "조회결과 세부사항에 관한 문의는 해당 보험회사(링크 참조)로 연락 주시기 바라며, 이외 기타 문의는 생명보험협회(02-2262-6600)로 연락 주시기 바랍니다."
+      ],
+      "organizationConfidence": 0.99,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "미청구보험금 조회결과, 휴면보험금 조회결과, 보험금 관련 표 항목을 근거로 생명보험협회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 6832,
+      "completion_tokens": 483,
+      "total_tokens": 7315
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "unclaimedInsuranceCount": 1,
+    "dormantInsuranceCount": 2,
+    "messages": [
+      "미청구보험금 내역이 1건 있습니다.",
+      "휴면보험금 내역이 2건 있습니다."
+    ],
+    "records": [
+      {
+        "recordCategory": "unclaimed_insurance",
+        "institutionName": "한빛생명보험(주)",
+        "recordType": "만기보험금",
+        "productName": "(무)행복더드림 종신보험",
+        "referenceNumber": "12345-67890",
+        "contractRelationship": "계약자",
+        "contractDate": "2010-03-15",
+        "currency": "KRW",
+        "amount": 1250000,
+        "calculationDate": "2024-07-10",
+        "additionalInterest": 25300,
+        "remainingAnnuityStatus": "",
+        "institutionContact": "",
+        "dormantFundTransferOrCalculationDate": ""
+      },
+      {
+        "recordCategory": "dormant_insurance",
+        "institutionName": "한빛생명보험(주)",
+        "recordType": "휴면보험금",
+        "productName": "",
+        "referenceNumber": "987654321",
+        "contractRelationship": "",
+        "contractDate": "",
+        "currency": "KRW",
+        "amount": 320000,
+        "calculationDate": "",
+        "additionalInterest": 0,
+        "remainingAnnuityStatus": "unknown",
+        "institutionContact": "02-1234-5678",
+        "dormantFundTransferOrCalculationDate": "2022-04-01"
+      },
+      {
+        "recordCategory": "dormant_insurance",
+        "institutionName": "드림라이프생명(주)",
+        "recordType": "휴면보험금",
+        "productName": "",
+        "referenceNumber": "A1122334455",
+        "contractRelationship": "",
+        "contractDate": "",
+        "currency": "KRW",
+        "amount": 180000,
+        "calculationDate": "",
+        "additionalInterest": 0,
+        "remainingAnnuityStatus": "unknown",
+        "institutionContact": "02-9876-5432",
+        "dormantFundTransferOrCalculationDate": "2021-08-15"
+      }
+    ],
+    "warnings": [
+      "조회결과 세부사항에 관한 문의는 해당 보험회사(링크 참조)로 연락 주시기 바라며, 이외 기타 문의는 생명보험협회(02-2262-6600)로 연락 주시기 바랍니다."
+    ]
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 8
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 26290,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4576
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 10551
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 11150
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 2
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 10
+      }
+    }
+  }
+}

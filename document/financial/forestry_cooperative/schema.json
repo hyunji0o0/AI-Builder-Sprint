@@ -58,8 +58,6 @@
         }
       },
       "required": [
-        "documentType",
-        "sourceOrganization",
         "hasFinancialRecords",
         "depositAccountCount",
         "closedDepositCount",
