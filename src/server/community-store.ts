@@ -24,9 +24,18 @@ function fromRow(row: PostRow): CommunityPost {
   }
 }
 
-export async function listCommunityPosts(category?: string): Promise<CommunityPost[]> {
-  let query = supabase.from('community_posts').select('*').order('created_at', { ascending: false })
+export async function listCommunityPosts(
+  category?: string,
+  keyword?: string,
+  sort: 'recent' | 'helpful' = 'recent',
+): Promise<CommunityPost[]> {
+  let query = supabase.from('community_posts').select('*')
   if (category && category !== 'ALL') query = query.eq('category', category)
+  if (keyword && keyword.trim()) query = query.ilike('content', `%${keyword.trim()}%`)
+  query =
+    sort === 'helpful'
+      ? query.order('helpful_count', { ascending: false }).order('created_at', { ascending: false })
+      : query.order('created_at', { ascending: false })
   const { data, error } = await query
   if (error) throw error
   return (data as PostRow[]).map(fromRow)

@@ -26,7 +26,9 @@ export function createCommunityServerPlugin(): Plugin {
         if (req.method === 'GET') {
           const url = new URL(req.url ?? '', 'http://localhost')
           const category = url.searchParams.get('category') ?? undefined
-          const posts = await listCommunityPosts(category)
+          const keyword = url.searchParams.get('q') ?? undefined
+          const sort = url.searchParams.get('sort') === 'helpful' ? 'helpful' : 'recent'
+          const posts = await listCommunityPosts(category, keyword, sort)
           res.end(JSON.stringify(posts))
           return
         }

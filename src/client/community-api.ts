@@ -1,7 +1,15 @@
 import { CommunityComment, CommunityPost, CreateCommunityCommentInput, CreateCommunityPostInput, UpdateCommunityPostInput } from '../schemas/community'
 
-export async function fetchCommunityPosts(category?: string): Promise<CommunityPost[]> {
-  const query = category && category !== 'ALL' ? `?category=${category}` : ''
+export async function fetchCommunityPosts(
+  category?: string,
+  keyword?: string,
+  sort?: 'recent' | 'helpful',
+): Promise<CommunityPost[]> {
+  const params = new URLSearchParams()
+  if (category && category !== 'ALL') params.set('category', category)
+  if (keyword && keyword.trim()) params.set('q', keyword.trim())
+  if (sort) params.set('sort', sort)
+  const query = params.toString() ? `?${params.toString()}` : ''
   const res = await fetch(`/api/community/posts${query}`)
   if (!res.ok) throw new Error('커뮤니티 글을 불러오지 못했어요.')
   return res.json()

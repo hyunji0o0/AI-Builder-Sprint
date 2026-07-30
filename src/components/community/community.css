@@ -27,9 +27,23 @@
 .cm-mine-toggle{flex:0 0 auto;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.85);padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.4);color:#6d7c90;font-size:12px;font-weight:600;cursor:pointer}
 .cm-mine-toggle.active{color:#ad593f;border-color:rgba(255,255,255,.9);background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7));box-shadow:inset 0 2px 1px #fff,0 6px 16px rgba(196,101,60,.18)}
 
+.cm-search{display:flex;gap:6px}
+.cm-search-input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.85);border-radius:999px;background:rgba(255,255,255,.5);outline:0;padding:9px 16px;font-size:13px;color:#34465e}
+.cm-search-clear{flex:0 0 auto;border:1px solid rgba(255,255,255,.85);border-radius:999px;background:rgba(255,255,255,.4);color:#7a8799;font-size:12px;font-weight:600;padding:9px 14px;cursor:pointer}
+.cm-search-submit{flex:0 0 auto;width:38px;height:38px;display:grid;place-items:center;border:1px solid white;border-radius:50%;background:linear-gradient(145deg,#fff5ed,#ee9e78);color:#934f3b;cursor:pointer}
+
+.cm-sort{display:flex;gap:6px;flex:0 0 auto}
+.cm-sort button{border:1px solid rgba(255,255,255,.85);padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.4);color:#7a8799;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.cm-sort button.active{color:#ad593f;border-color:rgba(255,255,255,.9);background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7))}
+
+.cm-tabs-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cm-tabs-row .cm-tabs{flex:1;min-width:0}
+
 .cm-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .cm-tabs button{flex:0 0 auto;border:1px solid rgba(255,255,255,.85);padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.4);color:#6d7c90;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
-.cm-tabs button.active{color:#ad593f;border-color:rgba(255,255,255,.9);background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7));box-shadow:inset 0 2px 1px #fff,0 6px 16px rgba(196,101,60,.18)}
+.cm-tabs button.active{color:#ad593f;border-color:rgba(255,255,255,.9);background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7))}
+.cm-subtabs{margin-left:14px;padding-left:10px;border-left:2px solid rgba(255,255,255,.7)}
+.cm-subtabs button{padding:5px 11px;font-size:11px}
 
 .cm-list{display:flex;flex-direction:column;gap:10px}
 .cm-empty{margin:18px 0;text-align:center;color:#8e98a6;font-size:13px}

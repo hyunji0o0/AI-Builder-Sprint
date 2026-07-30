@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { fetchCommunityPosts, setCommunityPostHelpful, submitCommunityPost, updateCommunityPost } from '../../client/community-api'
 import { getMyPostIds, rememberMyPost } from '../../client/my-community-posts'
 import { CommunityCategory, CommunityPost, CATEGORY_LABEL, communityCategorySchema } from '../../schemas/community'
@@ -6,7 +6,10 @@ import { Icon } from '../ui/Icon'
 import { CommunityComposer } from './CommunityComposer'
 import { CommunityPostCard } from './CommunityPostCard'
 
-const TABS: Array<'ALL' | CommunityCategory> = ['ALL', ...communityCategorySchema.options]
+const EXPERIENCE_CATEGORIES = communityCategorySchema.options.filter((cat) => cat !== 'VENT')
+const TOP_TABS = ['ALL', 'EXPERIENCE', 'VENT'] as const
+type TopTab = (typeof TOP_TABS)[number]
+const TOP_TAB_LABEL: Record<TopTab, string> = { ALL: '전체', EXPERIENCE: '경험 나눔', VENT: CATEGORY_LABEL.VENT }
 
 // agent_and_ui와 합칠 때: Sidebar의 '경험 나눔' 메뉴가 활성화됐을 때
 // da-main 자리에 이 컴포넌트를 렌더링하면 됨. 챗 안의 COMMUNITY_REVIEW 블록은
@@ -14,27 +17,55 @@ const TABS: Array<'ALL' | CommunityCategory> = ['ALL', ...communityCategorySchem
 export function CommunityFeed() {
   const [view, setView] = useState<'list' | 'write'>('list')
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null)
-  const [category, setCategory] = useState<'ALL' | CommunityCategory>('ALL')
+  const [topCategory, setTopCategory] = useState<TopTab>('ALL')
+  const [subCategory, setSubCategory] = useState<'ALL' | CommunityCategory>('ALL')
   const [scope, setScope] = useState<'all' | 'mine'>('all')
+  const [searchInput, setSearchInput] = useState('')
+  const [keyword, setKeyword] = useState('')
+  const [sort, setSort] = useState<'recent' | 'helpful'>('recent')
   const [posts, setPosts] = useState<CommunityPost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // "경험 나눔" + 하위 탭 "전체"는 VENT를 뺀 6개 카테고리 전부 — 서버엔 그런 단일
+  // 카테고리가 없으니 ALL로 받아온 뒤 클라이언트에서 VENT만 걸러냄.
+  const excludeVent = topCategory === 'EXPERIENCE' && subCategory === 'ALL'
+  const fetchCategory =
+    topCategory === 'VENT' ? 'VENT' : topCategory === 'EXPERIENCE' && subCategory !== 'ALL' ? subCategory : 'ALL'
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchCommunityPosts(scope === 'mine' ? 'ALL' : category)
+    fetchCommunityPosts(scope === 'mine' ? 'ALL' : fetchCategory, keyword, sort)
       .then((data) => {
         if (cancelled) return
-        setPosts(scope === 'mine' ? data.filter((post) => getMyPostIds().includes(post.id)) : data)
+        let next = data
+        if (scope === 'mine') next = next.filter((post) => getMyPostIds().includes(post.id))
+        else if (excludeVent) next = next.filter((post) => post.category !== 'VENT')
+        setPosts(next)
       })
       .catch(() => !cancelled && setError('글을 불러오지 못했어요.'))
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [category, scope])
+  }, [fetchCategory, excludeVent, scope, keyword, sort])
+
+  const handleTopTabClick = (tab: TopTab) => {
+    setTopCategory(tab)
+    setSubCategory('ALL')
+  }
+
+  const handleSearchSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    setKeyword(searchInput)
+  }
+
+  const handleSearchClear = () => {
+    setSearchInput('')
+    setKeyword('')
+  }
 
   const handleSubmit = async (input: { nickname: string; category: CommunityCategory; content: string }) => {
     if (editingPost) {
@@ -46,7 +77,9 @@ export function CommunityFeed() {
     }
     const created = await submitCommunityPost(input)
     rememberMyPost(created.id)
-    if (scope === 'mine' || category === 'ALL' || category === created.category) {
+    const matchesCurrentView =
+      fetchCategory === 'ALL' ? !excludeVent || created.category !== 'VENT' : fetchCategory === created.category
+    if (scope === 'mine' || matchesCurrentView) {
       setPosts((current) => [created, ...current])
     }
     setView('list')
@@ -105,20 +138,75 @@ export function CommunityFeed() {
         <CommunityComposer initialPost={editingPost} onSubmit={handleSubmit} onCancel={handleCancel} />
       ) : (
         <>
+          <form className="cm-search" onSubmit={handleSearchSubmit}>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="키워드로 검색 (예: 상속세, 안심상속)"
+              className="cm-search-input"
+            />
+            {keyword && (
+              <button type="button" className="cm-search-clear" onClick={handleSearchClear}>
+                지우기
+              </button>
+            )}
+            <button type="submit" className="cm-search-submit" aria-label="검색">
+              <Icon name="send" size={14} />
+            </button>
+          </form>
+
           {scope === 'all' && (
-            <div className="cm-tabs" role="tablist" aria-label="카테고리">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  role="tab"
-                  aria-selected={category === tab}
-                  className={category === tab ? 'active' : ''}
-                  onClick={() => setCategory(tab)}
-                >
-                  {tab === 'ALL' ? '전체' : CATEGORY_LABEL[tab]}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="cm-tabs-row">
+                <div className="cm-tabs" role="tablist" aria-label="카테고리">
+                  {TOP_TABS.map((tab) => (
+                    <button
+                      key={tab}
+                      role="tab"
+                      aria-selected={topCategory === tab}
+                      className={topCategory === tab ? 'active' : ''}
+                      onClick={() => handleTopTabClick(tab)}
+                    >
+                      {TOP_TAB_LABEL[tab]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="cm-sort" role="group" aria-label="정렬">
+                  <button type="button" className={sort === 'recent' ? 'active' : ''} onClick={() => setSort('recent')}>
+                    최신순
+                  </button>
+                  <button type="button" className={sort === 'helpful' ? 'active' : ''} onClick={() => setSort('helpful')}>
+                    좋아요순
+                  </button>
+                </div>
+              </div>
+
+              {topCategory === 'EXPERIENCE' && (
+                <div className="cm-tabs cm-subtabs" role="tablist" aria-label="경험 나눔 세부 카테고리">
+                  <button
+                    role="tab"
+                    aria-selected={subCategory === 'ALL'}
+                    className={subCategory === 'ALL' ? 'active' : ''}
+                    onClick={() => setSubCategory('ALL')}
+                  >
+                    전체
+                  </button>
+                  {EXPERIENCE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      role="tab"
+                      aria-selected={subCategory === cat}
+                      className={subCategory === cat ? 'active' : ''}
+                      onClick={() => setSubCategory(cat)}
+                    >
+                      {CATEGORY_LABEL[cat]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           <div className="cm-list">
@@ -126,7 +214,11 @@ export function CommunityFeed() {
             {!loading && error && <p className="cm-empty">{error}</p>}
             {!loading && !error && posts.length === 0 && (
               <p className="cm-empty">
-                {scope === 'mine' ? '아직 쓴 글이 없어요. 글쓰기로 첫 경험을 남겨보세요.' : '아직 이 카테고리에 글이 없어요. 첫 경험을 나눠주세요.'}
+                {keyword
+                  ? `"${keyword}"에 대한 검색 결과가 없어요.`
+                  : scope === 'mine'
+                    ? '아직 쓴 글이 없어요. 글쓰기로 첫 경험을 남겨보세요.'
+                    : '아직 이 카테고리에 글이 없어요. 첫 경험을 나눠주세요.'}
               </p>
             )}
             {!loading && !error && posts.map((post) => (
