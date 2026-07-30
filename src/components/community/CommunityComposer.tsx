@@ -19,20 +19,31 @@ export function CommunityComposer({
 }) {
   const isEditing = Boolean(initialPost)
   const [nickname, setNickname] = useState(initialPost?.nickname ?? '')
-  const [category, setCategory] = useState<CommunityCategory>(
-    initialPost?.categories[0] ?? communityCategorySchema.options[0],
+  // 글 하나에 카테고리를 여러 개 달 수 있음(DB categories text[]). 최소 1개는 필요.
+  const [categories, setCategories] = useState<CommunityCategory[]>(
+    initialPost?.categories ?? [communityCategorySchema.options[0]],
   )
   const [content, setContent] = useState(initialPost?.content ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const toggleCategory = (category: CommunityCategory) => {
+    setCategories((current) =>
+      current.includes(category)
+        ? current.length > 1
+          ? current.filter((item) => item !== category)
+          : current // 마지막 하나는 해제 불가
+        : [...current, category],
+    )
+  }
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!nickname.trim() || !content.trim() || submitting) return
+    if (!nickname.trim() || !content.trim() || !categories.length || submitting) return
     setSubmitting(true)
     setError(null)
     try {
-      await onSubmit({ nickname: nickname.trim(), categories: [category], content: content.trim() })
+      await onSubmit({ nickname: nickname.trim(), categories, content: content.trim() })
     } catch {
       setError(isEditing ? '글을 수정하지 못했어요. 잠시 후 다시 시도해 주세요.' : '글을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.')
       setSubmitting(false)
@@ -46,13 +57,15 @@ export function CommunityComposer({
           <button
             key={cat}
             type="button"
-            className={category === cat ? 'active' : ''}
-            onClick={() => setCategory(cat)}
+            aria-pressed={categories.includes(cat)}
+            className={categories.includes(cat) ? 'active' : ''}
+            onClick={() => toggleCategory(cat)}
           >
             {CATEGORY_LABEL[cat]}
           </button>
         ))}
       </div>
+      <span className="cm-composer-hint">카테고리는 여러 개 고를 수 있어요.</span>
 
       <div className="cm-composer-nickname-row">
         <span className="cm-composer-avatar"><Icon name="sparkle" size={16} /></span>

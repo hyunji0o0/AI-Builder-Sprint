@@ -98,6 +98,7 @@
 .cm-reply-form{margin:8px 0 0 22px}
 
 .cm-composer{border-top:1px solid rgba(255,255,255,.7);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.cm-composer-hint{font-size:11px;color:#8e98a6}
 .cm-composer-categories{display:flex;gap:5px;overflow-x:auto}
 .cm-composer-categories button{flex:0 0 auto;border:1px solid rgba(255,255,255,.85);padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.4);color:#7a8799;font-size:11px;cursor:pointer;white-space:nowrap}
 .cm-composer-categories button.active{color:#ad593f;background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7));border-color:rgba(255,255,255,.9)}
