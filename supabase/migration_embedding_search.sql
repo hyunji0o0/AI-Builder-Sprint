@@ -13,7 +13,7 @@ create or replace function match_community_posts(
 returns table (
   id uuid,
   nickname text,
-  category text,
+  categories text[],
   content text,
   created_at timestamptz,
   helpful_count int,
@@ -22,11 +22,11 @@ returns table (
 language sql stable
 as $$
   select
-    id, nickname, category, content, created_at, helpful_count,
+    id, nickname, categories, content, created_at, helpful_count,
     1 - (embedding <=> query_embedding) as similarity
   from community_posts
   where embedding is not null
-    and (match_category is null or category = match_category)
+    and (match_category is null or match_category = any(categories))
   order by embedding <=> query_embedding
   limit match_count;
 $$;

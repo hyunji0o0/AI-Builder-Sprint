@@ -25,10 +25,12 @@ export const CATEGORY_LABEL: Record<CommunityCategory, string> = {
   ETC: '기타',
 }
 
+// DB의 community_posts.categories는 text[] — 글 하나에 카테고리를 여러 개 달 수 있음.
+// 최소 1개는 있어야 에이전트가 "이 할일과 관련된 팁"을 필터링할 수 있어서 min(1).
 export const communityPostSchema = z.object({
   id: z.string(),
   nickname: z.string().min(1).max(20),
-  category: communityCategorySchema,
+  categories: z.array(communityCategorySchema).min(1),
   content: z.string().min(1).max(500),
   createdAt: z.string(),
   helpfulCount: z.number().int().nonnegative().default(0),
@@ -37,13 +39,13 @@ export type CommunityPost = z.infer<typeof communityPostSchema>
 
 export const createCommunityPostSchema = communityPostSchema.pick({
   nickname: true,
-  category: true,
+  categories: true,
   content: true,
 })
 export type CreateCommunityPostInput = z.infer<typeof createCommunityPostSchema>
 
 export const updateCommunityPostSchema = communityPostSchema.pick({
-  category: true,
+  categories: true,
   content: true,
 })
 export type UpdateCommunityPostInput = z.infer<typeof updateCommunityPostSchema>
@@ -82,7 +84,7 @@ export function toCommunityReviewItem(post: CommunityPost): CommunityReviewBlock
   return {
     id: post.id,
     excerpt: post.content,
-    reason: CATEGORY_LABEL[post.category],
+    reason: post.categories.map((category) => CATEGORY_LABEL[category]).join(' · '),
     createdAt: post.createdAt,
     helpfulCount: post.helpfulCount,
     url: null,

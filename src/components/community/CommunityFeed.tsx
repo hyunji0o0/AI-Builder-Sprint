@@ -42,7 +42,7 @@ export function CommunityFeed() {
         if (cancelled) return
         let next = data
         if (scope === 'mine') next = next.filter((post) => getMyPostIds().includes(post.id))
-        else if (excludeVent) next = next.filter((post) => post.category !== 'VENT')
+        else if (excludeVent) next = next.filter((post) => !post.categories.includes('VENT'))
         setPosts(next)
       })
       .catch(() => !cancelled && setError('글을 불러오지 못했어요.'))
@@ -67,9 +67,9 @@ export function CommunityFeed() {
     setKeyword('')
   }
 
-  const handleSubmit = async (input: { nickname: string; category: CommunityCategory; content: string }) => {
+  const handleSubmit = async (input: { nickname: string; categories: CommunityCategory[]; content: string }) => {
     if (editingPost) {
-      const updated = await updateCommunityPost(editingPost.id, { category: input.category, content: input.content })
+      const updated = await updateCommunityPost(editingPost.id, { categories: input.categories, content: input.content })
       setPosts((current) => current.map((post) => (post.id === updated.id ? updated : post)))
       setEditingPost(null)
       setView('list')
@@ -78,7 +78,9 @@ export function CommunityFeed() {
     const created = await submitCommunityPost(input)
     rememberMyPost(created.id)
     const matchesCurrentView =
-      fetchCategory === 'ALL' ? !excludeVent || created.category !== 'VENT' : fetchCategory === created.category
+      fetchCategory === 'ALL'
+        ? !excludeVent || !created.categories.includes('VENT')
+        : created.categories.includes(fetchCategory as CommunityCategory)
     if (scope === 'mine' || matchesCurrentView) {
       setPosts((current) => [created, ...current])
     }

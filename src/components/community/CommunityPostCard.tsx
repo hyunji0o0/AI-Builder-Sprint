@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { CATEGORY_LABEL, CommunityPost } from '../../schemas/community'
+import { CATEGORY_LABEL, CommunityCategory, CommunityPost } from '../../schemas/community'
 import { isMyPost } from '../../client/my-community-posts'
 import { forgetLikedPost, hasLikedPost, rememberLikedPost } from '../../client/community-likes'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 import { CommunityComments } from './CommunityComments'
 
-const CATEGORY_TONE: Record<CommunityPost['category'], string> = {
+const CATEGORY_TONE: Record<CommunityCategory, string> = {
   RENOUNCE: 'coral',
   TAX: 'amber',
   TRANSFER: 'sage',
@@ -32,7 +32,8 @@ export function CommunityPostCard({
   onEdit: (post: CommunityPost) => void
   onHelpful: (id: string, liked: boolean) => void
 }) {
-  const tone = CATEGORY_TONE[post.category]
+  // 아이콘 톤은 대표(첫 번째) 카테고리 기준, 뱃지는 달린 카테고리 전부 보여줌.
+  const tone = CATEGORY_TONE[post.categories[0]] ?? 'blue'
   const [liked, setLiked] = useState(() => hasLikedPost(post.id))
 
   const handleHelpful = () => {
@@ -51,7 +52,13 @@ export function CommunityPostCard({
           <strong>{post.nickname}</strong>
           <span>{timeAgo(post.createdAt)}</span>
         </div>
-        <span className={`cm-badge cm-${tone}`}>{CATEGORY_LABEL[post.category]}</span>
+        <span className="cm-badges">
+          {post.categories.map((category) => (
+            <span key={category} className={`cm-badge cm-${CATEGORY_TONE[category] ?? 'blue'}`}>
+              {CATEGORY_LABEL[category]}
+            </span>
+          ))}
+        </span>
         {isMyPost(post.id) && (
           <button type="button" className="cm-card-edit" onClick={() => onEdit(post)} aria-label="내 글 수정">
             <Icon name="edit" size={13} />

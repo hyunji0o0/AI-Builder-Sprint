@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react'
 import { CATEGORY_LABEL, CommunityCategory, CommunityPost, communityCategorySchema } from '../../schemas/community'
 import { Icon } from '../ui/Icon'
 
-type SubmitInput = { nickname: string; category: CommunityCategory; content: string }
+type SubmitInput = { nickname: string; categories: CommunityCategory[]; content: string }
 
 const MAX_CONTENT_LENGTH = 500
 
@@ -19,7 +19,9 @@ export function CommunityComposer({
 }) {
   const isEditing = Boolean(initialPost)
   const [nickname, setNickname] = useState(initialPost?.nickname ?? '')
-  const [category, setCategory] = useState<CommunityCategory>(initialPost?.category ?? communityCategorySchema.options[0])
+  const [category, setCategory] = useState<CommunityCategory>(
+    initialPost?.categories[0] ?? communityCategorySchema.options[0],
+  )
   const [content, setContent] = useState(initialPost?.content ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,7 +32,7 @@ export function CommunityComposer({
     setSubmitting(true)
     setError(null)
     try {
-      await onSubmit({ nickname: nickname.trim(), category, content: content.trim() })
+      await onSubmit({ nickname: nickname.trim(), categories: [category], content: content.trim() })
     } catch {
       setError(isEditing ? '글을 수정하지 못했어요. 잠시 후 다시 시도해 주세요.' : '글을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.')
       setSubmitting(false)

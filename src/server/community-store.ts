@@ -7,7 +7,7 @@ import { embedPassage } from './upstage-client'
 type PostRow = {
   id: string
   nickname: string
-  category: string
+  categories: string[]
   content: string
   created_at: string
   helpful_count: number
@@ -17,7 +17,7 @@ function fromRow(row: PostRow): CommunityPost {
   return {
     id: row.id,
     nickname: row.nickname,
-    category: row.category as CommunityCategory,
+    categories: (row.categories ?? []) as CommunityCategory[],
     content: row.content,
     createdAt: row.created_at,
     helpfulCount: row.helpful_count,
@@ -30,7 +30,8 @@ export async function listCommunityPosts(
   sort: 'recent' | 'helpful' = 'recent',
 ): Promise<CommunityPost[]> {
   let query = supabase.from('community_posts').select('*')
-  if (category && category !== 'ALL') query = query.eq('category', category)
+  // categories는 text[]라 동등 비교가 아니라 배열 포함(@>) 연산으로 걸러야 함.
+  if (category && category !== 'ALL') query = query.contains('categories', [category])
   if (keyword && keyword.trim()) query = query.ilike('content', `%${keyword.trim()}%`)
   query =
     sort === 'helpful'
@@ -44,7 +45,7 @@ export async function listCommunityPosts(
 export async function createCommunityPost(input: CreateCommunityPostInput): Promise<CommunityPost> {
   const { data, error } = await supabase
     .from('community_posts')
-    .insert({ nickname: input.nickname, category: input.category, content: input.content })
+    .insert({ nickname: input.nickname, categories: input.categories, content: input.content })
     .select()
     .single()
   if (error) throw error
@@ -61,7 +62,7 @@ export async function createCommunityPost(input: CreateCommunityPostInput): Prom
 export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost | null> {
   const { data, error } = await supabase
     .from('community_posts')
-    .update({ category: input.category, content: input.content })
+    .update({ categories: input.categories, content: input.content })
     .eq('id', id)
     .select()
     .maybeSingle()

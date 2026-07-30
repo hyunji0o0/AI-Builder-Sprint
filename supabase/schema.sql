@@ -8,7 +8,7 @@ create extension if not exists vector;
 create table if not exists community_posts (
   id uuid primary key default gen_random_uuid(),
   nickname text not null,
-  category text not null,
+  categories text[] not null, -- 글 하나에 카테고리 여러 개. enum이 아니라 text[]라 카테고리 추가 시 DB 변경 불필요
   content text not null,
   created_at timestamptz not null default now(),
   helpful_count int not null default 0,
@@ -25,7 +25,7 @@ create table if not exists community_comments (
   embedding vector(4096)
 );
 
-create index if not exists community_posts_category_idx on community_posts(category);
+create index if not exists community_posts_categories_idx on community_posts using gin(categories);
 create index if not exists community_comments_post_id_idx on community_comments(post_id);
 create index if not exists community_comments_parent_id_idx on community_comments(parent_id);
 
@@ -40,7 +40,7 @@ create or replace function match_community_posts(
 returns table (
   id uuid,
   nickname text,
-  category text,
+  categories text[],
   content text,
   created_at timestamptz,
   helpful_count int,
@@ -49,11 +49,11 @@ returns table (
 language sql stable
 as $$
   select
-    id, nickname, category, content, created_at, helpful_count,
+    id, nickname, categories, content, created_at, helpful_count,
     1 - (embedding <=> query_embedding) as similarity
   from community_posts
   where embedding is not null
-    and (match_category is null or category = match_category)
+    and (match_category is null or match_category = any(categories))
   order by embedding <=> query_embedding
   limit match_count;
 $$;
