@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { CATEGORY_LABEL, CommunityPost } from '../../schemas/community'
+import { CATEGORY_LABEL, CommunityCategory, CommunityPost } from '../../schemas/community'
 import { isMyPost } from '../../client/my-community-posts'
 import { forgetLikedPost, hasLikedPost, rememberLikedPost } from '../../client/community-likes'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 import { CommunityComments } from './CommunityComments'
 
-const CATEGORY_TONE: Record<CommunityPost['category'], string> = {
+const CATEGORY_TONE: Record<CommunityCategory, string> = {
   RENOUNCE: 'coral',
   TAX: 'amber',
   TRANSFER: 'sage',
@@ -32,7 +32,7 @@ export function CommunityPostCard({
   onEdit: (post: CommunityPost) => void
   onHelpful: (id: string, liked: boolean) => void
 }) {
-  const tone = CATEGORY_TONE[post.category]
+  const primaryTone = CATEGORY_TONE[post.categories[0]]
   const [liked, setLiked] = useState(() => hasLikedPost(post.id))
 
   const handleHelpful = () => {
@@ -46,12 +46,18 @@ export function CommunityPostCard({
   return (
     <article className="cm-card">
       <div className="cm-card-head">
-        <GlassIcon icon="users" tone={tone} />
+        <GlassIcon icon="users" tone={primaryTone} />
         <div className="cm-card-meta">
           <strong>{post.nickname}</strong>
           <span>{timeAgo(post.createdAt)}</span>
         </div>
-        <span className={`cm-badge cm-${tone}`}>{CATEGORY_LABEL[post.category]}</span>
+        <div className="cm-badge-group">
+          {post.categories.map((cat) => (
+            <span key={cat} className={`cm-badge cm-${CATEGORY_TONE[cat]}`}>
+              {CATEGORY_LABEL[cat]}
+            </span>
+          ))}
+        </div>
         {isMyPost(post.id) && (
           <button type="button" className="cm-card-edit" onClick={() => onEdit(post)} aria-label="내 글 수정">
             <Icon name="edit" size={13} />

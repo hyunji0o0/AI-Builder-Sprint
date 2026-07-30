@@ -1,11 +1,12 @@
 import { ReactNode } from 'react'
 
-// agent_and_ui의 src/components/ui/Icon.tsx와 동일한 내용.
-// 합칠 때 이 파일은 지우고 그쪽 파일을 그대로 쓰면 됨.
+// agent_and_ui의 src/components/ui/Icon.tsx와 동일한 내용이었는데, 'search'는
+// 이 브랜치에서 커뮤니티 검색 기능 때문에 새로 추가함 — merge할 때 agent_and_ui
+// 쪽 Icon.tsx에도 이 아이콘을 옮겨야 함(안 그러면 검색 버튼이 깨짐).
 export type IconName =
   | 'sparkle' | 'home' | 'check' | 'folder' | 'users' | 'person'
   | 'file' | 'clock' | 'alert' | 'wallet' | 'send' | 'calendar'
-  | 'upload' | 'building' | 'heart' | 'edit'
+  | 'upload' | 'building' | 'heart' | 'edit' | 'search'
 
 const iconPaths: Record<IconName, ReactNode> = {
   sparkle: <><path d="m12 2 1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></>,
@@ -24,6 +25,7 @@ const iconPaths: Record<IconName, ReactNode> = {
   building: <><path d="M4 21V8l8-5 8 5v13M2 21h20"/><path d="M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></>,
   heart: <path d="M20 8.5c0 5-8 10-8 10s-8-5-8-10A4.5 4.5 0 0 1 12 5.7a4.5 4.5 0 0 1 8 2.8z"/>,
   edit: <><path d="m4 20 4-.8L19 8.2 15.8 5 4.8 16zM14.5 6.3l3.2 3.2"/></>,
+  search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></>,
 }
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {

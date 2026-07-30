@@ -18,7 +18,9 @@ export async function recommendCommunityTips(query: string, category?: string, l
     return { answer: '관련된 커뮤니티 경험담을 아직 찾지 못했어요.', sources: [] }
   }
 
-  const context = matches.map((match, i) => `${i + 1}. [${CATEGORY_LABEL[match.category]}] ${match.content}`).join('\n')
+  const context = matches
+    .map((match, i) => `${i + 1}. [${match.categories.map((cat) => CATEGORY_LABEL[cat]).join('·')}] ${match.content}`)
+    .join('\n')
 
   const answer = await generateSolarChat([
     {

@@ -4,7 +4,6 @@ import { CommunityComment } from '../../schemas/community'
 import { Icon } from '../ui/Icon'
 
 const PREVIEW_COUNT = 1
-const MAX_CONTENT_LENGTH = 300
 
 function timeAgo(iso: string) {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
@@ -48,7 +47,6 @@ function MiniCommentForm({
         onChange={(event) => setContent(event.target.value)}
         placeholder={placeholder}
         className="cm-comment-input"
-        maxLength={MAX_CONTENT_LENGTH}
       />
       <button type="submit" className="cm-comment-submit" disabled={submitting} aria-label="등록">
         <Icon name="send" size={13} />

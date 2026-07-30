@@ -40,7 +40,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: {
 const seedPath = path.resolve(process.cwd(), 'data/community-posts.seed.json')
 const originalPosts = JSON.parse(readFileSync(seedPath, 'utf8')).map((post) => ({
   nickname: post.nickname,
-  category: post.category,
+  categories: [post.category], // categories는 배열 컬럼(중복 카테고리 허용) — 원본은 1개씩만 있었음
   content: post.content,
   created_at: post.createdAt,
   helpful_count: post.helpfulCount,
@@ -133,7 +133,7 @@ const tipPosts = TIPS.map((tip, i) => {
   const helpfulCount = ((i * 7) % 23) + 1
   return {
     nickname: NICKNAMES[i % NICKNAMES.length],
-    category: tip.category,
+    categories: [tip.category],
     content: tip.content,
     created_at: createdAt,
     helpful_count: helpfulCount,

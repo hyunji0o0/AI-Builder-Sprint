@@ -28,8 +28,9 @@ export const CATEGORY_LABEL: Record<CommunityCategory, string> = {
 export const communityPostSchema = z.object({
   id: z.string(),
   nickname: z.string().min(1).max(20),
-  category: communityCategorySchema,
-  content: z.string().min(1).max(500),
+  // 긴 팁 하나가 여러 주제를 다룰 수 있어서 카테고리를 배열로 허용함(중복 태깅).
+  categories: z.array(communityCategorySchema).min(1),
+  content: z.string().min(1),
   createdAt: z.string(),
   helpfulCount: z.number().int().nonnegative().default(0),
 })
@@ -37,13 +38,13 @@ export type CommunityPost = z.infer<typeof communityPostSchema>
 
 export const createCommunityPostSchema = communityPostSchema.pick({
   nickname: true,
-  category: true,
+  categories: true,
   content: true,
 })
 export type CreateCommunityPostInput = z.infer<typeof createCommunityPostSchema>
 
 export const updateCommunityPostSchema = communityPostSchema.pick({
-  category: true,
+  categories: true,
   content: true,
 })
 export type UpdateCommunityPostInput = z.infer<typeof updateCommunityPostSchema>
@@ -53,7 +54,7 @@ export const communityCommentSchema = z.object({
   postId: z.string(),
   parentId: z.string().nullable().default(null),
   nickname: z.string().min(1).max(20),
-  content: z.string().min(1).max(300),
+  content: z.string().min(1),
   createdAt: z.string(),
 })
 export type CommunityComment = z.infer<typeof communityCommentSchema>
@@ -82,7 +83,7 @@ export function toCommunityReviewItem(post: CommunityPost): CommunityReviewBlock
   return {
     id: post.id,
     excerpt: post.content,
-    reason: CATEGORY_LABEL[post.category],
+    reason: post.categories.map((cat) => CATEGORY_LABEL[cat]).join(' · '),
     createdAt: post.createdAt,
     helpfulCount: post.helpfulCount,
     url: null,
