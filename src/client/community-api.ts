@@ -15,6 +15,13 @@ export async function fetchCommunityPosts(
   return res.json()
 }
 
+export async function fetchCommunityPost(id: string): Promise<CommunityPost> {
+  const res = await fetch(`/api/community/posts/${id}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? '글을 불러오지 못했어요.')
+  return data as CommunityPost
+}
+
 export async function submitCommunityPost(input: CreateCommunityPostInput): Promise<CommunityPost> {
   const res = await fetch('/api/community/posts', {
     method: 'POST',
@@ -35,6 +42,14 @@ export async function updateCommunityPost(id: string, input: UpdateCommunityPost
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error ?? '글을 수정하지 못했어요.')
   return data as CommunityPost
+}
+
+export async function deleteCommunityPost(id: string): Promise<void> {
+  const res = await fetch(`/api/community/posts/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error ?? '글을 삭제하지 못했어요.')
+  }
 }
 
 export async function setCommunityPostHelpful(id: string, liked: boolean): Promise<CommunityPost> {

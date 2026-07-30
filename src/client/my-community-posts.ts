@@ -18,6 +18,10 @@ export function rememberMyPost(id: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([id, ...ids]))
 }
 
+export function forgetMyPost(id: string): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(readIds().filter((existing) => existing !== id)))
+}
+
 export function isMyPost(id: string): boolean {
   return readIds().includes(id)
 }

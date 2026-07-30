@@ -130,6 +130,17 @@ function toSummaryItem(post: CommunityPost, pick?: Pick<PickResult, 'reason' | '
   }
 }
 
+// Solar Pro가 JSON을 ```json 코드펜스로 감싸거나 앞뒤에 설명 문장을 붙여서
+// 반환하는 경우가 있어서, 파싱 전에 JSON 본문([...] 또는 {...})만 잘라냄.
+function stripToJson(raw: string): string {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const body = (fenced ? fenced[1] : raw).trim()
+  const start = body.search(/[[{]/)
+  if (start === -1) return body
+  const lastBracket = Math.max(body.lastIndexOf(']'), body.lastIndexOf('}'))
+  return lastBracket > start ? body.slice(start, lastBracket + 1) : body.slice(start)
+}
+
 // Solar Pro가 매번 정확히 같은 JSON 모양으로 답하진 않음 — 순수 배열, 객체 하나,
 // { results: [...] } 처럼 아무 키로나 감싼 배열까지 다 받아줌.
 function extractPickArray(parsed: unknown): unknown[] {
@@ -168,7 +179,7 @@ async function pickRelevantPosts(candidates: CommunityPost[], situation: string,
   ])
 
   try {
-    const items = extractPickArray(JSON.parse(raw))
+    const items = extractPickArray(JSON.parse(stripToJson(raw)))
     return items
       .filter((item): item is PickResult => typeof (item as PickResult)?.id === 'string' && typeof (item as PickResult)?.reason === 'string')
       .slice(0, limit)

@@ -6,7 +6,7 @@ import { ReactNode } from 'react'
 export type IconName =
   | 'sparkle' | 'home' | 'check' | 'folder' | 'users' | 'person'
   | 'file' | 'clock' | 'alert' | 'wallet' | 'send' | 'calendar'
-  | 'upload' | 'building' | 'heart' | 'edit' | 'search'
+  | 'upload' | 'building' | 'heart' | 'edit' | 'search' | 'close' | 'trash'
 
 const iconPaths: Record<IconName, ReactNode> = {
   sparkle: <><path d="m12 2 1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></>,
@@ -26,6 +26,8 @@ const iconPaths: Record<IconName, ReactNode> = {
   heart: <path d="M20 8.5c0 5-8 10-8 10s-8-5-8-10A4.5 4.5 0 0 1 12 5.7a4.5 4.5 0 0 1 8 2.8z"/>,
   edit: <><path d="m4 20 4-.8L19 8.2 15.8 5 4.8 16zM14.5 6.3l3.2 3.2"/></>,
   search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></>,
+  close: <path d="M5 5 19 19M19 5 5 19"/>,
+  trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></>,
 }
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {

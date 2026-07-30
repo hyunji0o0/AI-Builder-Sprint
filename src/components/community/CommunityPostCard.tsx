@@ -26,14 +26,17 @@ function timeAgo(iso: string) {
 export function CommunityPostCard({
   post,
   onEdit,
+  onDelete,
   onHelpful,
 }: {
   post: CommunityPost
   onEdit: (post: CommunityPost) => void
+  onDelete: (post: CommunityPost) => void
   onHelpful: (id: string, liked: boolean) => void
 }) {
   const primaryTone = CATEGORY_TONE[post.categories[0]]
   const [liked, setLiked] = useState(() => hasLikedPost(post.id))
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const handleHelpful = () => {
     const next = !liked
@@ -58,10 +61,22 @@ export function CommunityPostCard({
             </span>
           ))}
         </div>
-        {isMyPost(post.id) && (
-          <button type="button" className="cm-card-edit" onClick={() => onEdit(post)} aria-label="내 글 수정">
-            <Icon name="edit" size={13} />
-          </button>
+        {isMyPost(post.id) && !confirmingDelete && (
+          <div className="cm-card-owner-actions">
+            <button type="button" className="cm-card-edit" onClick={() => onEdit(post)} aria-label="내 글 수정">
+              <Icon name="edit" size={13} />
+            </button>
+            <button type="button" className="cm-card-delete" onClick={() => setConfirmingDelete(true)} aria-label="내 글 삭제">
+              <Icon name="trash" size={13} />
+            </button>
+          </div>
+        )}
+        {confirmingDelete && (
+          <div className="cm-card-delete-confirm">
+            <span>삭제할까요?</span>
+            <button type="button" onClick={() => onDelete(post)}>삭제</button>
+            <button type="button" onClick={() => setConfirmingDelete(false)}>취소</button>
+          </div>
         )}
       </div>
       <p className="cm-card-content">{post.content}</p>

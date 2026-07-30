@@ -49,10 +49,19 @@ PR을 만들려고 하는 경우가 있으니, PR 만들 때는 `--repo hyunji0o
 - `src/server/community-server-plugin.ts` — `/api/community/posts` 및 하위
   경로(`/:id`, `/:id/helpful`, `/:id/comments`) GET/POST/PATCH/DELETE.
   `agent_and_ui`의 `vite-agent-plugin.ts`와 완전히 같은 패턴(Connect 미들웨어).
-- `src/components/community/` — `CommunityFeed`(카테고리 탭 + 목록 + 글쓰기 +
-  "내가 쓴 글" 토글), `CommunityPostCard`(좋아요/취소, 수정 버튼, 댓글 섹션),
-  `CommunityComposer`(글자 수 카운터 포함), `CommunityComments`(댓글 + 대댓글,
-  각각 1개 초과 시 "더보기").
+- `src/components/community/` — `CommunityFeed`(카테고리 탭 + 검색 + 정렬 +
+  목록 + 글쓰기 + "내가 쓴 글" 토글), `CommunityPostCard`(카테고리 여러 개
+  배지, 좋아요/취소, 수정 버튼, 댓글 섹션), `CommunityComposer`(카테고리
+  다중 선택, 글자 수 제한 없음), `CommunityComments`(댓글 + 대댓글, 각각
+  1개 초과 시 "더보기").
+- `src/components/community/AgentTestWidget.tsx` — merge 전에
+  `searchCommunityReviewsForAgent()`를 직접 눌러보기 위한 임시 위젯. 화면
+  우측 하단에 흔히 보이는 동그란 챗 버블 패턴으로, 클릭하면 작은 패널이 열려
+  자유 텍스트로 상황을 입력하면 `/api/community/agent-test`를 호출해 카드
+  최대 3개(요약 excerpt + 이유 reason)를 보여줌. 카드의 "더 자세히 보기"는
+  `GET /api/community/posts/:id`로 원글 전체를 펼침. **merge 후엔 실제
+  메인챗이 이 역할을 대신하니 이 컴포넌트, `src/client/community-agent-test-api.ts`,
+  `/api/community/agent-test` 라우트는 다 지워도 됨.**
 - `src/client/community-api.ts`, `my-community-posts.ts`, `community-likes.ts`
   — fetch 헬퍼 + localStorage 기반 "내 글"/"좋아요 누른 글" 판별 (로그인 전
   스텁, §"왜 이런 구조인가" 참고).
@@ -106,7 +115,11 @@ PR을 만들려고 하는 경우가 있으니, PR 만들 때는 `--repo hyunji0o
   스텁. `CommunityPost.nickname`은 문자열이라, 나중에 로그인 붙이면 로그인
   유저 정보로 바꿔 끼우면 됨 (스키마 변경 없음). "내가 쓴 글"/"좋아요 누른
   글" 판별도 지금은 이 브라우저의 localStorage에 id를 기록해두는 방식(§내가
-  만든 것)이라, 로그인 붙이면 서버 쪽 소유자 필드 체크로 교체하면 됨.
+  만든 것)이라, 로그인 붙이면 서버 쪽 소유자 필드 체크로 교체하면 됨. **주의:
+  지금 수정/삭제 API(`PATCH`, `DELETE /api/community/posts/:id`)엔 소유자
+  검증이 전혀 없음** — 화면에선 내 글에만 버튼이 보이지만 API를 직접 치면
+  누구 글이든 수정·삭제 가능. 로그인 붙일 때 반드시 같이 막아야 함(2026-07-30
+  브랜치 점검 때 발견, 지금은 데모 규모라 의도적으로 미룸).
 - **카테고리는 필수값.** 메인 챗 쪽 에이전트가 "지금 이 할일과 관련된 팁"을
   골라오려면 태그가 있어야 필터링이 쉬움. 카테고리 값 자체는 DB에서 `text`
   컬럼(enum 타입 아님)이라, 나중에 카테고리를 추가/변경해도 DB 마이그레이션
@@ -187,10 +200,18 @@ PR을 만들려고 하는 경우가 있으니, PR 만들 때는 `--repo hyunji0o
    맞는 글을 골라 이유까지 써주는 구조라, 프롬프트 인젝션 가드레일(커뮤니티
    글 속 지시문 무시)과 응답 형식 방어(JSON이 매번 다른 모양으로 옴)를
    이미 넣어뒀음.
-4. **임베딩 채우기 + pgvector 유사도 검색 구현** — 임베딩 모델 선정(예: Voyage
-   AI) → 65개 글(+ 앞으로 쌓일 댓글) 임베딩 생성해서 `embedding` 컬럼 채우기
-   → category 필터 + `<=>` 코사인 유사도로 정렬하는 조회 함수 작성. 이게
-   되어야 "에이전트가 커뮤니티 데이터를 학습해서 팁 추천"이 실제로 동작함.
+4. **임베딩 차원 수정 + 백필 실행** — 코드는 다 있는데(**Upstage Solar
+   임베딩으로 확정**, `upstage-client.ts` + `scripts/backfill-embeddings.mjs`),
+   **라이브 DB의 `embedding` 컬럼이 초기 스키마의 `vector(1536)` 그대로라서
+   4096차원 Solar 임베딩 저장이 전부 조용히 실패하고 있었음**(2026-07-30
+   진단 — 글 65개 전부 embedding null, 벡터 검색이 결과 0개를 돌려줘서
+   하이브리드 랭킹이 BM25만으로 동작 중이었음). 순서: ① Supabase SQL
+   Editor에서 `supabase/migration_fix_embedding_dim.sql` 실행(컬럼 타입만
+   4096으로 변경, 전부 null이라 데이터 손실 없음) → ② `node
+   scripts/backfill-embeddings.mjs`로 65개 채우기 → ③ 벡터 검색이 실제로
+   결과를 내는지 확인. 참고: 예전 `migration_embedding_search.sql`은
+   multi-category 이전 스키마(`category` 단수) 기준이라 지금 실행하면
+   `match_community_posts` 함수를 망가뜨려서 **삭제함**.
 5. **`docs/tips_raw.md` 처리 방향 결정** — `tips_tagged.md`는 이번에 커뮤니티
    글로 옮겼지만, `tips_raw.md`(세무사 상담 요약)는 아직 미정. F7 팁 카드로
    갈지, 커뮤니티로 갈지, 출처를 "세무사 상담 요약"으로 명시하는 별도 카드로

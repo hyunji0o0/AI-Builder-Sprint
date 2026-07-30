@@ -58,6 +58,12 @@ export async function createCommunityPost(input: CreateCommunityPostInput): Prom
   return post
 }
 
+export async function getCommunityPost(id: string): Promise<CommunityPost | null> {
+  const { data, error } = await supabase.from('community_posts').select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as PostRow) : null
+}
+
 export async function updateCommunityPost(id: string, input: UpdateCommunityPostInput): Promise<CommunityPost | null> {
   const { data, error } = await supabase
     .from('community_posts')
@@ -66,7 +72,15 @@ export async function updateCommunityPost(id: string, input: UpdateCommunityPost
     .select()
     .maybeSingle()
   if (error) throw error
-  return data ? fromRow(data as PostRow) : null
+  if (!data) return null
+
+  // 내용이 바뀌었으니 임베딩도 다시 채움(안 그러면 수정 전 내용의 벡터로 검색됨).
+  // 생성 때와 같은 이유로 백그라운드 처리 — 응답을 늦추거나 실패로 수정을 막지 않음.
+  embedPassage(input.content)
+    .then((embedding) => supabase.from('community_posts').update({ embedding }).eq('id', id))
+    .catch((err) => console.error('글 임베딩 갱신 실패:', err))
+
+  return fromRow(data as PostRow)
 }
 
 export type CommunityPostMatch = CommunityPost & { similarity: number }
@@ -85,6 +99,13 @@ export async function searchCommunityPosts(
   })
   if (error) throw error
   return (data as (PostRow & { similarity: number })[]).map((row) => ({ ...fromRow(row), similarity: row.similarity }))
+}
+
+export async function deleteCommunityPost(id: string): Promise<boolean> {
+  // community_comments.post_id가 on delete cascade라 댓글도 같이 지워짐(schema.sql).
+  const { error, count } = await supabase.from('community_posts').delete({ count: 'exact' }).eq('id', id)
+  if (error) throw error
+  return (count ?? 0) > 0
 }
 
 export async function setCommunityPostHelpful(id: string, liked: boolean): Promise<CommunityPost | null> {

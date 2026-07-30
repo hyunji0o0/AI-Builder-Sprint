@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { fetchCommunityPosts, setCommunityPostHelpful, submitCommunityPost, updateCommunityPost } from '../../client/community-api'
-import { getMyPostIds, rememberMyPost } from '../../client/my-community-posts'
+import { deleteCommunityPost, fetchCommunityPosts, setCommunityPostHelpful, submitCommunityPost, updateCommunityPost } from '../../client/community-api'
+import { forgetMyPost, getMyPostIds, rememberMyPost } from '../../client/my-community-posts'
 import { CommunityCategory, CommunityPost, CATEGORY_LABEL, communityCategorySchema } from '../../schemas/community'
 import { Icon } from '../ui/Icon'
 import { CommunityComposer } from './CommunityComposer'
@@ -99,6 +99,16 @@ export function CommunityFeed() {
   const handleEdit = (post: CommunityPost) => {
     setEditingPost(post)
     setView('write')
+  }
+
+  const handleDelete = async (post: CommunityPost) => {
+    try {
+      await deleteCommunityPost(post.id)
+      forgetMyPost(post.id)
+      setPosts((current) => current.filter((item) => item.id !== post.id))
+    } catch {
+      setError('글을 삭제하지 못했어요.')
+    }
   }
 
   const handleCancel = () => {
@@ -224,7 +234,7 @@ export function CommunityFeed() {
               </p>
             )}
             {!loading && !error && posts.map((post) => (
-              <CommunityPostCard key={post.id} post={post} onEdit={handleEdit} onHelpful={handleHelpful} />
+              <CommunityPostCard key={post.id} post={post} onEdit={handleEdit} onDelete={handleDelete} onHelpful={handleHelpful} />
             ))}
           </div>
         </>
