@@ -1,3 +1,4 @@
+import type { ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
 import { createCommunityCommentSchema, createCommunityPostSchema, updateCommunityPostSchema } from '../schemas/community'
 import { createCommunityComment, listCommunityComments } from './community-comment-store'
@@ -13,9 +14,24 @@ const readBody = async (req: NodeJS.ReadableStream) => {
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
 }
 
+// async 미들웨어에서 예외가 새어나가면 unhandled rejection이 되어 dev 서버 프로세스가
+// 통째로 죽음(Node 15+ 기본 동작). 라우트마다 try/catch를 빠뜨리지 않도록 여기서 한 번 감쌈.
+type Handler = (req: Connect.IncomingMessage, res: ServerResponse) => Promise<void>
+const withErrorBoundary = (handler: Handler): Connect.NextHandleFunction => (req, res) => {
+  handler(req as Connect.IncomingMessage, res as ServerResponse).catch((error) => {
+    console.error('커뮤니티 API 처리 실패:', error)
+    if (res.headersSent) {
+      res.end()
+      return
+    }
+    res.statusCode = 500
+    res.end(JSON.stringify({ error: '요청을 처리하지 못했어요.' }))
+  })
+}
+
 export function createCommunityServerPlugin(): Plugin {
   const installApi = (middlewares: Connect.Server) => {
-    middlewares.use('/api/community/posts', async (req, res) => {
+    middlewares.use('/api/community/posts', withErrorBoundary(async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
       const urlPath = (req.url ?? '').split('?')[0].replace(/^\/+|\/+$/g, '')
@@ -127,11 +143,11 @@ export function createCommunityServerPlugin(): Plugin {
 
       res.statusCode = 404
       res.end(JSON.stringify({ error: '알 수 없는 요청이에요.' }))
-    })
+    }))
 
     // /api/community/recommend — 사용자 상황을 근거로 관련 커뮤니티 경험담을 검색해서
     // Solar Pro 3가 종합한 답을 돌려줌. merge 후 메인 챗 에이전트가 이 라우트를 호출.
-    middlewares.use('/api/community/recommend', async (req, res) => {
+    middlewares.use('/api/community/recommend', withErrorBoundary(async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
       if (req.method !== 'POST') {
@@ -153,7 +169,7 @@ export function createCommunityServerPlugin(): Plugin {
         res.statusCode = 500
         res.end(JSON.stringify({ error: '추천을 생성하지 못했어요.', detail: `${error}` }))
       }
-    })
+    }))
   }
 
   return {
