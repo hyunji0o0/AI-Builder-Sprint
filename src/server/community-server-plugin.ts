@@ -1,9 +1,10 @@
 import type { ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
-import { createCommunityCommentSchema, createCommunityPostSchema, updateCommunityPostSchema } from '../schemas/community'
+import { createCommunityCommentSchema, createCommunityPostSchema, toCommunityReviewBlock, updateCommunityPostSchema } from '../schemas/community'
 import { createCommunityComment, listCommunityComments } from './community-comment-store'
 import { createCommunityPost, listCommunityPosts, setCommunityPostHelpful, updateCommunityPost } from './community-store'
-import { recommendCommunityTips } from './community-recommend'
+import { PROCEDURE_STEPS, PROCEDURE_STEP_IDS, procedureStepIdSchema } from '../schemas/procedure-steps'
+import { RecommendInput, recommendCommunityTips } from './community-recommend'
 
 // agent_and_ui의 vite-agent-plugin.ts와 동일한 패턴(Vite dev 서버에 미들웨어로
 // API를 붙이는 방식)을 그대로 따름. 합칠 때 vite.config.ts의 plugins 배열에
@@ -145,8 +146,22 @@ export function createCommunityServerPlugin(): Plugin {
       res.end(JSON.stringify({ error: '알 수 없는 요청이에요.' }))
     }))
 
-    // /api/community/recommend — 사용자 상황을 근거로 관련 커뮤니티 경험담을 검색해서
-    // Solar Pro 3가 종합한 답을 돌려줌. merge 후 메인 챗 에이전트가 이 라우트를 호출.
+    // /api/community/recommend — 지금 밟고 있는 단계에 맞는 커뮤니티 팁 카드를 돌려줌.
+    //
+    //   요청: {
+    //     stepId?: ProcedureStepId,        // docs/기획서.md §12의 8단계. 이것만 줘도 동작
+    //     situation?: string,              // 단계로 안 떨어질 때 / 맥락 추가
+    //     context?: {                      // 개인화 신호, 전부 선택
+    //       relationToDeceased?, region?, debtExceedsAssets?,
+    //       hasUnverifiedItems?, daysRemaining?, missingDocuments?
+    //     },
+    //     category?: CommunityCategory,    // 하드 필터. 기본은 안 씀
+    //     limit?: number,
+    //     format?: 'tips' | 'block',       // 'block'이면 COMMUNITY_REVIEW로 변환
+    //   }
+    //   응답: { step, tips: CommunityTip[], disclaimer, candidateCount }
+    //
+    // GET /api/community/steps로 단계 목록을 받아갈 수 있음.
     middlewares.use('/api/community/recommend', withErrorBoundary(async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
@@ -157,18 +172,43 @@ export function createCommunityServerPlugin(): Plugin {
       }
 
       try {
-        const body = (await readBody(req)) as { query?: string; category?: string; limit?: number }
-        if (!body.query || !body.query.trim()) {
+        const body = (await readBody(req)) as RecommendInput & { format?: 'tips' | 'block' }
+        if (body.stepId && !procedureStepIdSchema.safeParse(body.stepId).success) {
           res.statusCode = 422
-          res.end(JSON.stringify({ error: 'query가 필요합니다.' }))
+          res.end(JSON.stringify({
+            error: `stepId가 올바르지 않아요. 가능한 값: ${PROCEDURE_STEP_IDS.join(', ')}`,
+          }))
           return
         }
-        const result = await recommendCommunityTips(body.query.trim(), body.category, body.limit)
-        res.end(JSON.stringify(result))
+        if (!body.stepId && !body.situation?.trim()) {
+          res.statusCode = 422
+          res.end(JSON.stringify({ error: 'stepId 또는 situation 중 하나는 필요합니다.' }))
+          return
+        }
+        const result = await recommendCommunityTips(body)
+        res.end(JSON.stringify(
+          body.format === 'block' ? toCommunityReviewBlock(result.tips, result.disclaimer) : result,
+        ))
       } catch (error) {
         res.statusCode = 500
         res.end(JSON.stringify({ error: '추천을 생성하지 못했어요.', detail: `${error}` }))
       }
+    }))
+
+    // /api/community/steps — 팁 카드를 요청할 수 있는 단계 목록.
+    // 호출부가 stepId를 하드코딩하지 않고 여기서 받아가도록 열어둠.
+    middlewares.use('/api/community/steps', withErrorBoundary(async (_req, res) => {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.end(JSON.stringify(
+        PROCEDURE_STEP_IDS.map((id) => ({
+          id,
+          label: PROCEDURE_STEPS[id].label,
+          deadline: PROCEDURE_STEPS[id].deadline,
+          baseDate: PROCEDURE_STEPS[id].baseDate,
+          legalBasis: PROCEDURE_STEPS[id].legalBasis,
+          categories: PROCEDURE_STEPS[id].categories,
+        })),
+      ))
     }))
   }
 
