@@ -14,7 +14,7 @@ import requests
 from dotenv import load_dotenv
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 UPSTAGE_DOCUMENT_PARSE_URL = (
     "https://api.upstage.ai/v1/document-digitization"

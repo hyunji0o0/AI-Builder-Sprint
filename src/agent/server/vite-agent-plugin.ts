@@ -1,5 +1,5 @@
 import type { Connect, Plugin } from 'vite'
-import { createDocumentProcessingTool } from '../tools/document-processing-tool'
+import { createDocumentProcessingTool } from '../document-processing/tool/document-processing-tool'
 import { runAgent } from '../orchestrator/run-agent'
 import { AgentLLM } from '../shared/llm-adapter'
 import { systemPrompt } from '../prompts/system'

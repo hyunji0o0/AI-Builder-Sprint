@@ -21,7 +21,7 @@ from document_parser import parse_document
 # 프로젝트 및 API 설정
 # ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 DOCUMENT_DIR = PROJECT_ROOT / "document"
 
 FINANCIAL_DIR = DOCUMENT_DIR / "financial"

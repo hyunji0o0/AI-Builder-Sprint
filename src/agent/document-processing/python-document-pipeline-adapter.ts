@@ -236,7 +236,7 @@ export class PythonDocumentPipelineAdapter implements DocumentPipelineAdapter {
         await writeFile(temporaryPath, inspection.bytes)
         const parsed = await runPythonPipeline(
           this.pythonCommand,
-          join(this.projectRoot, 'document_analysis_pipeline.py'),
+          join(this.projectRoot, 'src', 'agent', 'document-processing', 'python', 'document_analysis_pipeline.py'),
           temporaryPath,
           this.apiKey,
         )

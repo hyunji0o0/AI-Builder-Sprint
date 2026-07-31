@@ -11,7 +11,7 @@ from typing import Any
 from document_analysis_pipeline import analyze_document
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 DEFAULT_OUTPUT_DIR = (
     PROJECT_ROOT

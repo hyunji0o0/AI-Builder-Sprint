@@ -1,11 +1,11 @@
-import { CaseState } from '../schemas/case-state'
-import { DocumentPipelineInput } from '../schemas/document-pipeline'
-import { createDocumentPipeline, DocumentPipelineConfig } from '../document-processing/document-pipeline-factory'
+import { CaseState } from '../../schemas/case-state'
+import { DocumentPipelineInput } from '../../schemas/document-pipeline'
+import { createDocumentPipeline, DocumentPipelineConfig } from '../document-pipeline-factory'
 import {
   DocumentPipelineRunResult,
   runDocumentPipeline,
-} from '../document-processing/run-document-pipeline'
-import { DocumentPipelineAdapter } from '../document-processing/document-pipeline'
+} from '../run-document-pipeline'
+import { DocumentPipelineAdapter } from '../document-pipeline'
 
 export type DocumentProcessingToolInput = {
   input: DocumentPipelineInput

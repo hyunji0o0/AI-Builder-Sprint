@@ -114,6 +114,6 @@ pnpm dev
 Upstage Solar Chat Completions API를 호출합니다. `.env.local`을 변경한 경우
 개발 서버를 다시 시작해야 합니다.
 
-문서 업로드는 기본적으로 저장소의 `document_analysis_pipeline.py`를 Tool Call로
+문서 업로드는 `src/agent/document-processing/python/document_analysis_pipeline.py`를 Tool Call로
 실행합니다. Python 명령어가 다르면 `PYTHON_COMMAND`를 변경해 주세요.
 제품 실행 경로에서는 Upstage 기반 실제 문서 파이프라인만 사용합니다.

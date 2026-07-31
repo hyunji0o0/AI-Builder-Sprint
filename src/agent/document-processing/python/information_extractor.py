@@ -21,7 +21,7 @@ from document_classifier import classify_document
 # 프로젝트 및 API 설정
 # ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 UPSTAGE_INFORMATION_EXTRACT_URL = (
     "https://api.upstage.ai/v1/information-extraction"
