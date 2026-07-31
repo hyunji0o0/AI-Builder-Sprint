@@ -97,15 +97,16 @@ git push origin develop
 ```env
 UPSTAGE_API_KEY=up_your_api_key_here
 UPSTAGE_MODEL=solar-pro3
-AGENT_MOCK_MODE=false
-DOCUMENT_PIPELINE_MODE=mock
-ALLOW_MOCK_DOCUMENT_PIPELINE_IN_PRODUCTION=false
+DOCUMENT_PIPELINE_MODE=python
+# 자동 탐색이 실패할 때만 설정
+# PYTHON_COMMAND=C:\path\to\python.exe
 ```
 
 2. 의존성을 설치하고 개발 서버를 실행합니다.
 
 ```bash
 pnpm install
+python -m pip install -r requirements.txt
 pnpm dev
 ```
 
@@ -113,10 +114,6 @@ pnpm dev
 Upstage Solar Chat Completions API를 호출합니다. `.env.local`을 변경한 경우
 개발 서버를 다시 시작해야 합니다.
 
-API 키 발급 전에는 `AGENT_MOCK_MODE=true`로 설정하면 외부 LLM 호출 없이
-동일한 Agent 상태·도구·UI Block 흐름을 확인할 수 있습니다. 실제 Solar를
-연결할 때는 반드시 `false`로 되돌려 주세요.
-
-문서 파이프라인은 개발 환경에서 `DOCUMENT_PIPELINE_MODE=mock`이 기본입니다.
-실제 Upstage Document Parse를 사용할 때는 `live`로 변경합니다. 운영 환경에서
-mock 사용은 기본 차단되며, 명시적 데모 배포가 아니라면 허용 옵션을 켜지 마세요.
+문서 업로드는 기본적으로 저장소의 `document_analysis_pipeline.py`를 Tool Call로
+실행합니다. Python 명령어가 다르면 `PYTHON_COMMAND`를 변경해 주세요.
+제품 실행 경로에서는 Upstage 기반 실제 문서 파이프라인만 사용합니다.

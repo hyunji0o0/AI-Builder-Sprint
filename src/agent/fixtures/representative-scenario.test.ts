@@ -29,8 +29,9 @@ describe('대표 Agent 데이터 시나리오', () => {
     )
 
     expect(result.caseState.stage).toBe('CONFIRMING_EXTRACTION')
-    expect(result.output.ui.filter((block) => block.type === 'FIELD_VERIFICATION'))
-      .toHaveLength(5)
+    const reviews = result.output.ui.filter((block) => block.type === 'DOCUMENT_EXTRACTION_REVIEW')
+    expect(reviews).toHaveLength(3)
+    expect(reviews.reduce((count, review) => count + review.items.length, 0)).toBe(5)
     expect(result.output.message).toContain('원문')
   })
 

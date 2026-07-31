@@ -1,11 +1,11 @@
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { toDashboardCase } from './case.data'
-import { AgentBlockKind, AgentMessage, CaseStage } from './case.types'
+import { AgentBlockKind, AgentMessage, CaseStage, UploadedDocument } from './case.types'
 import { requestSolarReply } from '../../agent/client/agent-api'
 import { AgentUIBlock } from '../../agent/schemas/agent-output'
 import { DocumentProgress } from '../../agent/schemas/document-pipeline'
 import { processDocuments } from '../../agent/client/document-api'
-import { confirmDocumentField } from '../../agent/document-processing/run-document-pipeline'
+import { confirmAllDocumentFields, confirmDocumentField } from '../../agent/document-processing/run-document-pipeline'
 import { resolveCaseScenario } from './case.scenario'
 
 const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
@@ -37,18 +37,54 @@ export function useCaseAgent() {
   const [messages, setMessages] = useState<AgentMessage[]>(scenario.messages)
   const [input, setInput] = useState('')
   const [activeMenu, setActiveMenu] = useState('AI 홈')
-  const [assetDraft, setAssetDraft] = useState(String(scenario.caseState.financials.totalAssets ?? 0))
-  const [debtDraft, setDebtDraft] = useState(String(scenario.caseState.financials.totalDebts ?? 0))
+  const [assetDraft, setAssetDraft] = useState(scenario.caseState.financials.totalAssets === null ? '' : String(scenario.caseState.financials.totalAssets))
+  const [debtDraft, setDebtDraft] = useState(scenario.caseState.financials.totalDebts === null ? '' : String(scenario.caseState.financials.totalDebts))
   const [isResponding, setIsResponding] = useState(false)
+  const [responseStatus, setResponseStatus] = useState('답변을 준비하고 있어요…')
   const [documentProgress, setDocumentProgress] = useState<DocumentProgress[]>([])
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([])
+  const [previewDocument, setPreviewDocument] = useState<UploadedDocument | null>(null)
+  const uploadedDocumentsRef = useRef<UploadedDocument[]>([])
   const caseState = useMemo(() => toDashboardCase(agentCaseState, caseUi), [agentCaseState, caseUi])
 
-  const stages: CaseStage[] = useMemo(() => [
-    { label: '기본 정보 확인', state: '완료', done: true },
-    { label: '서류 확인', state: caseState.documents >= 4 ? '완료' : '진행 중', done: caseState.documents >= 4 },
-    { label: '재산·채무 확인', state: caseState.needsCheck === 0 ? '완료' : '진행 중', done: caseState.needsCheck === 0 },
-    { label: '상담 준비', state: caseState.activeTasks === 0 ? '준비 완료' : '곧 진행 예정', done: caseState.activeTasks === 0 },
-  ], [caseState])
+  useEffect(() => {
+    uploadedDocumentsRef.current = uploadedDocuments
+  }, [uploadedDocuments])
+
+  useEffect(() => () => {
+    uploadedDocumentsRef.current.forEach((document) => URL.revokeObjectURL(document.url))
+  }, [])
+
+  const stages: CaseStage[] = useMemo(() => {
+    const basicInformationPresent = Boolean(
+      agentCaseState.user.relationToDeceased
+      && agentCaseState.user.region.city
+      && agentCaseState.deceased.deathDate,
+    )
+    const basicDone = agentCaseState.onboardingCompleted && basicInformationPresent
+    const documentsStarted = agentCaseState.documents.length > 0
+    const documentsDone = documentsStarted
+      && agentCaseState.documents.every((document) => document.status === 'VERIFIED')
+    const financialsStarted = agentCaseState.financials.totalAssets !== null
+      || agentCaseState.financials.totalDebts !== null
+      || agentCaseState.financials.assets.length > 0
+      || agentCaseState.financials.debts.length > 0
+    const financialsDone = agentCaseState.financials.totalAssets !== null
+      && agentCaseState.financials.totalDebts !== null
+      && !agentCaseState.financials.hasUnverifiedItems
+    const consultationTasks = agentCaseState.tasks.filter((task) => task.category === 'CONSULTATION')
+    const consultationStarted = consultationTasks.length > 0
+    const consultationDone = consultationStarted
+      && consultationTasks.every((task) => task.status === 'COMPLETED' || task.status === 'NOT_APPLICABLE')
+
+    const currentIndex = !basicDone ? 0 : !documentsDone ? 1 : !financialsDone ? 2 : 3
+    return [
+      { label: '기본 정보 확인', state: basicDone ? '완료' : basicInformationPresent ? '확인 중' : '시작 전', done: basicDone },
+      { label: '서류 확인', state: documentsDone ? '완료' : documentsStarted ? '확인 중' : '대기', done: documentsDone },
+      { label: '재산·채무 확인', state: financialsDone ? '완료' : financialsStarted ? '확인 중' : '대기', done: financialsDone },
+      { label: '상담 준비', state: consultationDone ? '완료' : consultationStarted ? '준비 중' : '대기', done: consultationDone },
+    ].map((stage, index) => ({ ...stage, current: index === currentIndex }))
+  }, [agentCaseState])
 
   const addAgent = (text: string, block?: AgentBlockKind, ui?: AgentUIBlock[]) => {
     setMessages((current) => [...current, {
@@ -68,7 +104,14 @@ export function useCaseAgent() {
     const nextMessages = [...messages, userMessage]
     setMessages(nextMessages)
     setInput('')
+
+    if (/(문서|서류|파일).*(보낼|보내|올릴|올려|업로드|첨부)|(?:보낼|올릴|업로드|첨부).*(문서|서류|파일)/.test(question.replace(/\s+/g, ''))) {
+      addAgent('좋아. 아래에서 문서를 선택해줘. 파일을 올리면 문서 종류와 중요한 내용을 확인해서 보기 쉽게 정리해줄게.', 'upload')
+      return
+    }
+
     setIsResponding(true)
+    setResponseStatus('답변을 준비하고 있어요…')
 
     try {
       const reply = await requestSolarReply(question, agentCaseState, undefined, nextMessages)
@@ -88,6 +131,7 @@ export function useCaseAgent() {
     const nextMessages = [...messages, userMessage]
     setMessages(nextMessages)
     setIsResponding(true)
+    setResponseStatus('다음 업무를 정리하고 있어요…')
     try {
       const reply = await requestSolarReply('다음 준비 단계로 진행해줘', agentCaseState, 'CONTINUE_WORKFLOW', nextMessages)
       setAgentCaseState(reply.caseState)
@@ -153,16 +197,24 @@ export function useCaseAgent() {
     addAgent('상속 사실을 알게 된 날짜를 저장했어. 기한을 계산할 때는 공식 기준도 함께 확인해야 해.', 'complete')
   }
 
-  const chooseQuick = (label: string, block: AgentBlockKind) => {
-    setMessages((current) => [...current, { id: Date.now(), role: 'user', text: label }])
-    const text = block === 'urgent'
-      ? '지금 가장 먼저 확인해야 하는 항목은 ○○은행 채무 금액이야.'
-      : block === 'checklist'
-        ? '상담 전에 준비해야 할 서류를 확인해줘.'
-        : block === 'institution'
-          ? '부산에서 방문할 수 있는 기관을 찾았어.'
-          : '지금 상황과 비슷한 경험자의 팁이야.'
-    window.setTimeout(() => addAgent(text, block), 280)
+  const chooseQuick = async (label: string, block: AgentBlockKind) => {
+    void block
+    if (isResponding) return
+    const userMessage: AgentMessage = { id: Date.now(), role: 'user', text: label }
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
+    setIsResponding(true)
+    setResponseStatus(label.includes('기관') ? '공식 기관 정보를 찾고 있어요…' : label.includes('후기') ? '사용자 후기를 찾고 있어요…' : '현재 사건 상태를 확인하고 있어요…')
+    try {
+      const reply = await requestSolarReply(label, agentCaseState, undefined, nextMessages)
+      setAgentCaseState(reply.caseState)
+      addAgent(reply.output.message, blockFromUI(reply.output.ui), reply.output.ui)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '잠시 후 다시 시도해줘.'
+      addAgent(`요청을 처리하지 못했어. ${message}`)
+    } finally {
+      setIsResponding(false)
+    }
   }
 
   const menuAction = (label: string) => {
@@ -172,8 +224,23 @@ export function useCaseAgent() {
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     if (!files.length) return
+    const attachments = files.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      name: file.name,
+      type: file.type,
+      url: URL.createObjectURL(file),
+    }))
+    setUploadedDocuments((current) => [...current, ...attachments])
+    setActiveMenu('AI 홈')
+    setMessages((current) => [...current, {
+      id: Date.now(),
+      role: 'user',
+      text: files.length === 1 ? '문서를 업로드했어.' : `문서 ${files.length}개를 업로드했어.`,
+      attachments,
+    }])
     setCaseUi((state) => ({ ...state, uploadedFile: files.length === 1 ? files[0].name : `${files.length}개 파일` }))
     setIsResponding(true)
+    setResponseStatus('문서를 확인 중이에요…')
     try {
       const result = await processDocuments(files, agentCaseState, setDocumentProgress)
       setAgentCaseState(result.caseState)
@@ -210,6 +277,7 @@ export function useCaseAgent() {
     addAgent('확인한 값을 사건 상태와 대시보드에 반영했어.', 'complete')
     if (nextState.documents.length > 0 && nextState.documents.every((document) => document.status === 'VERIFIED')) {
       setIsResponding(true)
+      setResponseStatus('확인한 문서를 바탕으로 다음 업무를 정리하고 있어요…')
       try {
         const reply = await requestSolarReply('문서 확인이 끝났어. 개인별 절차를 시작해줘.', nextState, 'CONTINUE_WORKFLOW', messages)
         setAgentCaseState(reply.caseState)
@@ -218,6 +286,18 @@ export function useCaseAgent() {
         setIsResponding(false)
       }
     }
+  }
+
+  const confirmPipelineDocument = (documentId: string) => {
+    const nextState = confirmAllDocumentFields(agentCaseState, documentId)
+    setAgentCaseState(nextState)
+    const document = nextState.documents.find((item) => item.id === documentId)
+    addAgent(
+      document?.status === 'VERIFIED'
+        ? '확인한 내용을 사건 정보에 반영했어. 이제 이 문서를 기준으로 다음 업무를 정리할 수 있어.'
+        : '확인한 값은 반영했어. 값이 비어 있거나 추가 확인이 필요한 항목은 하나씩 확인해줘.',
+      'complete',
+    )
   }
 
   const saveFinance = () => {
@@ -272,12 +352,16 @@ export function useCaseAgent() {
     assetDraft,
     debtDraft,
     isResponding,
+    responseStatus,
     documentProgress,
+    uploadedDocuments,
+    previewDocument,
     stages,
     setInput,
     setAssetDraft,
     setDebtDraft,
     setSelectedDate,
+    setPreviewDocument,
     addAgent,
     send,
     advanceWorkflow,
@@ -288,6 +372,7 @@ export function useCaseAgent() {
     upload,
     confirmExtraction,
     confirmPipelineField,
+    confirmPipelineDocument,
     saveFinance,
     completeTask,
     toggleChecklist,

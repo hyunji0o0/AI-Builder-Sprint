@@ -183,16 +183,37 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   }
 
   if (structured?.type === 'DOCUMENT_BATCH_SUMMARY') return (
-    <div className="da-checklist">
+    <div className="da-document-summary">
       {structured.files.map((file) => (
         <div key={file.documentId}>
-          <strong>{file.fileName}</strong>
-          <span>{file.documentType} · 신뢰도 {Math.round(file.confidence * 100)}% · {file.status}</span>
+          <span><Icon name="file" size={18}/></span>
+          <div><strong>{file.fileName}</strong><small>문서 분석 완료 · 분류 신뢰도 {Math.round(file.confidence * 100)}%</small></div>
         </div>
       ))}
       {structured.issues.map((issue) => <p key={`${issue.code}-${issue.documentId}`}>{issue.message}</p>)}
-      <small>AI BUILDER SPRINT 테스트용 가상 문서 결과일 수 있으며 실제 기관 발급 결과가 아닙니다.</small>
     </div>
+  )
+
+  if (structured?.type === 'DOCUMENT_EXTRACTION_REVIEW') return (
+    <section className="da-document-review">
+      <header>
+        <div><small>추출 내용 확인</small><strong>{structured.documentTypeLabel}</strong><span>{structured.fileName}</span></div>
+        <em>신뢰도 {Math.round(structured.confidence * 100)}%</em>
+      </header>
+      <p>{structured.notice}</p>
+      <div className="da-document-review-items">
+        {structured.items.map((item) => (
+          <div key={item.fieldKey}>
+            <span>{item.label}</span>
+            <strong>{item.formattedValue}</strong>
+          </div>
+        ))}
+      </div>
+      <footer>
+        <button onClick={() => c.confirmPipelineDocument(structured.documentId)}>모두 정확해요</button>
+        <button onClick={() => c.addAgent('수정할 항목의 이름과 정확한 값을 알려줘. 확인한 뒤 반영할게.')}>수정할 내용이 있어요</button>
+      </footer>
+    </section>
   )
 
   if (structured?.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION') return (
@@ -249,9 +270,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
 
   if (block === 'extract') return (
     <div className="da-extract">
-      <div><span>문서 종류</span><strong>금융거래 조회 결과서</strong></div>
-      <div><span>금융기관</span><strong>○○은행</strong><button aria-label="추출 결과 수정"><Icon name="edit" size={15}/></button></div>
-      <div><span>채무 금액</span><strong>확인 필요</strong></div>
+      <div><span>문서 분석</span><strong>올린 문서의 분석 결과를 확인해줘</strong></div>
       <button onClick={c.confirmExtraction}>추출 결과 확인</button>
     </div>
   )
@@ -267,8 +286,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   if (block === 'urgent') return (
     <div className="da-action-card da-coral">
       <GlassIcon icon="alert" tone="coral"/>
-      <div><small>긴급 확인</small><strong>○○은행 채무 금액 확인</strong><span>정확한 상속 방법 판단을 위해 필요해요.</span></div>
-      <button onClick={() => c.addAgent('채무 금액을 입력해줘.', 'finance')}>확인하기</button>
+      <div><small>긴급 확인</small><strong>확인이 필요한 정보가 있어</strong><span>확인되지 않은 항목부터 살펴볼게.</span></div>
+      <button onClick={() => c.addAgent('확인되지 않은 정보를 입력해줘.', 'finance')}>확인하기</button>
     </div>
   )
 
@@ -276,13 +295,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className="da-stack">
       <div className="da-action-card da-coral">
         <GlassIcon icon="alert" tone="coral"/>
-        <div><small>먼저 확인</small><strong>정확하지 않은 채무 금액 확인</strong><span>준비도 50%</span></div>
-        <button onClick={() => c.addAgent('지금 확인이 필요한 채무 정보를 입력해줘.', 'finance')}>이어하기</button>
-      </div>
-      <div className="da-action-card da-amber">
-        <GlassIcon icon="users" tone="amber"/>
-        <div><small>다음 단계</small><strong>상속 방법 전문가 상담 준비</strong><span>준비도 60%</span></div>
-        <button onClick={() => c.addAgent('상담 날짜와 준비 서류를 확인할게.', 'date')}>준비하기</button>
+        <div><small>다음 업무</small><strong>사건 상태를 확인하고 있어</strong><span>확인된 정보에 따라 다음 업무가 표시돼.</span></div>
+        <button onClick={() => c.advanceWorkflow()}>다음 업무 확인</button>
       </div>
     </div>
   )
@@ -301,18 +315,14 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   if (block === 'institution') return (
     <div className="da-institution">
       <GlassIcon icon="building" tone="blue"/>
-      <div><small>부산광역시 연제구</small><strong>부산시청 행복민원실</strong><span>안심상속 원스톱 서비스 · 평일 09:00–18:00</span><p>부산 연제구 중앙대로 1001 · 방문 전 전화 확인 권장</p></div>
-      <button onClick={() => c.addAgent('방문 준비에 필요한 서류 체크리스트를 열었어.', 'checklist')}>준비 서류</button>
+      <div><strong>연결된 공식 기관 정보가 없어요</strong><p>검증된 기관 데이터가 연결되면 현재 지역과 업무에 맞춰 보여줄게.</p></div>
     </div>
   )
 
   if (block === 'review') return (
     <div className="da-review">
-      <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><small>사용자 경험</small><strong>비슷한 경험자의 팁</strong></div></div>
-      <blockquote>“방문 전에 필요한 서류를 전화로 다시 확인하니 재방문하지 않아도 됐어요.”</blockquote>
-      <div className="da-tags"><span>부모님</span><span>부산</span><span>채무 확인</span></div>
-      <footer><span><Icon name="heart" size={15}/> 도움이 됐어요 38</span><button>후기 전체 보기</button></footer>
-      <p>개인의 경험이며 공식 안내나 법률 자문이 아닙니다.</p>
+      <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><strong>등록된 사용자 후기가 없어요</strong></div></div>
+      <p>실제 후기가 등록되면 현재 사건과 비슷한 경험을 찾아 보여줄게.</p>
     </div>
   )
 

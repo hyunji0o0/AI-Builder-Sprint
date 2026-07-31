@@ -62,7 +62,7 @@ export interface CaseTools {
   generateNextTask(caseId: string): Promise<TaskState | null>
 }
 
-export class MockCaseTools implements CaseTools {
+export class CaseToolsService implements CaseTools {
   constructor(private repository: StateRepository, private now = () => new Date()) {}
 
   getCaseState(caseId: string) {
@@ -134,27 +134,14 @@ export class MockCaseTools implements CaseTools {
   }
 
   async findLocalInstitutions(district: string | null, taskType: string) {
+    void district
     z.string().min(1).parse(taskType)
-    return [{
-      id: 'mock-institution',
-      name: '공식 기관 정보 확인 필요',
-      district: district || '부산광역시',
-      sourceUrl: null,
-      verification: 'MOCK_NEEDS_VERIFICATION' as const,
-    }]
+    return []
   }
 
   async searchCommunityReviews(query: CommunityReviewQuery) {
-    const limit = z.number().int().min(1).max(10).parse(query.limit)
-    return [{
-      id: 'review-demo-1',
-      excerpt: '방문 전에 필요한 서류를 전화로 다시 확인해 재방문을 줄였어요.',
-      reason: `${query.relation || '가족'} 사후 행정 · ${query.region || '지역 미지정'} · ${query.taskType || '업무'} 경험`,
-      createdAt: '2026-07-01',
-      helpfulCount: 38,
-      url: null,
-      label: '사용자 경험' as const,
-    }].slice(0, limit)
+    z.number().int().min(1).max(10).parse(query.limit)
+    return []
   }
 
   async updateTaskStatus(caseId: string, taskId: string, status: TaskState['status']) {
@@ -361,3 +348,6 @@ export class MockCaseTools implements CaseTools {
     return this.selectPriorityTask(caseId)
   }
 }
+
+/** 테스트에서만 명시적으로 주입하는 별칭입니다. */
+export class MockCaseTools extends CaseToolsService {}

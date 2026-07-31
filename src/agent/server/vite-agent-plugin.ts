@@ -15,11 +15,10 @@ type UpstageChatResponse = {
 export type AgentServerConfig = {
   apiKey: string
   model: string
-  agentMockMode: boolean
   documentPipeline: {
-    mode: 'mock' | 'live'
+    mode: 'python'
     environment: string
-    allowMockInProduction: boolean
+    pythonCommand?: string
   }
 }
 
@@ -79,8 +78,8 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
         res.end(JSON.stringify(result))
       } catch (error) {
         res.statusCode = 422
-        const message = error instanceof Error && error.message === 'MOCK_DOCUMENT_PIPELINE_BLOCKED_IN_PRODUCTION'
-          ? '운영 환경에서는 mock 문서 파이프라인 사용이 차단되어 있어요.'
+        const message = error instanceof Error && error.message === 'DOCUMENT_PIPELINE_TIMEOUT'
+            ? '문서 분석 시간이 너무 오래 걸려 중단했어. 잠시 후 다시 올려줘.'
           : '문서 처리를 완료하지 못했어요. 현재 상태는 변경되지 않았습니다.'
         res.end(JSON.stringify({ error: message }))
       }
@@ -93,7 +92,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
         res.end(JSON.stringify({ error: 'POST 요청만 지원합니다.' }))
         return
       }
-      if (!config.apiKey && !config.agentMockMode) {
+      if (!config.apiKey) {
         res.statusCode = 503
         res.end(JSON.stringify({ error: '.env.local에 UPSTAGE_API_KEY를 설정해 주세요.' }))
         return
@@ -105,7 +104,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
           caseState: caseStateSchema.parse(body.caseState),
           uiActionIntent: body.uiActionIntent,
           recentMessages: body.recentMessages,
-        }, config.agentMockMode ? {} : { llm: solar })
+        }, { llm: solar })
         res.end(JSON.stringify(result))
       } catch {
         res.statusCode = 502

@@ -16,7 +16,7 @@ export function ProgressDashboard({ caseState, stages, addAgent }: Props) {
         {stages.map((stage, index) => (
           <button
             onClick={() => addAgent(`${stage.label} 단계는 현재 ‘${stage.state}’ 상태예요.`, index === 1 ? 'upload' : index === 2 ? 'finance' : 'checklist')}
-            className={stage.done ? 'done' : index === 2 ? 'current' : ''}
+            className={stage.done ? 'done' : stage.current ? 'current' : ''}
             key={stage.label}
           >
             <span className="da-stage-orb">{stage.done ? <Icon name="check"/> : index + 1}</span>

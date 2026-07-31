@@ -6,6 +6,7 @@ import { MobileNav, Sidebar } from '../components/layout/Sidebar'
 import { useCaseAgent } from '../features/case/useCaseAgent'
 import { CaseSectionView } from '../features/case/CaseSectionView'
 import { CommunityRouter, useCommunity } from '../features/community'
+import { DocumentPreview } from '../components/documents/DocumentPreview'
 import '../dashboard.css'
 
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
         </>}
       </main>
       <MobileNav activeMenu={activeMenu} menuAction={menuAction}/>
+      <DocumentPreview document={controller.previewDocument} onClose={() => controller.setPreviewDocument(null)}/>
     </div>
   )
 }
