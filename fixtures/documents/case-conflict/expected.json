@@ -1,0 +1,9 @@
+{
+  "fixtureId": "case-conflict",
+  "documents": ["death-certificate-a-demo.png", "death-certificate-b-demo.png"],
+  "expectedClassification": ["DEATH_CERTIFICATE", "DEATH_CERTIFICATE"],
+  "expectedExtractedFields": ["deathDate", "deathDate"],
+  "expectedValidationIssues": ["DEATH_DATE_CONFLICT"],
+  "expectedFinancialSummary": {},
+  "expectedRiskLevel": "DOCUMENT_CONFLICT"
+}

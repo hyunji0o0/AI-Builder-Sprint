@@ -1,0 +1,9 @@
+{
+  "fixtureId": "case-asset-over",
+  "documents": ["death-certificate-demo.png", "deposit-balance-120m-demo.png", "loan-balance-20m-demo.png"],
+  "expectedClassification": ["DEATH_CERTIFICATE", "FINANCIAL_ASSET_DOCUMENT", "FINANCIAL_DEBT_DOCUMENT"],
+  "expectedExtractedFields": ["deathDate", "amount", "amount"],
+  "expectedValidationIssues": [],
+  "expectedFinancialSummary": { "totalAssets": 120000000, "totalDebts": 20000000, "difference": 100000000 },
+  "expectedRiskLevel": "CURRENTLY_NO_DEBT_EXCESS"
+}
