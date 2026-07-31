@@ -37,8 +37,19 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
   try {
     switch (selection.action) {
       case 'ONBOARD':
-        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, { stage: 'COLLECTING_BASIC_INFO' }))
-        result.ui.push({ type: 'CHOICE', prompt: '먼저 어떤 정보부터 확인할까요?', options: [{ id: 'basic_info', label: '기본 정보 확인' }, { id: 'later', label: '나중에 이어하기' }] })
+        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+          stage: 'COLLECTING_BASIC_INFO',
+          onboarding: { ...state.onboarding, currentStep: 'DEATH_REPORT' },
+        }))
+        result.ui.push({
+          type: 'CHOICE',
+          prompt: '사망신고는 이미 마쳤어?',
+          options: [
+            { id: 'onboarding_death_completed', label: '이미 신고했어' },
+            { id: 'onboarding_death_not_completed', label: '아직 하지 않았어' },
+            { id: 'onboarding_pause', label: '나중에 확인할게' },
+          ],
+        })
         break
       case 'UPLOAD':
         result.ui.push({ type: 'DOCUMENT_UPLOAD', accept: ['.pdf', '.jpg', '.jpeg', '.png'], taskId: state.currentFocus.id })

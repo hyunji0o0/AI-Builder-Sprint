@@ -22,6 +22,12 @@ export const createInitialCaseState = (): CaseState => caseStateSchema.parse({
   warnings: [],
   currentFocus: { type: null, id: null },
   emotionalContext: { currentSignal: 'NEUTRAL', intensity: 'LOW', tonePreference: 'BALANCED', recentComfortCount: 0, userRequestedPause: false },
+  onboarding: {
+    currentStep: 'DEATH_REPORT',
+    deathReportStatus: 'UNKNOWN',
+    financialInquiryStatus: 'UNKNOWN',
+    oneStopServiceStatus: 'UNKNOWN',
+  },
   onboardingCompleted: false,
   lastUpdatedAt: new Date().toISOString(),
 })

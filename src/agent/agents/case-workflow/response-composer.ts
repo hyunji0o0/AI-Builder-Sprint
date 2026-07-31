@@ -70,7 +70,7 @@ export function deterministicMessage(
   }
   const messages: Record<ActionSelection['action'], string> = {
     CHAT: '행정업무가 아닌 대화는 대화 Agent에서 이어갈게.',
-    ONBOARD: '기본 상황부터 천천히 확인해볼게.',
+    ONBOARD: '서비스를 시작하기 전에 현재 처리 상태부터 차례로 확인할게. 한 번에 하나씩 물어볼게. 먼저, 사망신고는 이미 마쳤어?',
     UPLOAD: '문서 종류를 미리 고르지 않아도 돼. 가진 서류를 한 번에 올려주면 종류와 중요한 정보를 먼저 정리한 뒤, 확인이 필요한 내용만 하나씩 보여줄게. JPG, PNG, WEBP, PDF 파일을 최대 10개까지 올릴 수 있어.',
     CONFIRM_EXTRACTION: '추출된 정보가 맞는지 확인하거나 수정해줘.',
     FINANCIAL_INPUT: '지금 알고 있는 자산이나 채무 금액을 입력해줘. 추정 금액도 따로 표시할 수 있어.',
