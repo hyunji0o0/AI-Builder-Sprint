@@ -1,0 +1,16 @@
+death_certificate	사망진단서
+death_report	사망신고서
+bank	은행연합회 금융거래조회 결과
+life_insurance	생명보험협회 금융거래조회 결과
+nonlife_insurance	손해보험협회 금융거래조회 결과
+financial_investment	금융투자협회 금융거래조회 결과
+credit_finance	여신금융협회 금융거래조회 결과
+korea_post	우정사업본부 금융거래조회 결과
+saving_bank	저축은행중앙회 금융거래조회 결과
+community_credit	새마을금고중앙회 금융거래조회 결과
+forestry_cooperative	산림조합중앙회 금융거래조회 결과
+credit_union	신협중앙회 금융거래조회 결과
+korea_security	한국예탁결제원 금융거래조회 결과
+consumer_finance	한국대부금융협회 금융거래조회 결과
+deposit	예금보험공사 금융거래조회 결과
+credit_information	한국신용정보원 금융거래조회 결과
