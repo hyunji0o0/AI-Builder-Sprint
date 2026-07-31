@@ -1,0 +1,142 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "korea_post_financial_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requestNumber": {
+          "type": "string",
+          "description": "상속인 금융내역조회 화면에 표시된 접수번호를 반환한다. 마스킹되어 있거나 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "inquiryDateTime": {
+          "type": "string",
+          "description": "화면에 표시된 조회시간을 YYYY-MM-DDTHH:mm:ss 형식으로 반환한다. 시간 없이 날짜만 확인되면 YYYY-MM-DD 형식으로 반환하고, 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "inquiryStatus": {
+          "type": "string",
+          "description": "조회 결과가 정상적으로 표시되어 있으면 completed, 조회 중이면 processing, 조회 오류이면 failed를 반환한다."
+        },
+        "hasRecords": {
+          "type": "boolean",
+          "description": "예금계좌, 예금대출, 보험계좌, 보험 관련 대출, 펀드, 카드, 일반 대출 또는 기타금액 중 하나라도 실제 금융내역이 있으면 true, 모든 항목이 없거나 0원이면 false를 반환한다."
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "금액이 0원보다 크거나 계좌가 존재하는 금융 항목의 개수를 반환한다. 예금대출, 보험환급금대출, 보험계약자대출, 펀드, 카드, 일반 대출, 기타금액을 각각 하나의 항목으로 계산한다. 모든 항목이 없거나 0원이면 0을 반환한다."
+        },
+        "message": {
+          "type": "string",
+          "description": "조회 결과 영역에 명시적으로 표시된 주요 결과 또는 안내 문구를 반환한다. 별도 문구가 없으면 빈 문자열을 반환한다."
+        },
+        "hasDepositAccount": {
+          "type": "boolean",
+          "description": "예금금액 항목에 예금계좌가 존재하면 true, '계좌없음' 또는 이에 준하는 내용이면 false를 반환한다. 예금대출금액 존재 여부와 혼동하지 않는다."
+        },
+        "depositAccountStatus": {
+          "type": "string",
+          "description": "예금계좌 상태를 반환한다. 계좌가 있으면 exists, 계좌없음이면 none, 확인할 수 없으면 unknown을 반환한다."
+        },
+        "depositBalance": {
+          "type": "integer",
+          "description": "예금금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 계좌가 없거나 금액이 없으면 0을 반환한다."
+        },
+        "depositLoanAmount": {
+          "type": "integer",
+          "description": "예금대출금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 대출금액이 없으면 0을 반환한다."
+        },
+        "depositLoanRepaymentDate": {
+          "type": "string",
+          "description": "예금대출 상환일을 YYYY-MM-DD 형식으로 반환한다. 값이 '-', 공란이거나 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "hasInsuranceAccount": {
+          "type": "boolean",
+          "description": "보험계좌가 존재하면 true, '계좌없음' 또는 이에 준하는 내용이면 false를 반환한다. 보험 관련 대출금액 존재 여부와 혼동하지 않는다."
+        },
+        "insuranceAccountStatus": {
+          "type": "string",
+          "description": "보험계좌 상태를 반환한다. 계좌가 있으면 exists, 계좌없음이면 none, 확인할 수 없으면 unknown을 반환한다."
+        },
+        "insuranceRefundLoanAmount": {
+          "type": "integer",
+          "description": "보험환급금 대출금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "insuranceRefundLoanMaturityDate": {
+          "type": "string",
+          "description": "보험환급금 대출금액과 같은 행에 표시된 만기일을 YYYY-MM-DD 형식으로 반환한다. 표시가 없거나 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "policyholderLoanAmount": {
+          "type": "integer",
+          "description": "보험계약자 대출금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "policyholderLoanMaturityDate": {
+          "type": "string",
+          "description": "보험계약자 대출 만기일을 YYYY-MM-DD 형식으로 반환한다. 값이 '-', 공란이거나 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "hasFund": {
+          "type": "boolean",
+          "description": "펀드금액이 0원보다 크면 true, 0원이거나 펀드 내역이 없으면 false를 반환한다."
+        },
+        "fundAmount": {
+          "type": "integer",
+          "description": "펀드금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "cardAmount": {
+          "type": "integer",
+          "description": "카드금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "loanAmount": {
+          "type": "integer",
+          "description": "화면의 '대출금액' 항목을 원 단위 정수로 반환한다. 예금대출금액이나 보험 관련 대출금액과 구분한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "loanExecutionDate": {
+          "type": "string",
+          "description": "일반 대출금액과 함께 표시된 대출 실행일을 YYYY-MM-DD 형식으로 반환한다. 표시가 없거나 확인할 수 없으면 빈 문자열을 반환한다."
+        },
+        "otherAmount": {
+          "type": "integer",
+          "description": "기타금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거하며, 금액이 없으면 0을 반환한다."
+        },
+        "totalAmount": {
+          "type": "integer",
+          "description": "화면의 '총 금액' 항목에 표시된 금액을 원 단위 정수로 반환한다. 쉼표와 '원' 표시는 제거한다. 직접 합산한 값보다 화면에 명시된 총 금액을 우선한다."
+        },
+        "warnings": {
+          "type": "array",
+          "description": "조회 결과 화면에 표시된 유의사항이나 추가 안내문을 문자열 배열로 반환한다. 안내사항이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "requestNumber",
+        "inquiryDateTime",
+        "inquiryStatus",
+        "hasRecords",
+        "recordCount",
+        "message",
+        "hasDepositAccount",
+        "depositAccountStatus",
+        "depositBalance",
+        "depositLoanAmount",
+        "depositLoanRepaymentDate",
+        "hasInsuranceAccount",
+        "insuranceAccountStatus",
+        "insuranceRefundLoanAmount",
+        "insuranceRefundLoanMaturityDate",
+        "policyholderLoanAmount",
+        "policyholderLoanMaturityDate",
+        "hasFund",
+        "fundAmount",
+        "cardAmount",
+        "loanAmount",
+        "loanExecutionDate",
+        "otherAmount",
+        "totalAmount",
+        "warnings"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

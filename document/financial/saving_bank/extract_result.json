@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "documentType": "saving_bank_result",
+  "data": {
+    "requestNumber": "20260729-01852",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "message": "총 3건 조회되었습니다.",
+    "records": [
+      {
+        "institutionName": "부산OK저축은행",
+        "recordType": "예금",
+        "branchName": "부산서면지점",
+        "amount": 3240000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "부산햇살저축은행",
+        "recordType": "적금",
+        "branchName": "부산센텀지점",
+        "amount": 1850000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "대구저축은행",
+        "recordType": "예금",
+        "branchName": "대구중앙지점",
+        "amount": 12680000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      }
+    ],
+    "warnings": []
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

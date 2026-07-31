@@ -1,0 +1,145 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\saving_bank\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "저축은행중앙회",
+  "organizationKey": "savings_bank",
+  "schema": {
+    "name": "saving_bank_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\saving_bank\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "상속인금융거래조회",
+      "상속인금융거래조회결과",
+      "금융거래조회결과",
+      "금융거래조회",
+      "금융기관",
+      "예금",
+      "조회결과",
+      "접수번호"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 28,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "저축은행중앙회",
+      "organizationKey": "savings_bank",
+      "organizationEvidence": [
+        "접수번호 (20260729-01852)에 대한 저축은행 금융거래 조회결과입니다.",
+        "금융기관, 거래종류, 지점명, 금액(원), 비고",
+        "부산OK저축은행, 부산햇살저축은행, 대구저축은행"
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "'저축은행 금융거래 조회결과'라는 본문 문구와 결과 표에 저축은행 기관들이 기재된 점을 근거로 저축은행중앙회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 5239,
+      "completion_tokens": 221,
+      "total_tokens": 5460
+    }
+  },
+  "data": {
+    "requestNumber": "20260729-01852",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 3,
+    "message": "총 3건 조회되었습니다.",
+    "records": [
+      {
+        "institutionName": "부산OK저축은행",
+        "recordType": "예금",
+        "branchName": "부산서면지점",
+        "amount": 3240000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "부산햇살저축은행",
+        "recordType": "적금",
+        "branchName": "부산센텀지점",
+        "amount": 1850000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "대구저축은행",
+        "recordType": "예금",
+        "branchName": "대구중앙지점",
+        "amount": 12680000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      }
+    ],
+    "warnings": []
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 7
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 21003,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 3783
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 7783
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 9419
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 4
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 14
+      }
+    }
+  }
+}

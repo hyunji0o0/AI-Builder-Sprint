@@ -1,0 +1,84 @@
+{
+  "success": true,
+  "documentType": "deposit_financial_result",
+  "data": {
+    "requestNumber": "",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 4,
+    "hasUnclaimedDepositRecords": true,
+    "unclaimedDepositRecordCount": 1,
+    "hasDebtRecords": true,
+    "debtRecordCount": 3,
+    "message": "상속인 미수령금 조회 결과, 상속인 채무정보 조회 결과",
+    "records": [
+      {
+        "recordCategory": "unclaimed_deposit",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "",
+        "depositInsuranceAmount": 1250000,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 320000,
+        "heldDividendAmount": 0,
+        "debtType": "",
+        "debtorName": "",
+        "principalBalance": 0,
+        "interestAmount": 0,
+        "extinctionStatus": "unknown",
+        "institutionContact": ""
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "한국자산관리공사",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "대출금",
+        "debtorName": "홍길동",
+        "principalBalance": 2300000,
+        "interestAmount": 120000,
+        "extinctionStatus": "active",
+        "institutionContact": "1588-3570"
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨",
+        "estateOrTransferInstitutionName": "신용회복위원회",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "신용카드채무",
+        "debtorName": "홍길동",
+        "principalBalance": 1200000,
+        "interestAmount": 0,
+        "extinctionStatus": "extinguished",
+        "institutionContact": "1600-5500"
+      },
+      {
+        "recordCategory": "financial_company_debt",
+        "institutionName": "(주)제이알앤씨 파산재단",
+        "estateOrTransferInstitutionName": "",
+        "depositInsuranceAmount": 0,
+        "settlementAmount": 0,
+        "bankruptcyDividendAmount": 0,
+        "heldDividendAmount": 0,
+        "debtType": "대출금",
+        "debtorName": "홍길동",
+        "principalBalance": 8500000,
+        "interestAmount": 320000,
+        "extinctionStatus": "active",
+        "institutionContact": "02-319-0554"
+      }
+    ],
+    "warnings": [
+      "위 조회 결과는 2025년 05월 20일 기준으로 제공된 자료이며, 이후 변동될 수 있습니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "documentType": "korea_security_result",
+  "data": {
+    "requestNumber": "20260729-01852",
+    "inquiryDate": "2026-07-29",
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 2,
+    "message": "총 2건 조회되었습니다.",
+    "records": [
+      {
+        "institutionName": "한국투자증권",
+        "recordType": "국내주식",
+        "productName": "삼성전자 보통주",
+        "quantityOrBalance": "15주",
+        "quantity": 15,
+        "evaluatedAmount": 1245000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      },
+      {
+        "institutionName": "미래에셋증권",
+        "recordType": "예수금",
+        "productName": "종합위탁계좌",
+        "quantityOrBalance": "",
+        "quantity": 0,
+        "evaluatedAmount": 2830000,
+        "recordStatus": "normal",
+        "statusMessage": "정상"
+      }
+    ],
+    "warnings": [
+      "조회결과에 기재된 상품의 상세내역, 잔고증명서 등 증빙서류는 한국예탁결제원 홈페이지에서 확인 가능합니다.",
+      "본 서비스는 조회신청일로부터 7-15일 경과 후 결과조회가 가능하며, 신청일로부터 6개월 경과 후 조회시 한국 예탁결제원 명의개서팀(02-3774-3000)으로 문의하여 주시기 바랍니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

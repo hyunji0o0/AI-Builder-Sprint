@@ -1,0 +1,61 @@
+{
+  "success": true,
+  "documentType": "credit_finance_financial_result",
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 5,
+    "message": "",
+    "records": [
+      {
+        "institutionName": "신한카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-6950-1234",
+        "notificationDate": "2024-07-15",
+        "amount": 1250000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "삼성카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-2000-2222",
+        "notificationDate": "2024-06-28",
+        "amount": 850000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "현대캐피탈(주)",
+        "recordType": "장기카드대출(카드론)",
+        "institutionContact": "02-3700-1114",
+        "notificationDate": "2024-07-02",
+        "amount": 3200000,
+        "dcdsEnrollmentStatus": "not_enrolled"
+      },
+      {
+        "institutionName": "롯데카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-1588-8100",
+        "notificationDate": "2024-06-30",
+        "amount": 620000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "KB국민카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-6300-7300",
+        "notificationDate": "2024-07-10",
+        "amount": 470000,
+        "dcdsEnrollmentStatus": "enrolled"
+      }
+    ],
+    "warnings": [
+      "※ 협회에서는 피상속인의 채무면제유예(이하 'DCDS') * 상품의 가입 유·무만 안내하고 있습니다.",
+      "※ 협회 홈페이지에 게시 된 총채무금액과 DCDS 채무면제 및 결제유예 대상 금액과 동일하지 않으니 착오 없으시길 바랍니다. DCDS와 관련된 채무면제 금액 등 자세한 사항은 해당 카드사에 문의하시기 바랍니다.",
+      "- DCDS란 신용카드사가 매월 회원으로부터 일정율의 수수료를 받고 회원(예:사망, 질병 등 사고가 발생하였을 때) 카드채무를 면제하거나 결제를 유예해 주는 상품"
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "nonlife_insurance_financial_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "inquiryStatus": {
+          "type": "string",
+          "description": "보험가입내역 조회 결과가 정상적으로 표시되면 completed, 조회 중이면 processing, 조회 오류이면 failed를 반환한다."
+        },
+        "hasRecords": {
+          "type": "boolean",
+          "description": "보험가입내역이 1건 이상 존재하면 true, 조회 내역이 없으면 false를 반환한다."
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "보험가입내역 조회 결과에 표시된 전체 건수를 반환한다. 예: '총 1건'이면 1을 반환한다."
+        },
+        "message": {
+          "type": "string",
+          "description": "조회 결과의 제목이나 요약 문구를 반환한다. 예: '보험가입내역 조회결과 총 1건'. 별도 문구가 없으면 빈 문자열을 반환한다."
+        },
+        "records": {
+          "type": "array",
+          "description": "보험가입내역 조회 결과 표의 각 행을 배열로 반환한다. 내역이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "recordCategory": {
+                "type": "string",
+                "description": "금융거래 내역의 공통 분류이다. 손해보험 가입내역이면 insurance_policy를 반환한다."
+              },
+              "institutionName": {
+                "type": "string",
+                "description": "표의 보험회사 항목에 표시된 보험회사명을 반환한다."
+              },
+              "recordType": {
+                "type": "string",
+                "description": "표의 구분 항목에 표시된 값을 반환한다. 예: 보험."
+              },
+              "productName": {
+                "type": "string",
+                "description": "표의 상품명 항목에 표시된 보험 상품명을 반환한다."
+              },
+              "referenceNumber": {
+                "type": "string",
+                "description": "표의 증권(계좌)번호를 반환한다. 줄바꿈된 번호는 하나의 문자열로 연결한다. 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "status": {
+                "type": "string",
+                "description": "표의 보험계약 상태를 반환한다. 유지이면 active, 해지이면 terminated, 만기이면 expired, 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "relationship": {
+                "type": "string",
+                "description": "표의 보험계약 관계를 반환한다. 계약자는 policyholder, 피보험자는 insured, 수익자는 beneficiary로 반환하며, 그 외에는 문서의 값을 그대로 반환한다."
+              },
+              "startDate": {
+                "type": "string",
+                "description": "보험기간 시작일을 YYYY-MM-DD 형식으로 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "endDate": {
+                "type": "string",
+                "description": "보험기간 종료일을 YYYY-MM-DD 형식으로 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "branchName": {
+                "type": "string",
+                "description": "표의 담당점포 또는 담당지점명을 반환한다. 식별할 수 없거나 마스킹되어 있으면 빈 문자열을 반환한다."
+              },
+              "institutionContact": {
+                "type": "string",
+                "description": "표 안에 표시된 해당 보험회사 또는 담당점포의 전화번호를 반환한다. 마스킹되었거나 확인할 수 없으면 빈 문자열을 반환한다."
+              }
+            },
+            "required": [
+              "recordCategory",
+              "institutionName",
+              "recordType",
+              "productName",
+              "referenceNumber",
+              "status",
+              "relationship",
+              "startDate",
+              "endDate",
+              "branchName",
+              "institutionContact"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "조회 결과 하단 안내사항을 문자열 배열로 반환한다. 안내사항 영역이 입력 이미지에 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "inquiryStatus",
+        "hasRecords",
+        "recordCount",
+        "message",
+        "records",
+        "warnings"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

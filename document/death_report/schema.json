@@ -1,0 +1,278 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "death_report_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "enum": [
+            "death_report"
+          ],
+          "description": "문서 유형. 항상 death_report"
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "사망신고서 상단의 신고일. YYYY-MM-DD 형식"
+        },
+        "deceasedName": {
+          "type": "string",
+          "description": "사망자의 성명"
+        },
+        "deceasedHanjaName": {
+          "type": "string",
+          "description": "사망자의 한자 성명. 없으면 빈 문자열"
+        },
+        "deceasedGender": {
+          "type": "string",
+          "enum": [
+            "male",
+            "female",
+            "unknown"
+          ],
+          "description": "사망자의 성별"
+        },
+        "deceasedResidentNumber": {
+          "type": "string",
+          "description": "사망자의 주민등록번호. 문서에 표시된 마스킹을 그대로 유지"
+        },
+        "deceasedBirthDate": {
+          "type": "string",
+          "description": "주민등록번호 앞자리에서 확인되는 생년월일. YYYY-MM-DD 형식"
+        },
+        "deceasedRegisteredDomicile": {
+          "type": "string",
+          "description": "사망자의 등록기준지"
+        },
+        "deceasedAddress": {
+          "type": "string",
+          "description": "사망자의 주소"
+        },
+        "deathDateTime": {
+          "type": "string",
+          "description": "사망일시. YYYY-MM-DDTHH:MM 형식"
+        },
+        "deathPlaceCategory": {
+          "type": "string",
+          "enum": [
+            "home",
+            "medical_institution",
+            "social_welfare_facility",
+            "public_facility",
+            "road",
+            "commercial_service_facility",
+            "industrial_site",
+            "farm",
+            "during_transport",
+            "other",
+            "unknown"
+          ],
+          "description": "사망장소 구분에서 선택된 항목"
+        },
+        "deathPlaceAddress": {
+          "type": "string",
+          "description": "실제 사망 장소의 주소 또는 기관명"
+        },
+        "remarks": {
+          "type": "string",
+          "description": "기타사항 또는 비고. 없으면 빈 문자열"
+        },
+        "reporterName": {
+          "type": "string",
+          "description": "신고인의 성명"
+        },
+        "reporterResidentNumber": {
+          "type": "string",
+          "description": "신고인의 주민등록번호. 문서에 표시된 마스킹을 그대로 유지"
+        },
+        "reporterQualification": {
+          "type": "string",
+          "enum": [
+            "cohabiting_relative",
+            "non_cohabiting_relative",
+            "cohabitant",
+            "other",
+            "unknown"
+          ],
+          "description": "신고인의 자격"
+        },
+        "reporterRelationship": {
+          "type": "string",
+          "description": "신고인과 사망자의 관계. 예: 배우자, 자녀"
+        },
+        "reporterAddress": {
+          "type": "string",
+          "description": "신고인의 주소"
+        },
+        "reporterPhone": {
+          "type": "string",
+          "description": "신고인의 전화번호"
+        },
+        "reporterEmail": {
+          "type": "string",
+          "description": "신고인의 이메일"
+        },
+        "directCause": {
+          "type": "string",
+          "description": "직접 사망 원인"
+        },
+        "causeB": {
+          "type": "string",
+          "description": "직접 사망 원인의 원인이 된 질환 또는 상태"
+        },
+        "causeC": {
+          "type": "string",
+          "description": "선행 원인 또는 기초 질환"
+        },
+        "directCauseDuration": {
+          "type": "string",
+          "description": "직접 사망 원인의 발병부터 사망까지 기간"
+        },
+        "causeBDuration": {
+          "type": "string",
+          "description": "causeB의 발병부터 사망까지 기간"
+        },
+        "causeCDuration": {
+          "type": "string",
+          "description": "causeC의 발병부터 사망까지 기간"
+        },
+        "otherPhysicalCondition": {
+          "type": "string",
+          "description": "사망 원인과 관계없는 기타 신체 상황. 없으면 빈 문자열"
+        },
+        "diagnoserName": {
+          "type": "string",
+          "description": "진단자 또는 확인자의 성명"
+        },
+        "diagnoserLicenseNumber": {
+          "type": "string",
+          "description": "진단자의 면허번호"
+        },
+        "deathType": {
+          "type": "string",
+          "enum": [
+            "disease",
+            "external_cause",
+            "other_or_unknown"
+          ],
+          "description": "사망 종류. 병사, 외인사, 기타 및 불상"
+        },
+        "accidentType": {
+          "type": "string",
+          "enum": [
+            "traffic_accident",
+            "poisoning",
+            "fall",
+            "intentional_self_harm",
+            "unintentional_accident",
+            "other_accident",
+            "fire",
+            "other",
+            "homicide",
+            "pending",
+            "not_applicable",
+            "unknown"
+          ],
+          "description": "외인사인 경우 사고 종류. 병사이면 not_applicable"
+        },
+        "accidentDateTime": {
+          "type": "string",
+          "description": "외인사의 원인이 된 사고 일시. 해당 없으면 빈 문자열"
+        },
+        "accidentAreaCategory": {
+          "type": "string",
+          "enum": [
+            "same_city_county_district",
+            "different_city_county_district",
+            "other",
+            "unknown",
+            "not_applicable"
+          ],
+          "description": "사고가 발생한 지역 구분"
+        },
+        "accidentPlaceCategory": {
+          "type": "string",
+          "enum": [
+            "home",
+            "medical_institution",
+            "social_welfare_facility",
+            "public_facility",
+            "road",
+            "commercial_service_facility",
+            "industrial_site",
+            "farm",
+            "other",
+            "unknown",
+            "not_applicable"
+          ],
+          "description": "사고 장소 구분"
+        },
+        "nationality": {
+          "type": "string",
+          "description": "사망자의 국적"
+        },
+        "educationLevel": {
+          "type": "string",
+          "description": "사망자의 최종 졸업학교 또는 교육 수준"
+        },
+        "occupation": {
+          "type": "string",
+          "description": "사망 당시 직업"
+        },
+        "maritalStatus": {
+          "type": "string",
+          "enum": [
+            "never_married",
+            "spouse_present",
+            "divorced",
+            "widowed",
+            "unknown"
+          ],
+          "description": "사망자의 혼인 상태"
+        }
+      },
+      "required": [
+        "documentType",
+        "reportDate",
+        "deceasedName",
+        "deceasedHanjaName",
+        "deceasedGender",
+        "deceasedResidentNumber",
+        "deceasedBirthDate",
+        "deceasedRegisteredDomicile",
+        "deceasedAddress",
+        "deathDateTime",
+        "deathPlaceCategory",
+        "deathPlaceAddress",
+        "remarks",
+        "reporterName",
+        "reporterResidentNumber",
+        "reporterQualification",
+        "reporterRelationship",
+        "reporterAddress",
+        "reporterPhone",
+        "reporterEmail",
+        "directCause",
+        "causeB",
+        "causeC",
+        "directCauseDuration",
+        "causeBDuration",
+        "causeCDuration",
+        "otherPhysicalCondition",
+        "diagnoserName",
+        "diagnoserLicenseNumber",
+        "deathType",
+        "accidentType",
+        "accidentDateTime",
+        "accidentAreaCategory",
+        "accidentPlaceCategory",
+        "nationality",
+        "educationLevel",
+        "occupation",
+        "maritalStatus"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

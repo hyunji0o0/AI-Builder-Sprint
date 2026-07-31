@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "documentType": "nonlife_insurance_financial_result",
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 1,
+    "message": "총 1건 보험가입내역 조회결과",
+    "records": [
+      {
+        "recordCategory": "insurance_policy",
+        "institutionName": "한화손해보험",
+        "recordType": "보험",
+        "productName": "이륜자동차보험",
+        "referenceNumber": "CA2023393696300 0",
+        "status": "active",
+        "relationship": "policyholder",
+        "startDate": "2023-04-03",
+        "endDate": "2024-04-03",
+        "branchName": "서울지점",
+        "institutionContact": "02-1234-5678"
+      }
+    ],
+    "warnings": [
+      "■ 상기 조회결과는 사망일(접수일) 현재 기준이며, 보험회사에서 제공한 자료를 기초로 작성된 것으로 세부내역(유지여부, 보험금액, 보험금 신청방법 등)은 해당회사에 직접 문의하시기 바랍니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

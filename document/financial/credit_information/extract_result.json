@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "documentType": "credit_information_financial_result",
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 2,
+    "message": "",
+    "records": [
+      {
+        "institutionName": "신한은행",
+        "recordType": "입출금예금",
+        "branchName": "서울역지점",
+        "amount": 1250000,
+        "repaymentDate": "2025-05-15",
+        "institutionContact": "1599-8000"
+      },
+      {
+        "institutionName": "KB국민은행",
+        "recordType": "정기예금",
+        "branchName": "강남역지점",
+        "amount": 5000000,
+        "repaymentDate": "2026-03-21",
+        "institutionContact": "1588-9999"
+      }
+    ],
+    "warnings": [
+      "서민금융진흥원에서 조회되는 내역은 금융회사의 휴면예금 및 휴면보험금 중에서 관련 법률의 규정에 따라 서민금융진흥원에 출연된 것으로, 일부 정보하여 조회할 수 있습니다. 세부 조회내역은 휴면예금찾아줌 (http://sleepmoney.kinfa.or.kr) 사이트를 통해 확인하실 수 있습니다.",
+      "조회된 정보에 대한 자세한 내역은 해당 금융기관에 문의하셔야 합니다. 채무금액이 9,999,999,999원 을 넘으신 경우는 해당 기준으로 문의하시기 바랍니다.",
+      "* 성명불일치가 표시되는 경우",
+      "- '상속인 금융거래 조회(안심상속 원스톱) 서비스' 신청서에 기재한 사망자의 성명과 해당 출연에서 보유하고 있는 사망자의 성명이 일치하지 않아 금융거래정보가 제공되지 않은 경우입니다."
+    ]
+  },
+  "metadata": {
+    "sourceFile": "sample.png",
+    "model": "information-extract"
+  }
+}

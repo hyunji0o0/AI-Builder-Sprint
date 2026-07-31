@@ -1,0 +1,161 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_finance\\sample.png",
+  "documentType": "financial_inquiry_result",
+  "resultCategory": "financial",
+  "sourceOrganization": "여신금융협회",
+  "organizationKey": "credit_finance",
+  "schema": {
+    "name": "credit_finance_financial_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\financial\\credit_finance\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.7125,
+    "needsConfirmation": false,
+    "evidence": [
+      "거래내역",
+      "대출",
+      "채무"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 0,
+      "death_report": 0,
+      "financial_inquiry_result": 6,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": {
+      "sourceOrganization": "여신금융협회",
+      "organizationKey": "credit_finance",
+      "organizationEvidence": [
+        "표의 열 이름에 '채무금액', 'DCDS 가입여부'가 포함되어 있습니다.",
+        "안내문에 '피상속인의 채무면제유예(이하 'DCDS') 상품의 가입 유·무만 안내'라고 기재되어 있습니다.",
+        "안내문에 '해당 카드사에 문의' 및 '신용카드사가 매월 회원으로부터 일정율의 수수료를 받고'라고 설명되어 있습니다."
+      ],
+      "organizationConfidence": 0.98,
+      "organizationNeedsConfirmation": false,
+      "organizationMessage": "DCDS 가입여부, 채무금액 항목과 카드사·신용카드 관련 안내문을 근거로 여신금융협회 문서로 판별했습니다.",
+      "method": "information_extract_schema"
+    }
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 5129,
+      "completion_tokens": 535,
+      "total_tokens": 5664
+    }
+  },
+  "data": {
+    "inquiryStatus": "completed",
+    "hasRecords": true,
+    "recordCount": 5,
+    "message": "",
+    "records": [
+      {
+        "institutionName": "신한카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-6950-1234",
+        "notificationDate": "2024-07-15",
+        "amount": 1250000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "삼성카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-2000-2222",
+        "notificationDate": "2024-06-28",
+        "amount": 850000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "현대캐피탈(주)",
+        "recordType": "장기카드대출(카드론)",
+        "institutionContact": "02-3700-1114",
+        "notificationDate": "2024-07-02",
+        "amount": 3200000,
+        "dcdsEnrollmentStatus": "not_enrolled"
+      },
+      {
+        "institutionName": "롯데카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-1588-8100",
+        "notificationDate": "2024-06-30",
+        "amount": 620000,
+        "dcdsEnrollmentStatus": "enrolled"
+      },
+      {
+        "institutionName": "KB국민카드(주)",
+        "recordType": "신용카드",
+        "institutionContact": "02-6300-7300",
+        "notificationDate": "2024-07-10",
+        "amount": 470000,
+        "dcdsEnrollmentStatus": "enrolled"
+      }
+    ],
+    "warnings": [
+      "※ 협회에서는 피상속인의 채무면제유예(이하 'DCDS') * 상품의 가입 유·무만 안내하고 있습니다.",
+      "※ 협회 홈페이지에 게시 된 총채무금액과 DCDS 채무면제 및 결제유예 대상 금액과 동일하지 않으니 착오 없으시길 바랍니다. DCDS와 관련된 채무면제 금액 등 자세한 사항은 해당 카드사에 문의하시기 바랍니다.",
+      "- DCDS란 신용카드사가 매월 회원으로부터 일정율의 수수료를 받고 회원(예:사망, 질병 등 사고가 발생하였을 때) 카드채무를 면제하거나 결제를 유예해 주는 상품"
+    ]
+  },
+  "warnings": [
+    "문서 대분류 신뢰도는 기준보다 낮았지만 금융기관 세부 분류와 스키마 연결이 확인되어 자동으로 정보 추출을 진행합니다."
+  ],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 7
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 27245,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 4697
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 9933
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 12596
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 4
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 15
+      }
+    }
+  }
+}

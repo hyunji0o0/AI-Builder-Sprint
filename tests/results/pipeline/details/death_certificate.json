@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "stage": "completed",
+  "fileName": "sample.png",
+  "filePath": "C:\\GitHub\\AI-Builder-Sprint\\document\\death_certificate\\sample.png",
+  "documentType": "death_certificate",
+  "resultCategory": "death_document",
+  "sourceOrganization": "",
+  "organizationKey": "",
+  "schema": {
+    "name": "death_certificate_schema",
+    "path": "C:\\GitHub\\AI-Builder-Sprint\\document\\death_certificate\\schema.json",
+    "exists": true
+  },
+  "classification": {
+    "confidence": 0.99,
+    "needsConfirmation": false,
+    "evidence": [
+      "사망진단서",
+      "시체검안서",
+      "직접사인",
+      "사망의원인",
+      "사망의종류"
+    ],
+    "method": "document_parse_rules",
+    "scores": {
+      "death_certificate": 16,
+      "death_report": 4,
+      "financial_inquiry_result": 0,
+      "land_inquiry_result": 0,
+      "vehicle_inquiry_result": 0,
+      "tax_inquiry_result": 0
+    },
+    "organization": null
+  },
+  "extraction": {
+    "api": "information-extraction",
+    "model": "information-extract",
+    "usage": {
+      "prompt_tokens": 3652,
+      "completion_tokens": 127,
+      "total_tokens": 3779
+    }
+  },
+  "data": {
+    "documentType": "death_certificate",
+    "deceasedName": "김민수",
+    "birthDate": "1955-03-12",
+    "deathDateTime": "2026-07-07T14:20",
+    "deathPlaceCategory": "medical_institution",
+    "deathPlaceAddress": "부산광역시 금정구 부산대학로 63번길 2",
+    "deathType": "unknown",
+    "directCause": "폐렴",
+    "causeB": "패혈증",
+    "causeC": "당뇨병",
+    "issuingInstitution": "부산대학교병원",
+    "issuedDate": "2026-07-08"
+  },
+  "warnings": [],
+  "normalization": {
+    "success": true,
+    "warningCount": 0
+  },
+  "validation": {
+    "success": true,
+    "errorCount": 0,
+    "errors": []
+  },
+  "parse": {
+    "success": true,
+    "api": "2.0",
+    "model": "document-parse-260128",
+    "ocr": true,
+    "pageCount": 1,
+    "elementCount": 11
+  },
+  "pipeline": {
+    "success": true,
+    "completedStages": [
+      "document_parse",
+      "document_classification",
+      "information_extract",
+      "normalization",
+      "schema_validation"
+    ],
+    "totalDurationMs": 16720,
+    "stages": {
+      "document_parse": {
+        "success": true,
+        "durationMs": 6915
+      },
+      "document_classification": {
+        "success": true,
+        "durationMs": 61
+      },
+      "information_extract": {
+        "success": true,
+        "durationMs": 9718
+      },
+      "normalization": {
+        "success": true,
+        "durationMs": 13
+      },
+      "schema_validation": {
+        "success": true,
+        "durationMs": 12
+      }
+    }
+  }
+}

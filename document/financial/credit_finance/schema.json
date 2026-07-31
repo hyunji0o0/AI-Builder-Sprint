@@ -1,0 +1,85 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "credit_finance_financial_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "inquiryStatus": {
+          "type": "string",
+          "description": "현재 조회 상태를 반환한다. 처리 중이면 processing, 조회가 완료되었으면 completed, 조회 오류이면 failed를 반환한다."
+        },
+        "hasRecords": {
+          "type": "boolean",
+          "description": "조회가 완료된 결과 표에 금융거래 또는 채무 내역이 1건 이상 있으면 true를 반환한다. 내역이 없거나 아직 처리 중이면 false를 반환한다."
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "결과 표에 표시된 금융거래 내역 행의 개수를 반환한다. 내역이 없거나 처리 중이면 0을 반환한다."
+        },
+        "message": {
+          "type": "string",
+          "description": "결과 표 영역에 표시된 주요 조회 상태 또는 안내 문구를 반환한다. 예: 현재 여신금융사에서 처리중입니다."
+        },
+        "records": {
+          "type": "array",
+          "description": "조회가 완료된 후 결과 표에 표시되는 금융거래 및 채무 내역을 행 단위로 반환한다. 내역이 없거나 처리 중이면 빈 배열을 반환한다.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "institutionName": {
+                "type": "string",
+                "description": "표의 거래회사명 항목에 표시된 금융회사명을 반환한다."
+              },
+              "recordType": {
+                "type": "string",
+                "description": "표의 거래내역 항목에 표시된 거래 또는 채무의 종류를 반환한다."
+              },
+              "institutionContact": {
+                "type": "string",
+                "description": "표의 담당자 연락처 항목에 표시된 연락처를 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "notificationDate": {
+                "type": "string",
+                "description": "표의 통지일을 YYYY-MM-DD 형식으로 반환한다. 표시가 없거나 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "amount": {
+                "type": "integer",
+                "description": "표의 채무금액을 원 단위 정수로 반환한다. 쉼표와 원 표시는 제거하며, 금액이 없거나 확인할 수 없으면 0을 반환한다."
+              },
+              "dcdsEnrollmentStatus": {
+                "type": "string",
+                "description": "표의 DCDS 가입 여부를 반환한다. 가입되어 있으면 enrolled, 가입되어 있지 않으면 not_enrolled, 확인할 수 없으면 unknown을 반환한다."
+              }
+            },
+            "required": [
+              "institutionName",
+              "recordType",
+              "institutionContact",
+              "notificationDate",
+              "amount",
+              "dcdsEnrollmentStatus"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "결과 화면 하단에 표시된 조회 결과 해석 관련 안내사항을 문자열 배열로 반환한다. 안내사항 영역이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "inquiryStatus",
+        "hasRecords",
+        "recordCount",
+        "message",
+        "records",
+        "warnings"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

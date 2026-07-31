@@ -1,0 +1,145 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "deposit_insurance_financial_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "requestNumber": {
+          "type": "string",
+          "description": "결과 화면에 표시된 접수번호를 반환한다. 식별할 수 없거나 마스킹되어 있으면 빈 문자열을 반환한다."
+        },
+        "inquiryStatus": {
+          "type": "string",
+          "description": "조회 결과가 정상적으로 표시되어 있으면 completed, 조회 중이면 processing, 조회 오류이면 failed를 반환한다."
+        },
+        "hasRecords": {
+          "type": "boolean",
+          "description": "상속인 미수령금 또는 상속인 채무정보 내역이 하나라도 있으면 true, 두 영역 모두 조회된 데이터가 없으면 false를 반환한다."
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "상속인 미수령금과 상속인 채무정보 영역에 표시된 전체 결과 행의 개수를 반환한다."
+        },
+        "hasUnclaimedDepositRecords": {
+          "type": "boolean",
+          "description": "상속인 미수령금 조회 결과에 내역이 하나라도 있으면 true, 조회된 데이터가 없으면 false를 반환한다."
+        },
+        "unclaimedDepositRecordCount": {
+          "type": "integer",
+          "description": "상속인 미수령금 조회 결과에 표시된 내역 수를 반환한다. 내역이 없으면 0을 반환한다."
+        },
+        "hasDebtRecords": {
+          "type": "boolean",
+          "description": "상속인 채무정보 조회 결과에 내역이 하나라도 있으면 true, 조회된 데이터가 없으면 false를 반환한다."
+        },
+        "debtRecordCount": {
+          "type": "integer",
+          "description": "상속인 채무정보 조회 결과에 표시된 내역 수를 반환한다. 내역이 없으면 0을 반환한다."
+        },
+        "message": {
+          "type": "string",
+          "description": "조회 결과 영역에 표시된 주요 결과 문구를 반환한다. 두 영역 모두 데이터가 없으면 미수령금과 채무정보 모두 조회된 데이터가 없다는 내용으로 반환한다."
+        },
+        "records": {
+          "type": "array",
+          "description": "상속인 미수령금과 상속인 채무정보의 개별 결과를 행 단위로 반환한다. 내역이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "recordCategory": {
+                "type": "string",
+                "description": "상속인 미수령금 내역이면 unclaimed_deposit, 상속인 채무정보 내역이면 financial_company_debt를 반환한다."
+              },
+              "institutionName": {
+                "type": "string",
+                "description": "표의 파산금융회사, 파산재단 또는 채권양도기관 항목에 표시된 기관명을 반환한다. 확인할 수 없으면 빈 문자열을 반환한다."
+              },
+              "estateOrTransferInstitutionName": {
+                "type": "string",
+                "description": "파산재단명 또는 채권양도기관명이 별도로 표시된 경우 반환한다. 없으면 빈 문자열을 반환한다."
+              },
+              "depositInsuranceAmount": {
+                "type": "integer",
+                "description": "상속인 미수령금 표의 예금보험금 금액을 원 단위 정수로 반환한다. 쉼표와 원 표시는 제거하며, 해당하지 않으면 0을 반환한다."
+              },
+              "settlementAmount": {
+                "type": "integer",
+                "description": "상속인 미수령금 표의 정산금 금액을 원 단위 정수로 반환한다. 해당하지 않으면 0을 반환한다."
+              },
+              "bankruptcyDividendAmount": {
+                "type": "integer",
+                "description": "상속인 미수령금 표의 파산배당금 금액을 원 단위 정수로 반환한다. 해당하지 않으면 0을 반환한다."
+              },
+              "heldDividendAmount": {
+                "type": "integer",
+                "description": "상속인 미수령금 표의 파산배당금 예보미반 금액을 원 단위 정수로 반환한다. 해당하지 않으면 0을 반환한다."
+              },
+              "debtType": {
+                "type": "string",
+                "description": "상속인 채무정보 표의 채무구분 값을 반환한다. 미수령금 내역이거나 값이 없으면 빈 문자열을 반환한다."
+              },
+              "debtorName": {
+                "type": "string",
+                "description": "상속인 채무정보 표의 채무자명을 반환한다. 미수령금 내역이거나 값이 없으면 빈 문자열을 반환한다."
+              },
+              "principalBalance": {
+                "type": "integer",
+                "description": "상속인 채무정보 표의 원금잔액을 원 단위 정수로 반환한다. 쉼표와 원 표시는 제거하며, 해당하지 않으면 0을 반환한다."
+              },
+              "interestAmount": {
+                "type": "integer",
+                "description": "상속인 채무정보 표의 이자 금액을 원 단위 정수로 반환한다. 해당하지 않거나 확인할 수 없으면 0을 반환한다."
+              },
+              "extinctionStatus": {
+                "type": "string",
+                "description": "채무의 소각 여부를 반환한다. 소각되었으면 extinguished, 소각되지 않았으면 active, 확인할 수 없으면 unknown을 반환한다."
+              },
+              "institutionContact": {
+                "type": "string",
+                "description": "해당 결과 행의 담당자 연락처를 반환한다. 표시가 없거나 확인할 수 없으면 빈 문자열을 반환한다."
+              }
+            },
+            "required": [
+              "recordCategory",
+              "institutionName",
+              "estateOrTransferInstitutionName",
+              "depositInsuranceAmount",
+              "settlementAmount",
+              "bankruptcyDividendAmount",
+              "heldDividendAmount",
+              "debtType",
+              "debtorName",
+              "principalBalance",
+              "interestAmount",
+              "extinctionStatus",
+              "institutionContact"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "조회 결과 화면에 표시된 유의사항이나 추가 안내문을 문자열 배열로 반환한다. 안내사항이 없으면 빈 배열을 반환한다.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "requestNumber",
+        "inquiryStatus",
+        "hasRecords",
+        "recordCount",
+        "hasUnclaimedDepositRecords",
+        "unclaimedDepositRecordCount",
+        "hasDebtRecords",
+        "debtRecordCount",
+        "message",
+        "records",
+        "warnings"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "forestry_cooperative_financial_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "hasFinancialRecords": {
+          "type": "boolean",
+          "description": "문서에 거래내역이 있다고 표시되어 있으면 true, 없으면 false를 반환한다."
+        },
+        "depositAccountCount": {
+          "type": "integer",
+          "description": "수신예금 건수."
+        },
+        "closedDepositCount": {
+          "type": "integer",
+          "description": "수신해지 건수."
+        },
+        "loanCount": {
+          "type": "integer",
+          "description": "대출건수."
+        },
+        "loanAmount": {
+          "type": "integer",
+          "description": "대출금액을 원 단위 정수로 반환한다. 쉼표와 '원'은 제거한다."
+        },
+        "paymentCount": {
+          "type": "integer",
+          "description": "총지급수 건수."
+        },
+        "guaranteeCount": {
+          "type": "integer",
+          "description": "보증건수."
+        },
+        "guaranteeAmount": {
+          "type": "integer",
+          "description": "보증금액을 원 단위 정수로 반환한다. 쉼표와 '원'은 제거한다."
+        },
+        "balanceNumber": {
+          "type": "string",
+          "description": "잔액번호."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "문의 전화번호."
+        },
+        "message": {
+          "type": "string",
+          "description": "거래내역 존재 여부를 설명하는 안내 문구."
+        },
+        "notice": {
+          "type": "array",
+          "description": "문서 하단의 안내사항.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "hasFinancialRecords",
+        "depositAccountCount",
+        "closedDepositCount",
+        "loanCount",
+        "loanAmount",
+        "paymentCount",
+        "guaranteeCount",
+        "guaranteeAmount",
+        "balanceNumber",
+        "contactNumber",
+        "message",
+        "notice"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

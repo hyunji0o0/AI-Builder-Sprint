@@ -1,0 +1,73 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "death_certificate_schema",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "description": "문서가 사망진단서 또는 시체검안서이면 death_certificate를 반환한다."
+        },
+        "deceasedName": {
+          "type": "string",
+          "description": "사망자의 성명"
+        },
+        "birthDate": {
+          "type": "string",
+          "description": "사망자의 실제 생년월일을 YYYY-MM-DD 형식으로 반환한다."
+        },
+        "deathDateTime": {
+          "type": "string",
+          "description": "실제 사망 일시를 YYYY-MM-DDTHH:mm 형식으로 반환한다. 발병일시나 문서 작성일이 아니다."
+        },
+        "deathPlaceCategory": {
+          "type": "string",
+          "description": "선택된 사망 장소 유형. 의료기관이면 medical_institution, 주택이면 residence, 그 외에는 other를 반환한다."
+        },
+        "deathPlaceAddress": {
+          "type": "string",
+          "description": "⑨ 사망 장소 항목에 적힌 주소"
+        },
+        "deathType": {
+          "type": "string",
+          "description": "⑪ 사망의 종류에서 선택된 값. 병사는 natural, 외인사는 external, 기타 및 불상은 unknown을 반환한다."
+        },
+        "directCause": {
+          "type": "string",
+          "description": "⑩ 사망의 원인 중 (가) 직접사인"
+        },
+        "causeB": {
+          "type": "string",
+          "description": "⑩ 사망의 원인 중 (나), 즉 직접사인의 원인"
+        },
+        "causeC": {
+          "type": "string",
+          "description": "⑩ 사망의 원인 중 (다)"
+        },
+        "issuingInstitution": {
+          "type": "string",
+          "description": "문서 하단의 의료기관 명칭"
+        },
+        "issuedDate": {
+          "type": "string",
+          "description": "문서 하단의 진단 또는 검안 작성일을 YYYY-MM-DD 형식으로 반환한다."
+        }
+      },
+      "required": [
+        "documentType",
+        "deceasedName",
+        "birthDate",
+        "deathDateTime",
+        "deathPlaceCategory",
+        "deathPlaceAddress",
+        "deathType",
+        "directCause",
+        "causeB",
+        "causeC",
+        "issuingInstitution",
+        "issuedDate"
+      ]
+    }
+  }
+}
