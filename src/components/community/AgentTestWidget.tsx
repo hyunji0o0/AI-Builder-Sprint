@@ -14,10 +14,10 @@ type Turn = {
 
 type DetailState = CommunityPost | 'loading' | 'error'
 
-// 메인챗 에이전트가 아직 없어서(agent_and_ui merge 전), searchCommunityReviewsForAgent()를
-// 화면에서 직접 눌러보며 테스트할 수 있게 만든 임시 위젯 — 여러 사이트에 흔한
-// 우측 하단 동그란 챗 버블 패턴. merge 후에는 실제 메인챗이 이 자리를 대신하니
-// 이 컴포넌트와 /api/community/agent-test 라우트는 지워도 됨(§CLAUDE.md 다음 할 일).
+// 메인챗 에이전트가 아직 없어서(agent_and_ui merge 전), /api/community/recommend
+// (community-recommend.ts)를 화면에서 직접 눌러보며 테스트할 수 있게 만든 임시
+// 위젯 — 여러 사이트에 흔한 우측 하단 동그란 챗 버블 패턴. merge 후에는 실제
+// 메인챗이 이 자리를 대신하니 이 컴포넌트는 지워도 됨(§CLAUDE.md 다음 할 일).
 export function AgentTestWidget() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')

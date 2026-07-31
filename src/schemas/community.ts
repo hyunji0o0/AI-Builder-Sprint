@@ -25,6 +25,8 @@ export const CATEGORY_LABEL: Record<CommunityCategory, string> = {
   ETC: '기타',
 }
 
+// DB의 community_posts.categories는 text[] — 글 하나에 카테고리를 여러 개 달 수 있음.
+// 최소 1개는 있어야 에이전트가 "이 할일과 관련된 팁"을 필터링할 수 있어서 min(1).
 export const communityPostSchema = z.object({
   id: z.string(),
   nickname: z.string().min(1).max(20),
@@ -77,6 +79,45 @@ export type CommunityReviewBlockItem = {
   helpfulCount: number
   url: string | null
   label: '사용자 경험'
+}
+
+export const COMMUNITY_TIP_DISCLAIMER = '개인의 경험이라 상황에 따라 다를 수 있어. 공식 기관 안내도 함께 확인해줘.'
+
+// 메인 챗이 "지금 단계에 맞는 팁"으로 받아 쓰는 카드 형태.
+// LLM이 쓰는 건 title/summary/reason/quote 네 개뿐이고 나머지는 전부 DB 값 —
+// 날짜나 좋아요 수를 지어내지 못하게 하려는 구조(community-recommend.ts 참고).
+export const communityTipSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  reason: z.string(),
+  quote: z.string(),
+  categories: z.array(communityCategorySchema),
+  nickname: z.string(),
+  helpfulCount: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  relativeDate: z.string(),
+  similarity: z.number(),
+})
+export type CommunityTip = z.infer<typeof communityTipSchema>
+
+// agent_and_ui의 COMMUNITY_REVIEW 블록으로 변환하는 어댑터.
+// 블록은 지금 reviews[0]만 렌더링하므로 가장 관련도 높은 팁이 앞에 오도록 그대로 넘김.
+// 블록 스키마가 바뀌면 이 함수만 고치면 됨.
+export function toCommunityReviewBlock(tips: CommunityTip[], disclaimer = COMMUNITY_TIP_DISCLAIMER) {
+  return {
+    type: 'COMMUNITY_REVIEW' as const,
+    reviews: tips.map((tip) => ({
+      id: tip.id,
+      excerpt: tip.quote,
+      reason: tip.reason,
+      createdAt: tip.relativeDate, // 블록이 값을 그대로 출력해서 ISO 대신 사람이 읽는 형태로 넘김
+      helpfulCount: tip.helpfulCount,
+      url: null,
+      label: '사용자 경험' as const,
+    })),
+    disclaimer,
+  }
 }
 
 export function toCommunityReviewItem(post: CommunityPost): CommunityReviewBlockItem {

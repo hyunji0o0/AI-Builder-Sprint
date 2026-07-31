@@ -1,0 +1,72 @@
+{
+  "_note": "docs/기획서.md §12 '기한 룰 테이블'의 8개 항목. 기획서는 여기에 22개(통신·구독 해지, 건강보험, 명의이전 등)를 '권장 시점'으로 더 채워 총 30개를 만드는 계획인데 아직 목록이 없어서 확정된 8개만 정의함. 항목을 추가하려면 여기에 넣고 src/schemas/procedure-steps.ts의 enum에도 id를 추가할 것.",
+  "_searchText_note": "임베딩 검색에 쓰는 문장. 카테고리 코드값('TAX')을 임베딩하면 정확도가 떨어져서, 그 단계에서 사용자가 실제로 겪는 상황을 문장으로 씀. 팁이 엉뚱하게 나오면 여기를 먼저 손볼 것 — scripts/eval-recommend.mjs가 이 파일을 매번 새로 읽음.",
+  "_legalBasis_note": "기획서 원문 그대로. 법령 원문 확인은 팀에서 별도 진행 예정(기획서 §12 경고 참고).",
+
+  "steps": {
+    "DEATH_REPORT": {
+      "label": "사망신고",
+      "deadline": "1개월",
+      "baseDate": "사망 사실을 안 날",
+      "legalBasis": "가족관계등록법 §84",
+      "categories": ["ETC"],
+      "searchText": "사망신고를 하는 단계. 사망 사실을 안 날부터 1개월 안에 주민센터에 신고해야 한다. 신고서 작성, 필요한 서류, 방문 접수, 안심상속 원스톱 동시 신청."
+    },
+    "RENOUNCE_OR_LIMITED_ACCEPTANCE": {
+      "label": "상속포기·한정승인",
+      "deadline": "3개월",
+      "baseDate": "상속개시 있음을 안 날",
+      "legalBasis": "민법 §1019",
+      "categories": ["RENOUNCE"],
+      "searchText": "상속포기나 한정승인을 결정하고 신청하는 단계. 상속개시를 안 날부터 3개월 기한. 빚이 자산보다 많을 때의 판단, 후순위 상속인에게 넘어가는 문제, 법원 신청 절차."
+    },
+    "SAFE_INHERITANCE_ONESTOP": {
+      "label": "안심상속 원스톱 신청",
+      "deadline": "1년",
+      "baseDate": "사망일이 속한 달의 말일",
+      "legalBasis": "정부24 안내",
+      "categories": ["ETC"],
+      "searchText": "안심상속 원스톱 서비스로 고인의 금융·부동산·자동차·세금 내역을 한 번에 조회하는 단계. 신청 방법, 필요한 서류, 조회 결과를 받은 뒤 확인할 것."
+    },
+    "INHERITANCE_TAX": {
+      "label": "상속세 신고·납부",
+      "deadline": "6개월",
+      "baseDate": "상속개시일이 속한 달의 말일",
+      "legalBasis": "상증세법 §67",
+      "categories": ["TAX"],
+      "searchText": "상속세를 신고하고 납부하는 단계. 상속개시일이 속한 달의 말일부터 6개월 기한. 신고서 작성 순서, 공제 항목, 계좌 거래내역 소명, 사전 증여, 세무 상담."
+    },
+    "PROPERTY_ACQUISITION_TAX": {
+      "label": "부동산 취득세",
+      "deadline": "6개월",
+      "baseDate": "상속개시일이 속한 달의 말일",
+      "legalBasis": "지방세법 §20",
+      "categories": ["TRANSFER", "TAX"],
+      "searchText": "상속받은 부동산의 취득세를 신고하고 소유권 이전등기를 하는 단계. 상속재산분할협의서, 취득세 감면 요건, 등기 시점 판단."
+    },
+    "VEHICLE_TRANSFER": {
+      "label": "자동차 이전등록",
+      "deadline": "6개월",
+      "baseDate": "상속개시일",
+      "legalBasis": "자동차등록령",
+      "categories": ["TRANSFER"],
+      "searchText": "고인 명의 자동차를 상속인 앞으로 이전등록하거나 말소하는 단계. 기한을 넘겼을 때의 과태료, 필요한 서류."
+    },
+    "INSURANCE_CLAIM": {
+      "label": "보험금 청구",
+      "deadline": "3년 (소멸시효)",
+      "baseDate": "사고를 안 날",
+      "legalBasis": "상법 §662",
+      "categories": ["INSURANCE"],
+      "searchText": "고인 앞으로 된 보험금을 청구하는 단계. 청구 서류, 소멸시효, 수익자 확인, 건강보험 자격상실과 환급금 정리."
+    },
+    "SURVIVOR_PENSION": {
+      "label": "국민연금 유족연금",
+      "deadline": "5년",
+      "baseDate": "사망일",
+      "legalBasis": "국민연금법",
+      "categories": ["INSURANCE"],
+      "searchText": "국민연금 유족연금과 장제비를 신청하는 단계. 신청 기한과 소멸시효, 반환일시금과의 비교, 수급권 상실 사유."
+    }
+  }
+}

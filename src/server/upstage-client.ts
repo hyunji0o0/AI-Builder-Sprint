@@ -19,6 +19,8 @@ async function upstageFetch(path: string, body: unknown) {
       Authorization: `Bearer ${UPSTAGE_API_KEY}`,
     },
     body: JSON.stringify(body),
+    // 타임아웃이 없으면 Upstage가 느릴 때 요청이 무한정 매달림(데모 중 위험).
+    signal: AbortSignal.timeout(30_000),
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
@@ -45,11 +47,16 @@ export async function embedQuery(text: string): Promise<number[]> {
   return data.data[0].embedding
 }
 
-// 검색된 글을 종합해서 답변을 만드는 재작성 단계 — solar-pro3
-export async function generateSolarChat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[]): Promise<string> {
+// 검색된 글을 종합해서 답변을 만드는 재작성 단계 — solar-pro3.
+// 근거 기반 요약이라 temperature는 낮게 두는 게 기본(지어내기와 실행 간 편차를 줄임).
+export async function generateSolarChat(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+  temperature = 0.2,
+): Promise<string> {
   const data = await upstageFetch('/chat/completions', {
     model: 'solar-pro3',
     messages,
+    temperature,
   })
   return data.choices[0].message.content
 }

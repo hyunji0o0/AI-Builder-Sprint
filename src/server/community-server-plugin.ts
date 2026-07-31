@@ -1,5 +1,6 @@
+import type { ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
-import { createCommunityCommentSchema, createCommunityPostSchema, updateCommunityPostSchema } from '../schemas/community'
+import { createCommunityCommentSchema, createCommunityPostSchema, toCommunityReviewBlock, updateCommunityPostSchema } from '../schemas/community'
 import { createCommunityComment, listCommunityComments } from './community-comment-store'
 import {
   createCommunityPost,
@@ -9,7 +10,8 @@ import {
   setCommunityPostHelpful,
   updateCommunityPost,
 } from './community-store'
-import { searchCommunityReviewsForAgent } from './community-agent-tool'
+import { PROCEDURE_STEPS, PROCEDURE_STEP_IDS, procedureStepIdSchema } from '../schemas/procedure-steps'
+import { RecommendInput, recommendCommunityTips } from './community-recommend'
 
 // agent_and_ui의 vite-agent-plugin.ts와 동일한 패턴(Vite dev 서버에 미들웨어로
 // API를 붙이는 방식)을 그대로 따름. 합칠 때 vite.config.ts의 plugins 배열에
@@ -20,9 +22,24 @@ const readBody = async (req: NodeJS.ReadableStream) => {
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
 }
 
+// async 미들웨어에서 예외가 새어나가면 unhandled rejection이 되어 dev 서버 프로세스가
+// 통째로 죽음(Node 15+ 기본 동작). 라우트마다 try/catch를 빠뜨리지 않도록 여기서 한 번 감쌈.
+type Handler = (req: Connect.IncomingMessage, res: ServerResponse) => Promise<void>
+const withErrorBoundary = (handler: Handler): Connect.NextHandleFunction => (req, res) => {
+  handler(req as Connect.IncomingMessage, res as ServerResponse).catch((error) => {
+    console.error('커뮤니티 API 처리 실패:', error)
+    if (res.headersSent) {
+      res.end()
+      return
+    }
+    res.statusCode = 500
+    res.end(JSON.stringify({ error: '요청을 처리하지 못했어요.' }))
+  })
+}
+
 export function createCommunityServerPlugin(): Plugin {
   const installApi = (middlewares: Connect.Server) => {
-    middlewares.use('/api/community/posts', async (req, res) => {
+    middlewares.use('/api/community/posts', withErrorBoundary(async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
       const urlPath = (req.url ?? '').split('?')[0].replace(/^\/+|\/+$/g, '')
@@ -157,12 +174,26 @@ export function createCommunityServerPlugin(): Plugin {
 
       res.statusCode = 404
       res.end(JSON.stringify({ error: '알 수 없는 요청이에요.' }))
-    })
+    }))
 
-    // /api/community/agent-test — merge 전에 searchCommunityReviewsForAgent()를
-    // 직접 테스트해보기 위한 임시 라우트(AgentTestWidget 전용). merge 후
-    // agent_and_ui의 CaseTools 배선이 끝나면 이 라우트는 지워도 됨.
-    middlewares.use('/api/community/agent-test', async (req, res) => {
+    // /api/community/recommend — 지금 밟고 있는 단계에 맞는 커뮤니티 팁 카드를 돌려줌.
+    //
+    //   요청: {
+    //     stepId?: ProcedureStepId,        // docs/기획서.md §12의 8단계. 이것만 줘도 동작
+    //     situation?: string,              // 단계로 안 떨어질 때 / 맥락 추가
+    //     context?: {                      // 개인화 신호, 전부 선택
+    //       relationToDeceased?, region?, debtExceedsAssets?,
+    //       hasUnverifiedItems?, daysRemaining?, missingDocuments?
+    //     },
+    //     category?: CommunityCategory,    // 하드 필터. 기본은 안 씀
+    //     limit?: number,
+    //     format?: 'tips' | 'block',       // 'block'이면 COMMUNITY_REVIEW로 변환
+    //   }
+    //   응답: { step, tips: CommunityTip[], disclaimer, candidateCount }
+    //
+    // GET /api/community/steps로 단계 목록을 받아갈 수 있음.
+    // AgentTestWidget도 이 라우트를 그대로 호출함(format: 'block').
+    middlewares.use('/api/community/recommend', withErrorBoundary(async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
       if (req.method !== 'POST') {
@@ -172,19 +203,44 @@ export function createCommunityServerPlugin(): Plugin {
       }
 
       try {
-        const body = (await readBody(req)) as { query?: string }
-        if (!body.query || !body.query.trim()) {
+        const body = (await readBody(req)) as RecommendInput & { format?: 'tips' | 'block' }
+        if (body.stepId && !procedureStepIdSchema.safeParse(body.stepId).success) {
           res.statusCode = 422
-          res.end(JSON.stringify({ error: 'query가 필요합니다.' }))
+          res.end(JSON.stringify({
+            error: `stepId가 올바르지 않아요. 가능한 값: ${PROCEDURE_STEP_IDS.join(', ')}`,
+          }))
           return
         }
-        const cards = await searchCommunityReviewsForAgent({ financialSituation: body.query.trim(), limit: 3 })
-        res.end(JSON.stringify(cards))
+        if (!body.stepId && !body.situation?.trim()) {
+          res.statusCode = 422
+          res.end(JSON.stringify({ error: 'stepId 또는 situation 중 하나는 필요합니다.' }))
+          return
+        }
+        const result = await recommendCommunityTips(body)
+        res.end(JSON.stringify(
+          body.format === 'block' ? toCommunityReviewBlock(result.tips, result.disclaimer) : result,
+        ))
       } catch (error) {
         res.statusCode = 500
-        res.end(JSON.stringify({ error: '카드를 생성하지 못했어요.', detail: `${error}` }))
+        res.end(JSON.stringify({ error: '추천을 생성하지 못했어요.', detail: `${error}` }))
       }
-    })
+    }))
+
+    // /api/community/steps — 팁 카드를 요청할 수 있는 단계 목록.
+    // 호출부가 stepId를 하드코딩하지 않고 여기서 받아가도록 열어둠.
+    middlewares.use('/api/community/steps', withErrorBoundary(async (_req, res) => {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.end(JSON.stringify(
+        PROCEDURE_STEP_IDS.map((id) => ({
+          id,
+          label: PROCEDURE_STEPS[id].label,
+          deadline: PROCEDURE_STEPS[id].deadline,
+          baseDate: PROCEDURE_STEPS[id].baseDate,
+          legalBasis: PROCEDURE_STEPS[id].legalBasis,
+          categories: PROCEDURE_STEPS[id].categories,
+        })),
+      ))
+    }))
   }
 
   return {

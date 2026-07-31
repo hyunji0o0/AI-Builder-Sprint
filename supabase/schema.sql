@@ -8,7 +8,7 @@ create extension if not exists vector;
 create table if not exists community_posts (
   id uuid primary key default gen_random_uuid(),
   nickname text not null,
-  categories text[] not null default '{}', -- 긴 팁 하나가 여러 주제를 다룰 수 있어 배열로 허용
+  categories text[] not null default '{}', -- 긴 팁 하나가 여러 주제를 다룰 수 있어 배열로 허용. enum이 아니라 text[]라 카테고리 추가 시 DB 변경 불필요
   content text not null,
   created_at timestamptz not null default now(),
   helpful_count int not null default 0,
