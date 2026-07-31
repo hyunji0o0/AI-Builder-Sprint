@@ -11,11 +11,10 @@ export default defineConfig(({ mode }) => {
       createAgentServerPlugin({
         apiKey: env.UPSTAGE_API_KEY,
         model: env.UPSTAGE_MODEL || 'solar-pro3',
-        agentMockMode: env.AGENT_MOCK_MODE === 'true',
         documentPipeline: {
-          mode: env.DOCUMENT_PIPELINE_MODE === 'live' ? 'live' : 'mock',
+          mode: 'python',
           environment: mode,
-          allowMockInProduction: env.ALLOW_MOCK_DOCUMENT_PIPELINE_IN_PRODUCTION === 'true',
+          pythonCommand: env.PYTHON_COMMAND || undefined,
         },
       }),
     ],

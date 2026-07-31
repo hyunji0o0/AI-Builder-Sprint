@@ -8,4 +8,4 @@ export const DOCUMENT_LIMITS = {
   fieldConfidenceThreshold: 0.8,
 } as const
 
-export type DocumentPipelineMode = 'mock' | 'live'
+export type DocumentPipelineMode = 'python'

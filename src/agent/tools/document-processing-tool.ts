@@ -5,6 +5,7 @@ import {
   DocumentPipelineRunResult,
   runDocumentPipeline,
 } from '../document-processing/run-document-pipeline'
+import { DocumentPipelineAdapter } from '../document-processing/document-pipeline'
 
 export type DocumentProcessingToolInput = {
   input: DocumentPipelineInput
@@ -22,8 +23,9 @@ export interface DocumentProcessingTool {
  */
 export function createDocumentProcessingTool(
   config: DocumentPipelineConfig,
+  adapter?: DocumentPipelineAdapter,
 ): DocumentProcessingTool {
-  const pipeline = createDocumentPipeline(config)
+  const pipeline = adapter ?? createDocumentPipeline(config)
   return {
     name: 'processDocuments',
     execute({ input, caseState }) {

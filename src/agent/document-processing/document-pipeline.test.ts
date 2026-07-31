@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createInitialCaseState } from '../state/initial-case'
-import { DocumentPipelineAdapter, LiveDocumentPipelineAdapter, MockDocumentPipelineAdapter } from './document-pipeline'
+import { DocumentPipelineAdapter, MockDocumentPipelineAdapter } from './document-pipeline'
+import { PythonDocumentPipelineAdapter } from './python-document-pipeline-adapter'
 import { createDocumentPipeline } from './document-pipeline-factory'
 import { confirmDocumentField, runDocumentPipeline } from './run-document-pipeline'
 
@@ -78,20 +79,23 @@ describe('Document Pipeline', () => {
     expect(confirmed.financials.totalAssets).toBe(17_000_000)
   })
 
-  it('Mock과 Live adapter가 같은 interface를 구현한다', () => {
-    const adapters: DocumentPipelineAdapter[] = [new MockDocumentPipelineAdapter(), new LiveDocumentPipelineAdapter('test-key')]
+  it('Mock과 Python adapter가 같은 interface를 구현한다', () => {
+    const adapters: DocumentPipelineAdapter[] = [
+      new MockDocumentPipelineAdapter(),
+      new PythonDocumentPipelineAdapter({ apiKey: 'test-key' }),
+    ]
     expect(adapters.every((adapter) => typeof adapter.parse === 'function')).toBe(true)
   })
 
-  it('production에서 명시적 허용 없는 mock 사용을 차단한다', () => {
-    expect(() => createDocumentPipeline({ mode: 'mock', environment: 'production', allowMockInProduction: false, apiKey: '' }))
-      .toThrow('MOCK_DOCUMENT_PIPELINE_BLOCKED_IN_PRODUCTION')
+  it('제품 파이프라인은 실제 Python 어댑터만 생성한다', () => {
+    expect(createDocumentPipeline({ mode: 'python', environment: 'production', apiKey: 'test-key' }))
+      .toBeInstanceOf(PythonDocumentPipelineAdapter)
   })
 
   it('흐리거나 금액이 없는 문서에 재업로드·직접 확인 흐름을 제공한다', async () => {
     const result = await runDocumentPipeline(input(file('missing', 'loan-amount-missing-demo.png')), createInitialCaseState(), new MockDocumentPipelineAdapter())
     expect(result.output.suggestedActions.map((action) => action.id)).toContain('upload_again')
-    expect(result.output.ui.some((block) => block.type === 'FIELD_VERIFICATION')).toBe(true)
+    expect(result.output.ui.some((block) => block.type === 'DOCUMENT_EXTRACTION_REVIEW')).toBe(true)
   })
 
   it('처리 실패 시 사용자를 탓하지 않는 따뜻한 안내를 반환한다', async () => {

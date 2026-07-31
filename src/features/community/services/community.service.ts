@@ -1,4 +1,3 @@
-import { communityReviews } from '../data/community.data'
 import { CommunityRepository, CommunityReview, CommunitySearchQuery, CommunityUserContext, CreateReviewInput } from '../model/community.types'
 
 export const calculateReviewSimilarity = (review: CommunityReview, context: CommunityUserContext) => {
@@ -16,8 +15,12 @@ const reviewText = (review: CommunityReview) => [
   review.body.usefulTip, review.body.caution, review.region || '', review.taskType,
 ].join(' ').toLowerCase()
 
-export class MockCommunityRepository implements CommunityRepository {
-  private reviews = [...communityReviews]
+export class InMemoryCommunityRepository implements CommunityRepository {
+  private reviews: CommunityReview[]
+
+  constructor(initialReviews: CommunityReview[] = []) {
+    this.reviews = [...initialReviews]
+  }
 
   async getReviews(query: CommunitySearchQuery) {
     const notices = this.reviews.filter((review) => review.isNotice)
@@ -56,7 +59,7 @@ export class MockCommunityRepository implements CommunityRepository {
       helpfulCount: 0,
       commentCount: 0,
       isNotice: false,
-      isSynthetic: true,
+      isSynthetic: false,
     }
     this.reviews = [review, ...this.reviews]
     return review
@@ -101,4 +104,4 @@ export const paginateCommunityReviews = <T>(items: T[], page: number, pageSize: 
   return items.slice(start, start + safeSize)
 }
 
-export const communityRepository = new MockCommunityRepository()
+export const communityRepository = new InMemoryCommunityRepository()

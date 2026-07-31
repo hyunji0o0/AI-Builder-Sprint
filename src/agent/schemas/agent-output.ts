@@ -143,6 +143,21 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
     actions: z.array(actionSchema),
   }),
   z.object({
+    type: z.literal('DOCUMENT_EXTRACTION_REVIEW'),
+    documentId: z.string(),
+    fileName: z.string(),
+    documentTypeLabel: z.string(),
+    confidence: z.number().min(0).max(1),
+    items: z.array(z.object({
+      fieldKey: z.string(),
+      label: z.string(),
+      value: z.union([z.string(), z.number(), z.null()]),
+      formattedValue: z.string(),
+    })),
+    notice: z.string(),
+    actions: z.array(actionSchema),
+  }),
+  z.object({
     type: z.literal('DOCUMENT_CONFLICT'),
     title: z.string(),
     issues: z.array(validationIssueSchema),

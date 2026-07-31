@@ -35,6 +35,13 @@ export function AgentChat({ controller: c }: { controller: CaseAgentController }
               {message.role === 'agent' && <small>곁</small>}
               <div className="da-bubble">
                 {message.text.split(/\n\s*\n/).map((paragraph, index) => <p key={`${message.id}-paragraph-${index}`}>{paragraph}</p>)}
+                {message.attachments?.map((attachment) => (
+                  <button className="da-chat-attachment" type="button" key={attachment.id} onClick={() => c.setPreviewDocument(attachment)}>
+                    <Icon name="file" size={20}/>
+                    <span><strong>{attachment.name}</strong><small>클릭해서 문서 미리보기</small></span>
+                    <Icon name="chevronRight" size={18}/>
+                  </button>
+                ))}
                 {message.role === 'agent' && (
                   message.ui?.length
                     ? message.ui.map((ui, index) => <AgentBlock key={`${message.id}-${ui.type}-${index}`} block={message.block} ui={[ui]} controller={c}/>)
@@ -50,7 +57,10 @@ export function AgentChat({ controller: c }: { controller: CaseAgentController }
             <img className="da-agent-avatar" src="/aedohal-sigan-icon-3d.svg" alt=""/>
             <div className="da-message-content">
               <small>곁</small>
-              <div className="da-bubble"><p>답변을 정리하고 있어요…</p></div>
+              <div className="da-bubble da-processing-bubble">
+                <span className="da-processing-dots" aria-hidden="true"><i/><i/><i/></span>
+                <p>{c.responseStatus}</p>
+              </div>
             </div>
           </div>
         )}
@@ -58,6 +68,10 @@ export function AgentChat({ controller: c }: { controller: CaseAgentController }
       </div>
       <footer className="da-composer-wrap">
         <div className="da-quick">
+          <label className="da-quick-upload">
+            <Icon name="upload" size={18}/>문서 업로드
+            <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" onChange={c.upload}/>
+          </label>
           {quickQuestions.map(([label, block]) => (
             <button onClick={() => c.chooseQuick(label, block)} key={label}>
               <Icon name={block === 'institution' ? 'building' : 'sparkle'} size={14}/>{label}

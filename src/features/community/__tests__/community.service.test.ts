@@ -6,11 +6,11 @@ import {
   hasPossiblePrivateInformation,
   calculateReviewSimilarity,
   markReviewHelpfulOnce,
-  MockCommunityRepository,
+  InMemoryCommunityRepository,
   paginateCommunityReviews,
 } from '../services/community.service'
 
-const repository = () => new MockCommunityRepository()
+const repository = () => new InMemoryCommunityRepository(communityReviews)
 const base = { text: '', scope: 'ALL' as const, category: null, region: null, sort: 'LATEST' as const, userContext: communityUserContext }
 
 describe('community feature', () => {
@@ -86,7 +86,7 @@ describe('community feature', () => {
         preparedDocuments: [], usefulTip: '개인 경험입니다.', caution: '공식 기관에 확인하세요.',
       },
     })
-    expect(review.isSynthetic).toBe(true)
+    expect(review.isSynthetic).toBe(false)
     expect(review.isNotice).toBe(false)
   })
 

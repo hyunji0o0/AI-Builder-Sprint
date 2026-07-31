@@ -35,10 +35,19 @@ export type AgentMessage = {
   text: string
   block?: AgentBlockKind
   ui?: AgentUIBlock[]
+  attachments?: UploadedDocument[]
+}
+
+export type UploadedDocument = {
+  id: string
+  name: string
+  type: string
+  url: string
 }
 
 export type CaseStage = {
   label: string
   state: string
   done: boolean
+  current?: boolean
 }

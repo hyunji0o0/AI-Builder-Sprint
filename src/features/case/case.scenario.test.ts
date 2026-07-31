@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { resolveCaseScenario } from './case.scenario'
 
 describe('Case browser scenario', () => {
-  it('agent-demo 쿼리에서 대표 Agent 사건을 불러온다', () => {
+  it('이전 agent-demo 쿼리로도 임의 사건 데이터를 주입하지 않는다', () => {
     const scenario = resolveCaseScenario('?scenario=agent-demo')
 
-    expect(scenario.isDemo).toBe(true)
-    expect(scenario.caseState.financials.totalAssets).toBe(12_000_000)
-    expect(scenario.caseState.financials.totalDebts).toBe(84_000_000)
-    expect(scenario.caseState.user.region.district).toBe('금정구')
-    expect(scenario.messages[0].text).toContain('무엇부터 해야 할지')
-    expect(scenario.messages[0].ui?.[0]?.type).toBe('CHOICE')
+    expect(scenario.isDemo).toBe(false)
+    expect(scenario.caseState.documents).toEqual([])
+    expect(scenario.caseState.financials.totalAssets).toBeNull()
+    expect(scenario.caseState.financials.totalDebts).toBeNull()
+    expect(scenario.caseState.user.region.district).toBeNull()
+    expect(scenario.messages[0].ui).toBeUndefined()
   })
 
   it('일반 주소에서는 기존 사건 상태를 유지한다', () => {

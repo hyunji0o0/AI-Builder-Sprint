@@ -24,15 +24,27 @@ describe('Agent Harness', () => {
 
   it('부채가 자산보다 많으면 URGENT_REVIEW를 만든다', async () => {
     const state = createInitialCaseState()
-    state.financials.assets[0].amount = 17_000_000
-    state.financials.debts[0].amount = 87_000_000
+    state.financials = {
+      assets: [{ id: 'test-asset', category: 'ASSET', type: 'DEPOSIT', institution: null, amount: 17_000_000, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
+      debts: [{ id: 'test-debt', category: 'DEBT', type: 'LOAN', institution: null, amount: 87_000_000, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
+      totalAssets: 17_000_000,
+      totalDebts: 87_000_000,
+      difference: -70_000_000,
+      hasUnverifiedItems: false,
+    }
     const result = await runAgent({ input: '부채가 더 많으면 어떡해?', caseState: state })
     expect(result.caseState.stage).toBe('URGENT_REVIEW')
     expect(result.output.ui[0]).toMatchObject({ type: 'RISK_ALERT', level: 'URGENT_REVIEW' })
   })
 
   it('미확인 금융 항목이 있어도 확정적인 법률 결론을 만들지 않는다', async () => {
-    const result = await runAgent({ input: '부채가 더 많으면 어떡해?', caseState: createInitialCaseState() })
+    const state = createInitialCaseState()
+    state.financials = {
+      ...state.financials,
+      debts: [{ id: 'unknown-debt', category: 'DEBT', type: 'LOAN', institution: null, amount: null, amountStatus: 'UNKNOWN', source: 'USER_INPUT', sourceDocumentId: null }],
+      hasUnverifiedItems: true,
+    }
+    const result = await runAgent({ input: '부채가 더 많으면 어떡해?', caseState: state })
     expect(result.caseState.financials.hasUnverifiedItems).toBe(true)
     expect(result.output.message).not.toMatch(/상속포기하세요|무조건 한정승인|단순승인으로 진행/)
     expect(result.output.meta.requiresDisclaimer).toBe(true)
@@ -203,9 +215,21 @@ describe('Agent Harness', () => {
 
   it('채팅 상태 변경과 stateSummary가 함께 갱신된다', async () => {
     const before = createInitialCaseState()
+    before.tasks = [{
+      id: 'test-task',
+      type: 'TEST_TASK',
+      title: '테스트 업무',
+      priority: 'NORMAL',
+      status: 'IN_PROGRESS',
+      deadline: null,
+      daysRemaining: null,
+      readiness: 60,
+      requiredDocuments: [],
+      officialSourceIds: [],
+    }]
     const result = await runAgent({ input: '다 했어', caseState: before })
     expect(result.caseState.tasks.some((task) => task.status === 'COMPLETED')).toBe(true)
-    expect(result.output.stateSummary.progress).toBeGreaterThan(55)
+    expect(result.output.stateSummary.progress).toBe(100)
     expect(result.output.stateSummary.todayTaskCount).toBe(0)
   })
 

@@ -40,7 +40,10 @@ export function CaseSectionView({ controller: c }: { controller: CaseAgentContro
         <header><div><span>DOCUMENTS</span><h1>서류함</h1><p>업로드한 서류와 확인 상태를 한곳에서 볼 수 있어요.</p></div><GlassIcon icon="folder" tone="amber"/></header>
         <div className="da-document-grid">
           {c.agentCaseState.documents.map((document) => (
-            <article key={document.id}>
+            <article key={document.id} className="da-document-item" onClick={() => {
+              const uploaded = c.uploadedDocuments.find((item) => item.name === document.fileName)
+              if (uploaded) c.setPreviewDocument(uploaded)
+            }}>
               <GlassIcon icon="file" tone={document.status === 'VERIFIED' ? 'sage' : 'amber'}/>
               <div><strong>{document.fileName}</strong><span>{documentStatusLabel[document.status]}</span><small>확인된 항목 {document.extractedFields.filter((field) => field.verifiedByUser).length}개</small></div>
             </article>

@@ -12,7 +12,7 @@ export function CaseSummary({ caseState, addAgent, completeTask }: Props) {
       <div className="da-summary-counts">
         <button onClick={() => addAgent(`현재 확인된 서류는 ${caseState.documents}개예요.`, 'checklist')}><GlassIcon icon="file" tone="sage"/><span>확인된 서류<strong>{caseState.documents}개</strong></span></button>
         <button onClick={() => addAgent(`현재 진행 중인 업무는 ${caseState.activeTasks}개예요.`, 'next')}><GlassIcon icon="clock" tone="amber"/><span>진행 중인 업무<strong>{caseState.activeTasks}개</strong></span></button>
-        <button onClick={() => addAgent('현재 확인이 필요한 항목은 ○○은행 채무 금액이에요.', 'finance')}><GlassIcon icon="alert" tone="coral"/><span>확인 필요<strong>{caseState.needsCheck}개</strong></span></button>
+        <button onClick={() => addAgent(`현재 확인이 필요한 항목은 ${caseState.needsCheck}개야.`, 'finance')}><GlassIcon icon="alert" tone="coral"/><span>확인 필요<strong>{caseState.needsCheck}개</strong></span></button>
       </div>
       <div className="da-money-heading">
         <strong>재산·채무 요약</strong>

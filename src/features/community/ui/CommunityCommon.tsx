@@ -31,10 +31,16 @@ export function CategoryTabs({ controller: c }: { controller: CommunityControlle
 }
 
 export function SimilarReviewFilter({ controller: c }: { controller: CommunityController }) {
+  const contextTags = [
+    c.userContext.relation,
+    c.userContext.region,
+    c.userContext.financialStatus,
+    ...c.userContext.currentTaskTypes,
+  ].filter((value): value is string => Boolean(value))
   return <div className="cm-similar da-glass">
-    <div><GlassIcon icon="sparkle" tone="peach"/><span>내 상황과 비슷한 후기 5개가 있어요.</span></div>
-    <div className="cm-context-tags"><i>부모님</i><i>부산</i><i>채무 확인 중</i><i>전문가 상담 준비</i></div>
-    <button className={c.similarOnly ? 'active' : ''} onClick={() => c.setSimilarOnly(!c.similarOnly)}>{c.similarOnly ? '전체 후기 보기' : '맞춤 후기만 보기'}</button>
+    <div><GlassIcon icon="sparkle" tone="peach"/><span>{contextTags.length ? '현재 사건 정보와 비슷한 후기를 찾아볼 수 있어요.' : '사건 정보가 입력되면 비슷한 후기를 추천할 수 있어요.'}</span></div>
+    {contextTags.length > 0 && <div className="cm-context-tags">{contextTags.map((tag) => <i key={tag}>{tag}</i>)}</div>}
+    <button disabled={!contextTags.length} className={c.similarOnly ? 'active' : ''} onClick={() => c.setSimilarOnly(!c.similarOnly)}>{c.similarOnly ? '전체 후기 보기' : '맞춤 후기만 보기'}</button>
   </div>
 }
 

@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { COMMUNITY_PAGE_SIZE } from '../constants/community.constants'
-import { communityUserContext } from '../data/community.data'
-import { CommunityReview, CommunitySort, SearchScope } from '../model/community.types'
+import { CommunityReview, CommunitySort, CommunityUserContext, SearchScope } from '../model/community.types'
 import { calculateReviewSimilarity, communityRepository } from '../services/community.service'
 
 export function useCommunity() {
+  const communityUserContext: CommunityUserContext = {
+    relation: null,
+    region: null,
+    currentTaskTypes: [],
+    financialStatus: null,
+    preparingConsultation: false,
+  }
   const [reviews, setReviews] = useState<CommunityReview[]>([])
   const [searchText, setSearchText] = useState('')
   const [searchScope, setSearchScope] = useState<SearchScope>('ALL')

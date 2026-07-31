@@ -4,7 +4,7 @@ import { assessSafety } from '../../safety/safety-hooks'
 import { guardOutput } from '../../safety/output-guard'
 import { privacyFilter } from '../../safety/privacy-filter'
 import { MemoryStateRepository } from '../../state/state-repository'
-import { MockCaseTools } from '../../tools/case-tools'
+import { CaseToolsService } from '../../tools/case-tools'
 import { classifyIntent } from './intent-classifier'
 import { RunAgentInput, RunAgentResult } from '../../shared/agent-run-contract'
 import { AgentLLM } from '../../shared/llm-adapter'
@@ -24,7 +24,7 @@ export async function runCaseWorkflowAgent(
 ): Promise<RunAgentResult> {
   const initialState = caseStateSchema.parse(request.caseState)
   const repository = new MemoryStateRepository(initialState)
-  const tools = dependencies.tools || new MockCaseTools(repository)
+  const tools = dependencies.tools || new CaseToolsService(repository)
   const safeInput = privacyFilter.mask(request.input)
   const classification = request.uiActionIntent
     ? { intent: request.uiActionIntent, emotion: { signal: 'NEUTRAL' as const, intensity: 'LOW' as const }, confidence: 1 }
