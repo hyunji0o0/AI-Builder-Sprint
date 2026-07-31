@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2660" viewBox="0 0 1800 2660">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e9f3ff"/><stop offset=".52" stop-color="#f8f3f4"/><stop offset="1" stop-color="#fff0dc"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f9fcff"/><stop offset="1" stop-color="#d9e8f8"/>
+    </linearGradient>
+    <linearGradient id="peach" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff9f4"/><stop offset="1" stop-color="#f6d4bc"/>
+    </linearGradient>
+    <linearGradient id="sage" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fcf7"/><stop offset="1" stop-color="#d5e9da"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffdf6"/><stop offset="1" stop-color="#f2e2af"/>
+    </linearGradient>
+    <linearGradient id="coral" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff8f6"/><stop offset="1" stop-color="#f3c9c1"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="9" stdDeviation="10" flood-color="#53627a" flood-opacity=".15"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0 0L12 6 0 12Z" fill="#8b98aa"/>
+    </marker>
+    <style>
+      .title{font:700 42px 'Pretendard','Noto Sans KR',sans-serif;fill:#263752}
+      .subtitle{font:500 19px 'Pretendard','Noto Sans KR',sans-serif;fill:#66758b}
+      .section{font:700 25px 'Pretendard','Noto Sans KR',sans-serif;fill:#293a56}
+      .head{font:700 21px 'Pretendard','Noto Sans KR',sans-serif;fill:#293a56}
+      .body{font:500 17px 'Pretendard','Noto Sans KR',sans-serif;fill:#53627a}
+      .small{font:500 14px 'Pretendard','Noto Sans KR',sans-serif;fill:#738096}
+      .box{stroke:#fff;stroke-width:3;filter:url(#shadow)}
+      .line{fill:none;stroke:#8b98aa;stroke-width:3;marker-end:url(#arrow)}
+      .dash{fill:none;stroke:#9ba7b7;stroke-width:2.5;stroke-dasharray:9 8;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1800" height="2660" rx="44" fill="url(#bg)"/>
+  <circle cx="145" cy="180" r="100" fill="#fff" opacity=".28"/>
+  <circle cx="1660" cy="2460" r="210" fill="#ffd6b4" opacity=".18"/>
+
+  <text x="900" y="72" text-anchor="middle" class="title">애도할 시간 · 문서 종류별 Agent 작동 흐름도</text>
+  <text x="900" y="108" text-anchor="middle" class="subtitle">OCR 결과 JSON을 사건 상태로 변환하고, 문서별 다음 행동을 생성하는 구조</text>
+
+  <!-- common intake -->
+  <rect x="500" y="145" width="800" height="92" rx="28" fill="url(#peach)" class="box"/>
+  <text x="900" y="181" text-anchor="middle" class="head">외부 OCR · 문서 분석 결과 JSON 수신</text>
+  <text x="900" y="211" text-anchor="middle" class="body">파일명 대신 JSON 내부 documentType · organizationKey를 기준으로 판단</text>
+  <path d="M900 237V278" class="line"/>
+
+  <rect x="370" y="278" width="1060" height="116" rx="28" fill="url(#blue)" class="box"/>
+  <text x="900" y="315" text-anchor="middle" class="head">공통 입력 검증과 개인정보 보호</text>
+  <text x="900" y="347" text-anchor="middle" class="body">success · stage · classification.confidence · needsConfirmation · validation.success 확인</text>
+  <text x="900" y="377" text-anchor="middle" class="small">주민번호 · 전화번호 · 계좌번호 · 주소 · 접수번호는 로그와 LLM 전달 전에 마스킹</text>
+  <path d="M900 394V438" class="line"/>
+
+  <path d="M900 438 L1115 515 L900 592 L685 515 Z" fill="url(#amber)" class="box"/>
+  <text x="900" y="507" text-anchor="middle" class="head">documentType은 무엇인가?</text>
+  <text x="900" y="537" text-anchor="middle" class="small">사망진단서 · 사망신고서 · 금융조회 결과</text>
+
+  <!-- branch headers -->
+  <path d="M685 515H315V650" class="line"/>
+  <path d="M900 592V650" class="line"/>
+  <path d="M1115 515H1485V650" class="line"/>
+
+  <rect x="90" y="650" width="450" height="82" rx="26" fill="url(#blue)" class="box"/>
+  <text x="315" y="683" text-anchor="middle" class="head">death_certificate</text>
+  <text x="315" y="710" text-anchor="middle" class="body">사망진단서·검안서</text>
+
+  <rect x="675" y="650" width="450" height="82" rx="26" fill="url(#peach)" class="box"/>
+  <text x="900" y="683" text-anchor="middle" class="head">death_report</text>
+  <text x="900" y="710" text-anchor="middle" class="body">사망신고서</text>
+
+  <rect x="1260" y="650" width="450" height="82" rx="26" fill="url(#sage)" class="box"/>
+  <text x="1485" y="683" text-anchor="middle" class="head">financial_inquiry_result</text>
+  <text x="1485" y="710" text-anchor="middle" class="body">기관별 재산·채무 조회 결과</text>
+
+  <!-- death certificate lane -->
+  <path d="M315 732V776" class="line"/>
+  <rect x="70" y="776" width="490" height="126" rx="27" fill="#fff" fill-opacity=".78" class="box"/>
+  <text x="315" y="812" text-anchor="middle" class="head">핵심 추출값 확인</text>
+  <text x="315" y="843" text-anchor="middle" class="body">고인 성명 · 생년월일 · 사망일시</text>
+  <text x="315" y="872" text-anchor="middle" class="body">사망 장소 · 사망 원인 · 발급기관</text>
+  <path d="M315 902V946" class="line"/>
+  <path d="M315 946 L480 1005 L315 1064 L150 1005 Z" fill="url(#amber)" class="box"/>
+  <text x="315" y="997" text-anchor="middle" class="head">값이 정확한가?</text>
+  <text x="315" y="1026" text-anchor="middle" class="small">사용자 확인 필요</text>
+  <path d="M150 1005H80V1110" class="line"/>
+  <rect x="35" y="1110" width="280" height="90" rx="24" fill="url(#coral)" class="box"/>
+  <text x="175" y="1144" text-anchor="middle" class="head">확인·수정 UI</text>
+  <text x="175" y="1174" text-anchor="middle" class="small">틀린 필드만 직접 수정</text>
+  <path d="M315 1064V1110" class="line"/>
+  <rect x="330" y="1110" width="280" height="90" rx="24" fill="url(#sage)" class="box"/>
+  <text x="470" y="1144" text-anchor="middle" class="head">문서 VERIFIED</text>
+  <text x="470" y="1174" text-anchor="middle" class="small">사건 기본 사실 갱신</text>
+  <path d="M470 1200V1245" class="line"/>
+  <rect x="150" y="1245" width="410" height="102" rx="25" fill="url(#blue)" class="box"/>
+  <text x="355" y="1280" text-anchor="middle" class="head">후속 업무 생성</text>
+  <text x="355" y="1310" text-anchor="middle" class="body">사망신고 완료 여부 확인</text>
+  <text x="355" y="1335" text-anchor="middle" class="small">이미 완료했다면 준비 UI를 다시 띄우지 않음</text>
+
+  <!-- death report lane -->
+  <path d="M900 732V776" class="line"/>
+  <rect x="655" y="776" width="490" height="126" rx="27" fill="#fff" fill-opacity=".78" class="box"/>
+  <text x="900" y="812" text-anchor="middle" class="head">신고서 추출값 확인</text>
+  <text x="900" y="843" text-anchor="middle" class="body">신고일 · 신고인 관계 · 사망일시</text>
+  <text x="900" y="872" text-anchor="middle" class="body">신고인 정보 · 사망 장소 · 원인</text>
+  <path d="M900 902V946" class="line"/>
+  <path d="M900 946 L1070 1005 L900 1064 L730 1005 Z" fill="url(#amber)" class="box"/>
+  <text x="900" y="997" text-anchor="middle" class="head">실제 접수까지 완료했나?</text>
+  <text x="900" y="1026" text-anchor="middle" class="small">작성된 문서와 접수 완료를 구분</text>
+  <path d="M730 1005H675V1110" class="line"/>
+  <text x="690" y="985" class="small">아니오</text>
+  <rect x="615" y="1110" width="300" height="110" rx="25" fill="url(#peach)" class="box"/>
+  <text x="765" y="1145" text-anchor="middle" class="head">신고 준비 패키지</text>
+  <text x="765" y="1175" text-anchor="middle" class="body">양식 · 준비 서류 · 공식 안내</text>
+  <text x="765" y="1203" text-anchor="middle" class="small">방문·우편 접수 행동 제공</text>
+  <path d="M1070 1005H1125V1110" class="line"/>
+  <text x="1095" y="985" class="small">예</text>
+  <rect x="930" y="1110" width="300" height="110" rx="25" fill="url(#sage)" class="box"/>
+  <text x="1080" y="1145" text-anchor="middle" class="head">신고 업무 완료</text>
+  <text x="1080" y="1175" text-anchor="middle" class="body">TaskState COMPLETED</text>
+  <text x="1080" y="1203" text-anchor="middle" class="small">다음 절차를 바로 생성</text>
+  <path d="M1080 1220V1270" class="line"/>
+  <rect x="770" y="1270" width="420" height="102" rx="25" fill="url(#blue)" class="box"/>
+  <text x="980" y="1305" text-anchor="middle" class="head">다음 우선 업무 선택</text>
+  <text x="980" y="1335" text-anchor="middle" class="body">재산·채무 조회 또는 필요한 선행 업무</text>
+  <text x="980" y="1360" text-anchor="middle" class="small">완료된 사망신고 안내는 재노출하지 않음</text>
+
+  <!-- financial route -->
+  <path d="M1485 732V776" class="line"/>
+  <rect x="1240" y="776" width="490" height="126" rx="27" fill="#fff" fill-opacity=".78" class="box"/>
+  <text x="1485" y="812" text-anchor="middle" class="head">organizationKey 분류</text>
+  <text x="1485" y="843" text-anchor="middle" class="body">기관별 Normalizer 선택</text>
+  <text x="1485" y="872" text-anchor="middle" class="small">낮은 신뢰도·기관 불일치는 사용자 확인</text>
+  <path d="M1485 902V948" class="line"/>
+
+  <!-- finance organization groups -->
+  <rect x="1180" y="948" width="610" height="882" rx="34" fill="#fff" fill-opacity=".42" stroke="#fff" stroke-width="3"/>
+  <text x="1215" y="990" class="section">기관 종류별 변환 규칙</text>
+
+  <rect x="1215" y="1020" width="540" height="118" rx="24" fill="url(#blue)" class="box"/>
+  <text x="1485" y="1053" text-anchor="middle" class="head">은행 · 신용정보원 · 저축은행</text>
+  <text x="1485" y="1083" text-anchor="middle" class="body">예금·적금 → 자산 / 대출·채무 → 부채</text>
+  <text x="1485" y="1111" text-anchor="middle" class="small">성명 불일치·비정상 금액은 확인 경고 생성</text>
+
+  <rect x="1215" y="1160" width="540" height="118" rx="24" fill="url(#blue)" class="box"/>
+  <text x="1485" y="1193" text-anchor="middle" class="head">신협중앙회</text>
+  <text x="1485" y="1223" text-anchor="middle" class="body">한 행의 예금·출자금과 대출을 분리</text>
+  <text x="1485" y="1251" text-anchor="middle" class="small">자산 FinancialItem + 부채 FinancialItem 생성</text>
+
+  <rect x="1215" y="1300" width="540" height="118" rx="24" fill="url(#coral)" class="box"/>
+  <text x="1485" y="1333" text-anchor="middle" class="head">여신금융협회</text>
+  <text x="1485" y="1363" text-anchor="middle" class="body">카드 채무 → 부채 / DCDS 여부 별도 기록</text>
+  <text x="1485" y="1391" text-anchor="middle" class="small">가입 사실만으로 채무 면제를 확정하지 않음</text>
+
+  <rect x="1215" y="1440" width="540" height="118" rx="24" fill="url(#sage)" class="box"/>
+  <text x="1485" y="1473" text-anchor="middle" class="head">예금보험공사</text>
+  <text x="1485" y="1503" text-anchor="middle" class="body">미수령 예금 → 자산 / 채무 기록 → 부채</text>
+  <text x="1485" y="1531" text-anchor="middle" class="small">recordCategory별로 분리하여 합산</text>
+
+  <rect x="1215" y="1580" width="540" height="118" rx="24" fill="url(#sage)" class="box"/>
+  <text x="1485" y="1613" text-anchor="middle" class="head">금융투자협회 · 예탁결제원</text>
+  <text x="1485" y="1643" text-anchor="middle" class="body">평가금액·예수금 → 자산</text>
+  <text x="1485" y="1671" text-anchor="middle" class="small">수량만 있고 금액이 없으면 미확인 항목</text>
+
+  <rect x="1215" y="1720" width="540" height="92" rx="24" fill="url(#amber)" class="box"/>
+  <text x="1485" y="1753" text-anchor="middle" class="head">산림조합 · 우정사업본부</text>
+  <text x="1485" y="1783" text-anchor="middle" class="small">집계형 필드를 자산·대출·보험 항목으로 분리</text>
+
+  <!-- insurance section full width -->
+  <rect x="90" y="1435" width="1060" height="395" rx="34" fill="#fff" fill-opacity=".42" stroke="#fff" stroke-width="3"/>
+  <text x="125" y="1478" class="section">보험 문서의 별도 처리</text>
+
+  <rect x="125" y="1510" width="485" height="128" rx="25" fill="url(#sage)" class="box"/>
+  <text x="368" y="1545" text-anchor="middle" class="head">생명보험협회</text>
+  <text x="368" y="1576" text-anchor="middle" class="body">미청구·휴면보험금 → 자산 후보</text>
+  <text x="368" y="1605" text-anchor="middle" class="small">금액 확인 후 보험금 청구 업무 생성</text>
+  <text x="368" y="1629" text-anchor="middle" class="small">추가 이자는 검증 상태를 따로 표시</text>
+
+  <rect x="645" y="1510" width="470" height="128" rx="25" fill="url(#amber)" class="box"/>
+  <text x="880" y="1545" text-anchor="middle" class="head">손해보험협회</text>
+  <text x="880" y="1576" text-anchor="middle" class="body">보험 가입 사실과 계약 상태 기록</text>
+  <text x="880" y="1605" text-anchor="middle" class="small">보험금액이 없으면 자산 합계에 미반영</text>
+  <text x="880" y="1629" text-anchor="middle" class="small">보험사 지급 가능 여부 확인 업무 생성</text>
+
+  <path d="M368 1638V1690" class="line"/>
+  <path d="M880 1638V1690" class="line"/>
+  <rect x="305" y="1690" width="620" height="104" rx="25" fill="url(#peach)" class="box"/>
+  <text x="615" y="1725" text-anchor="middle" class="head">보험금 청구 Agent 업무</text>
+  <text x="615" y="1756" text-anchor="middle" class="body">보험사 확인 → 청구 서류 수집 → 공식 접수 연결</text>
+  <text x="615" y="1783" text-anchor="middle" class="small">계약 존재만으로 보험금 지급을 단정하지 않음</text>
+
+  <!-- Merge -->
+  <path d="M355 1347V1890H730" class="dash"/>
+  <path d="M980 1372V1860H850V1890" class="dash"/>
+  <path d="M615 1794V1890" class="line"/>
+  <path d="M1485 1830V1890H1070" class="line"/>
+
+  <rect x="490" y="1890" width="820" height="112" rx="29" fill="url(#blue)" class="box"/>
+  <text x="900" y="1927" text-anchor="middle" class="head">공통 CaseState로 정규화</text>
+  <text x="900" y="1959" text-anchor="middle" class="body">DocumentState · FinancialItem · MissingField · CaseWarning · TaskState</text>
+  <text x="900" y="1987" text-anchor="middle" class="small">확인 금액과 추정·미확인 금액을 분리하여 저장</text>
+  <path d="M900 2002V2045" class="line"/>
+
+  <rect x="350" y="2045" width="1100" height="112" rx="29" fill="url(#amber)" class="box"/>
+  <text x="900" y="2082" text-anchor="middle" class="head">결정론적 계산과 위험 탐지</text>
+  <text x="900" y="2114" text-anchor="middle" class="body">확인 자산 합계 · 확인 채무 합계 · 차액 · 미확인 항목 · 기한 · 누락 정보</text>
+  <text x="900" y="2142" text-anchor="middle" class="small">부채 초과 가능성은 경고하지만 상속포기·한정승인을 대신 결정하지 않음</text>
+  <path d="M900 2157V2200" class="line"/>
+
+  <path d="M900 2200 L1115 2272 L900 2344 L685 2272 Z" fill="url(#peach)" class="box"/>
+  <text x="900" y="2264" text-anchor="middle" class="head">지금 가장 필요한 행동은?</text>
+  <text x="900" y="2294" text-anchor="middle" class="small">긴급 위험 → 누락 해결 → 진행 업무 → 다음 선행 업무</text>
+
+  <path d="M685 2272H345V2382" class="line"/>
+  <rect x="110" y="2382" width="470" height="120" rx="27" fill="url(#coral)" class="box"/>
+  <text x="345" y="2418" text-anchor="middle" class="head">확인·수정이 필요한 경우</text>
+  <text x="345" y="2449" text-anchor="middle" class="body">금액 입력 · 문서 재확인 · 기관 문의</text>
+  <text x="345" y="2478" text-anchor="middle" class="small">나중에 이어하기 선택 가능</text>
+
+  <path d="M900 2344V2382" class="line"/>
+  <rect x="665" y="2382" width="470" height="120" rx="27" fill="url(#sage)" class="box"/>
+  <text x="900" y="2418" text-anchor="middle" class="head">실행 가능한 다음 업무</text>
+  <text x="900" y="2449" text-anchor="middle" class="body">준비 서류 · 양식 · 공식 사이트 · 완료 버튼</text>
+  <text x="900" y="2478" text-anchor="middle" class="small">한 응답에서 핵심 행동 하나만 제시</text>
+
+  <path d="M1115 2272H1455V2382" class="line"/>
+  <rect x="1220" y="2382" width="470" height="120" rx="27" fill="url(#blue)" class="box"/>
+  <text x="1455" y="2418" text-anchor="middle" class="head">화면 상태 동시 갱신</text>
+  <text x="1455" y="2449" text-anchor="middle" class="body">채팅 UI Block + 사건 요약 대시보드</text>
+  <text x="1455" y="2478" text-anchor="middle" class="small">서류 · 업무 · 확인 필요 · 자산·채무 · 진행률</text>
+
+  <path d="M345 2502V2550H900" class="dash"/>
+  <path d="M900 2502V2550" class="line"/>
+  <path d="M1455 2502V2550H900" class="dash"/>
+  <rect x="590" y="2550" width="620" height="70" rx="35" fill="url(#peach)" class="box"/>
+  <text x="900" y="2580" text-anchor="middle" class="head">사용자 응답 → 상태 저장 → 다음 업무 반복</text>
+  <text x="900" y="2607" text-anchor="middle" class="small">문서 종류가 달라도 동일한 F1~F7 Agent 루프로 진행</text>
+</svg>

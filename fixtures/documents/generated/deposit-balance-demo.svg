@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <rect width="100%" height="100%" fill="#fff8f0"/>
+  <text x="80" y="120" font-size="44" fill="#24324a">자산 확인 문서</text>
+  <text x="80" y="230" font-size="34" fill="#24324a">잔액 17,000,000원</text>
+  <text x="80" y="650" font-size="30" fill="#b45f45">AI BUILDER SPRINT 테스트용 가상 문서</text>
+  <text x="80" y="710" font-size="30" fill="#b45f45">실제 기관에서 발급한 문서가 아닙니다</text>
+</svg>

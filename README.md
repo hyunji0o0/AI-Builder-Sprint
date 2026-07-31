@@ -89,3 +89,31 @@ git push origin develop
 
 - 대회 관련 문의: 해커톤 문의 오픈채팅방
 - 주최: 부산대학교 APPTIVE, 정보컴퓨터공학부 동아리연합회 / 후원: Upstage, 부산대 Anchor 사업단, 부산대 AI융합교육원
+
+## 로컬 실행
+
+1. 프로젝트 루트에 `.env.local` 파일을 만들고 Upstage API 키를 설정합니다.
+
+```env
+UPSTAGE_API_KEY=up_your_api_key_here
+UPSTAGE_MODEL=solar-pro3
+DOCUMENT_PIPELINE_MODE=python
+# 자동 탐색이 실패할 때만 설정
+# PYTHON_COMMAND=C:\path\to\python.exe
+```
+
+2. 의존성을 설치하고 개발 서버를 실행합니다.
+
+```bash
+pnpm install
+python -m pip install -r requirements.txt
+pnpm dev
+```
+
+브라우저에는 API 키가 전달되지 않으며, Vite 개발 서버의 `/api/chat` 프록시가
+Upstage Solar Chat Completions API를 호출합니다. `.env.local`을 변경한 경우
+개발 서버를 다시 시작해야 합니다.
+
+문서 업로드는 `src/agent/document-processing/python/document_analysis_pipeline.py`를 Tool Call로
+실행합니다. Python 명령어가 다르면 `PYTHON_COMMAND`를 변경해 주세요.
+제품 실행 경로에서는 Upstage 기반 실제 문서 파이프라인만 사용합니다.

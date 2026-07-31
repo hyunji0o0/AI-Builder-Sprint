@@ -1,0 +1,9 @@
+{
+  "fixtureId": "case-debt-over",
+  "documents": ["death-certificate-demo.png", "deposit-balance-demo.png", "loan-balance-demo.png", "card-debt-demo.png"],
+  "expectedClassification": ["DEATH_CERTIFICATE", "FINANCIAL_ASSET_DOCUMENT", "FINANCIAL_DEBT_DOCUMENT", "CARD_DEBT_DOCUMENT"],
+  "expectedExtractedFields": ["deathDate", "amount", "amount", "amount"],
+  "expectedValidationIssues": [],
+  "expectedFinancialSummary": { "totalAssets": 17000000, "totalDebts": 87000000, "difference": -70000000 },
+  "expectedRiskLevel": "URGENT_REVIEW"
+}

@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="2240" viewBox="0 0 1400 2240">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eaf3ff"/>
+      <stop offset=".52" stop-color="#f7f3f5"/>
+      <stop offset="1" stop-color="#fff0dc"/>
+    </linearGradient>
+    <linearGradient id="peach" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff8f2"/><stop offset="1" stop-color="#f7d6bf"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dbe8f8"/>
+    </linearGradient>
+    <linearGradient id="sage" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fcf7"/><stop offset="1" stop-color="#d8eadc"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffdf5"/><stop offset="1" stop-color="#f4e4b8"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#53627a" flood-opacity=".16"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#8d99ab"/>
+    </marker>
+    <style>
+      .title{font:700 38px 'Pretendard','Noto Sans KR',sans-serif;fill:#263752}
+      .subtitle{font:500 18px 'Pretendard','Noto Sans KR',sans-serif;fill:#66758b}
+      .head{font:700 23px 'Pretendard','Noto Sans KR',sans-serif;fill:#293a56}
+      .body{font:500 17px 'Pretendard','Noto Sans KR',sans-serif;fill:#53627a}
+      .small{font:500 15px 'Pretendard','Noto Sans KR',sans-serif;fill:#738096}
+      .white{fill:#fff}
+      .line{fill:none;stroke:#8d99ab;stroke-width:3;marker-end:url(#arrow)}
+      .dash{fill:none;stroke:#a5adba;stroke-width:2.5;stroke-dasharray:9 8;marker-end:url(#arrow)}
+      .box{stroke:#fff;stroke-width:3;filter:url(#shadow)}
+    </style>
+  </defs>
+
+  <rect width="1400" height="2240" rx="42" fill="url(#bg)"/>
+  <circle cx="120" cy="150" r="70" fill="#fff" opacity=".35"/>
+  <circle cx="1270" cy="2040" r="170" fill="#ffd8b8" opacity=".22"/>
+
+  <text x="700" y="74" text-anchor="middle" class="title">애도할 시간 · AI Agent 실행 구조도</text>
+  <text x="700" y="108" text-anchor="middle" class="subtitle">대시보드는 현재 상태를 보여주고, Agent는 그 상태를 다음 단계로 움직인다</text>
+
+  <!-- intake -->
+  <rect x="390" y="145" width="620" height="90" rx="28" fill="url(#peach)" class="box"/>
+  <text x="700" y="181" text-anchor="middle" class="head">사용자 입력</text>
+  <text x="700" y="211" text-anchor="middle" class="body">채팅 · 선택 버튼 · 날짜 · 금액 · 문서 확인</text>
+  <path d="M700 235V275" class="line"/>
+
+  <rect x="430" y="275" width="540" height="82" rx="26" fill="url(#blue)" class="box"/>
+  <text x="700" y="309" text-anchor="middle" class="head">Agent 단일 진입점 · runAgent()</text>
+  <text x="700" y="337" text-anchor="middle" class="small">모든 사용자 행동을 동일한 실행 루프로 처리</text>
+  <path d="M700 357V397" class="line"/>
+
+  <rect x="250" y="397" width="900" height="105" rx="28" fill="url(#blue)" class="box"/>
+  <text x="700" y="433" text-anchor="middle" class="head">CaseState + 최근 대화 조회</text>
+  <text x="700" y="463" text-anchor="middle" class="body">현재 단계 · 완료/진행 업무 · 현재 집중 업무 · 문서 · 자산/채무 · 정서 맥락</text>
+  <text x="700" y="488" text-anchor="middle" class="small">개인정보는 LLM과 로그로 전달하기 전에 마스킹</text>
+  <path d="M700 502V542" class="line"/>
+
+  <rect x="250" y="542" width="900" height="112" rx="28" fill="url(#peach)" class="box"/>
+  <text x="700" y="580" text-anchor="middle" class="head">Solar 문맥 이해</text>
+  <text x="700" y="610" text-anchor="middle" class="body">업무 의도 + 정서 신호 + 완료/미완료 시제 + 생략된 대상 분류</text>
+  <text x="700" y="638" text-anchor="middle" class="small">정규식은 안전 신호와 LLM 실패 시 폴백으로만 사용</text>
+  <path d="M700 654V696" class="line"/>
+
+  <!-- safety diamond -->
+  <path d="M700 696 L900 770 L700 844 L500 770 Z" fill="url(#amber)" class="box"/>
+  <text x="700" y="762" text-anchor="middle" class="head">안전 경로가 필요한가?</text>
+  <text x="700" y="792" text-anchor="middle" class="small">즉각적 위험 · 법률 결정 요구 · 확인 불가능한 정보</text>
+
+  <path d="M500 770H295V868" class="line"/>
+  <text x="400" y="751" text-anchor="middle" class="small">예</text>
+  <rect x="85" y="868" width="420" height="118" rx="28" fill="#fff1ee" class="box"/>
+  <text x="295" y="905" text-anchor="middle" class="head">별도 안전 응답</text>
+  <text x="295" y="936" text-anchor="middle" class="body">안전 확보 우선 · 법률 결론 차단</text>
+  <text x="295" y="964" text-anchor="middle" class="small">사실·위험 신호·전문가 상담 준비까지만 제공</text>
+
+  <path d="M700 844V890" class="line"/>
+  <text x="720" y="872" class="small">아니오</text>
+  <rect x="565" y="890" width="270" height="78" rx="39" fill="url(#sage)" class="box"/>
+  <text x="700" y="922" text-anchor="middle" class="head">다음 행동 1개 선택</text>
+  <text x="700" y="949" text-anchor="middle" class="small">보조 행동은 최대 3개</text>
+  <path d="M700 968V1012" class="line"/>
+
+  <!-- priority -->
+  <rect x="175" y="1012" width="1050" height="102" rx="28" fill="#ffffff" fill-opacity=".72" class="box"/>
+  <text x="700" y="1048" text-anchor="middle" class="head">행동 우선순위</text>
+  <text x="700" y="1080" text-anchor="middle" class="body">직접 요청 → 긴급 기한·재산 위험 → 진행 업무 → 누락 정보 → 다음 선행 업무 → 보조 정보</text>
+  <path d="M700 1114V1160" class="line"/>
+
+  <!-- F1-F7 lane -->
+  <rect x="75" y="1160" width="1250" height="538" rx="38" fill="#ffffff" fill-opacity=".4" stroke="#fff" stroke-width="3"/>
+  <text x="115" y="1205" class="head">개인별 사후 행정 F1~F7 실행 흐름</text>
+
+  <rect x="110" y="1240" width="330" height="92" rx="25" fill="url(#blue)" class="box"/>
+  <text x="275" y="1275" text-anchor="middle" class="head">F1 · 문서 결과 확인</text>
+  <text x="275" y="1305" text-anchor="middle" class="small">외부 OCR 결과 확인·수정</text>
+
+  <path d="M440 1286H535" class="line"/>
+  <rect x="535" y="1240" width="330" height="92" rx="25" fill="url(#blue)" class="box"/>
+  <text x="700" y="1275" text-anchor="middle" class="head">F2 · 개인별 절차 생성</text>
+  <text x="700" y="1305" text-anchor="middle" class="small">관계·지역·사망일·재정 상황 반영</text>
+
+  <path d="M865 1286H960" class="line"/>
+  <rect x="960" y="1240" width="330" height="92" rx="25" fill="url(#peach)" class="box"/>
+  <text x="1125" y="1275" text-anchor="middle" class="head">F3 · 우선 업무 선택</text>
+  <text x="1125" y="1305" text-anchor="middle" class="small">기한·위험·선행 조건 기준</text>
+
+  <path d="M1125 1332V1380" class="line"/>
+  <rect x="960" y="1380" width="330" height="92" rx="25" fill="url(#amber)" class="box"/>
+  <text x="1125" y="1415" text-anchor="middle" class="head">F4 · 부족한 자료 수집</text>
+  <text x="1125" y="1445" text-anchor="middle" class="small">서류 업로드·직접 입력·확인</text>
+
+  <path d="M960 1426H865" class="line"/>
+  <rect x="535" y="1380" width="330" height="92" rx="25" fill="url(#amber)" class="box"/>
+  <text x="700" y="1415" text-anchor="middle" class="head">F5 · 업무 준비 실행</text>
+  <text x="700" y="1445" text-anchor="middle" class="small">양식·체크리스트·제출 자료</text>
+
+  <path d="M535 1426H440" class="line"/>
+  <rect x="110" y="1380" width="330" height="92" rx="25" fill="url(#sage)" class="box"/>
+  <text x="275" y="1415" text-anchor="middle" class="head">F6 · 공식 처리 연결</text>
+  <text x="275" y="1445" text-anchor="middle" class="small">공식 사이트·기관·접수 방법</text>
+
+  <path d="M275 1472V1520" class="line"/>
+  <rect x="300" y="1520" width="360" height="92" rx="25" fill="url(#sage)" class="box"/>
+  <text x="480" y="1555" text-anchor="middle" class="head">F7 · 처리 완료 확인</text>
+  <text x="480" y="1585" text-anchor="middle" class="small">업무 상태·완료 증빙 반영</text>
+
+  <path d="M660 1566H750" class="line"/>
+  <path d="M750 1508 L945 1566 L750 1624 L555 1566 Z" fill="url(#peach)" class="box"/>
+  <text x="750" y="1559" text-anchor="middle" class="head">남은 업무?</text>
+  <text x="750" y="1587" text-anchor="middle" class="small">있으면 F3으로 반복</text>
+  <path d="M845 1537C905 1488 1020 1488 1080 1380" class="dash"/>
+  <path d="M945 1566H1120V1645" class="line"/>
+  <text x="1015" y="1548" class="small">없음</text>
+  <rect x="1000" y="1640" width="250" height="42" rx="21" fill="#cfe6d5"/>
+  <text x="1125" y="1667" text-anchor="middle" class="body">전체 절차 완료</text>
+
+  <path d="M700 1698V1742" class="line"/>
+
+  <!-- tools and verification -->
+  <rect x="145" y="1742" width="1110" height="100" rx="28" fill="url(#blue)" class="box"/>
+  <text x="700" y="1778" text-anchor="middle" class="head">도구 실행 · 요청당 최대 3회</text>
+  <text x="700" y="1810" text-anchor="middle" class="body">문서 · 금융 계산 · 기한 · 누락 탐지 · 업무 · 기관 · 후기 · 상태 갱신</text>
+  <path d="M700 1842V1885" class="line"/>
+
+  <path d="M700 1885 L900 1955 L700 2025 L500 1955 Z" fill="url(#amber)" class="box"/>
+  <text x="700" y="1947" text-anchor="middle" class="head">도구 결과가 유효한가?</text>
+  <text x="700" y="1977" text-anchor="middle" class="small">입출력 스키마 · 공식 출처 · 계산 결과 검증</text>
+
+  <path d="M500 1955H290V2040" class="line"/>
+  <rect x="100" y="2040" width="380" height="92" rx="26" fill="#fff1ee" class="box"/>
+  <text x="290" y="2075" text-anchor="middle" class="head">안전한 폴백</text>
+  <text x="290" y="2105" text-anchor="middle" class="small">직접 입력 · 다시 시도 · 나중에 이어하기</text>
+
+  <path d="M700 2025V2060" class="line"/>
+  <rect x="535" y="2060" width="330" height="82" rx="26" fill="url(#sage)" class="box"/>
+  <text x="700" y="2093" text-anchor="middle" class="head">CaseState 갱신</text>
+  <text x="700" y="2121" text-anchor="middle" class="small">동일한 상태를 단일 기준으로 저장</text>
+
+  <path d="M865 2101H940" class="line"/>
+  <rect x="940" y="2048" width="360" height="106" rx="26" fill="url(#peach)" class="box"/>
+  <text x="1120" y="2083" text-anchor="middle" class="head">화면 동시 갱신</text>
+  <text x="1120" y="2113" text-anchor="middle" class="body">Agent 메시지 + UI Block</text>
+  <text x="1120" y="2140" text-anchor="middle" class="small">진행률 · 업무 · 서류 · 자산/채무 대시보드</text>
+
+  <path d="M1120 2154C1120 2200 700 2205 700 2165" class="dash"/>
+  <text x="700" y="2198" text-anchor="middle" class="small">다음 사용자 입력으로 반복</text>
+</svg>
