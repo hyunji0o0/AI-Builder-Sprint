@@ -45,6 +45,7 @@ export function useCaseAgent() {
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([])
   const [previewDocument, setPreviewDocument] = useState<UploadedDocument | null>(null)
   const uploadedDocumentsRef = useRef<UploadedDocument[]>([])
+  const onboardingStartedRef = useRef(false)
   const caseState = useMemo(() => toDashboardCase(agentCaseState, caseUi), [agentCaseState, caseUi])
 
   useEffect(() => {
@@ -56,12 +57,9 @@ export function useCaseAgent() {
   }, [])
 
   const stages: CaseStage[] = useMemo(() => {
-    const basicInformationPresent = Boolean(
-      agentCaseState.user.relationToDeceased
-      && agentCaseState.user.region.city
-      && agentCaseState.deceased.deathDate,
-    )
-    const basicDone = agentCaseState.onboardingCompleted && basicInformationPresent
+    const onboardingStarted = Object.values(agentCaseState.onboarding)
+      .some((value) => value === 'COMPLETED' || value === 'NOT_COMPLETED')
+    const basicDone = agentCaseState.onboardingCompleted
     const documentsStarted = agentCaseState.documents.length > 0
     const documentsDone = documentsStarted
       && agentCaseState.documents.every((document) => document.status === 'VERIFIED')
@@ -79,7 +77,7 @@ export function useCaseAgent() {
 
     const currentIndex = !basicDone ? 0 : !documentsDone ? 1 : !financialsDone ? 2 : 3
     return [
-      { label: '기본 정보 확인', state: basicDone ? '완료' : basicInformationPresent ? '확인 중' : '시작 전', done: basicDone },
+      { label: '기본 정보 확인', state: basicDone ? '완료' : onboardingStarted ? '확인 중' : '시작 전', done: basicDone },
       { label: '서류 확인', state: documentsDone ? '완료' : documentsStarted ? '확인 중' : '대기', done: documentsDone },
       { label: '재산·채무 확인', state: financialsDone ? '완료' : financialsStarted ? '확인 중' : '대기', done: financialsDone },
       { label: '상담 준비', state: consultationDone ? '완료' : consultationStarted ? '준비 중' : '대기', done: consultationDone },
@@ -95,6 +93,58 @@ export function useCaseAgent() {
       ui,
     }])
   }
+
+  useEffect(() => {
+    if (onboardingStartedRef.current || agentCaseState.stage !== 'FIRST_VISIT' || agentCaseState.onboardingCompleted) return
+    onboardingStartedRef.current = true
+    setIsResponding(true)
+    setResponseStatus('현재 상황을 먼저 확인하고 있어요…')
+
+    const startOnboarding = async () => {
+      try {
+        const reply = await requestSolarReply(
+          '서비스를 시작하고 현재 처리 상태부터 확인해줘',
+          agentCaseState,
+          'START_ONBOARDING',
+          messages,
+        )
+        setAgentCaseState(reply.caseState)
+        setMessages((current) => [...current, {
+          id: Date.now() + current.length,
+          role: 'agent',
+          text: reply.output.message,
+          block: blockFromUI(reply.output.ui),
+          ui: reply.output.ui,
+        }])
+      } catch {
+        const ui: AgentUIBlock[] = [{
+          type: 'CHOICE',
+          prompt: '사망신고는 이미 마쳤어?',
+          options: [
+            { id: 'onboarding_death_completed', label: '이미 신고했어' },
+            { id: 'onboarding_death_not_completed', label: '아직 하지 않았어' },
+            { id: 'onboarding_pause', label: '나중에 확인할게' },
+          ],
+        }]
+        setAgentCaseState((state) => ({
+          ...state,
+          stage: 'COLLECTING_BASIC_INFO',
+          onboarding: { ...state.onboarding, currentStep: 'DEATH_REPORT' },
+        }))
+        setMessages((current) => [...current, {
+          id: Date.now() + current.length,
+          role: 'agent',
+          text: '서비스를 시작하기 전에 현재 처리 상태부터 차례로 확인할게. 한 번에 하나씩 물어볼게. 먼저, 사망신고는 이미 마쳤어?',
+          block: 'choice',
+          ui,
+        }])
+      } finally {
+        setIsResponding(false)
+      }
+    }
+
+    void startOnboarding()
+  }, [agentCaseState, messages])
 
   const send = async (event?: FormEvent) => {
     event?.preventDefault()
@@ -145,6 +195,126 @@ export function useCaseAgent() {
   }
 
   const handleUiAction = (actionId: string, label: string) => {
+    if (actionId === 'onboarding_pause') {
+      setAgentCaseState((state) => ({
+        ...state,
+        emotionalContext: { ...state.emotionalContext, userRequestedPause: true },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent('응, 지금까지 확인한 상태로 저장해둘게. 준비되면 여기서 다시 이어가면 돼.')
+      return
+    }
+    if (actionId === 'onboarding_death_completed' || actionId === 'onboarding_death_not_completed') {
+      const completed = actionId === 'onboarding_death_completed'
+      setAgentCaseState((state) => ({
+        ...state,
+        onboarding: {
+          ...state.onboarding,
+          deathReportStatus: completed ? 'COMPLETED' : 'NOT_COMPLETED',
+          currentStep: 'FINANCIAL_INQUIRY',
+        },
+        tasks: completed
+          ? state.tasks.map((task) => task.type === 'CONFIRM_DEATH_REPORT'
+            ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
+            : task)
+          : state.tasks,
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      const ui: AgentUIBlock[] = [{
+        type: 'CHOICE',
+        prompt: '고인의 금융재산과 채무를 확인하는 금융조회는 진행했어?',
+        options: [
+          { id: 'onboarding_financial_completed', label: '조회했어' },
+          { id: 'onboarding_financial_not_completed', label: '아직 안 했어' },
+          { id: 'onboarding_pause', label: '나중에 확인할게' },
+        ],
+      }]
+      addAgent(
+        `${completed ? '사망신고를 마친 것으로 저장했어.' : '아직 하지 않은 것으로 저장했어. 준비 방법은 상태 확인을 마친 뒤 가장 먼저 연결해줄게.'}\n\n고인의 금융재산과 채무를 확인하는 금융조회는 진행했어?`,
+        'choice',
+        ui,
+      )
+      return
+    }
+    if (actionId === 'onboarding_financial_completed' || actionId === 'onboarding_financial_not_completed') {
+      const completed = actionId === 'onboarding_financial_completed'
+      setAgentCaseState((state) => ({
+        ...state,
+        onboarding: {
+          ...state.onboarding,
+          financialInquiryStatus: completed ? 'COMPLETED' : 'NOT_COMPLETED',
+          currentStep: 'ONE_STOP_SERVICE',
+        },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      const ui: AgentUIBlock[] = [{
+        type: 'CHOICE',
+        prompt: '안심상속 원스톱 서비스는 신청했어?',
+        options: [
+          { id: 'onboarding_one_stop_completed', label: '신청했어' },
+          { id: 'onboarding_one_stop_not_completed', label: '아직 안 했어' },
+          { id: 'onboarding_pause', label: '나중에 확인할게' },
+        ],
+      }]
+      addAgent(
+        `${completed ? '금융조회를 진행한 것으로 저장했어.' : '금융조회가 아직인 것으로 저장했어.'}\n\n마지막으로 한 가지만 더 확인할게. 안심상속 원스톱 서비스는 신청했어?`,
+        'choice',
+        ui,
+      )
+      return
+    }
+    if (actionId === 'onboarding_one_stop_completed' || actionId === 'onboarding_one_stop_not_completed') {
+      const oneStopCompleted = actionId === 'onboarding_one_stop_completed'
+      const deathPending = agentCaseState.onboarding.deathReportStatus === 'NOT_COMPLETED'
+      const financialPending = agentCaseState.onboarding.financialInquiryStatus === 'NOT_COMPLETED'
+      setAgentCaseState((state) => ({
+        ...state,
+        onboarding: {
+          ...state.onboarding,
+          oneStopServiceStatus: oneStopCompleted ? 'COMPLETED' : 'NOT_COMPLETED',
+          currentStep: 'COMPLETE',
+        },
+        onboardingCompleted: true,
+        stage: 'WAITING_FOR_DOCUMENT',
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+
+      let message = '기본 상태 확인을 마쳤어.'
+      let prompt = '가지고 있는 문서를 올려서 다음 절차를 정리해볼까?'
+      let options = [
+        { id: 'onboarding_upload_documents', label: '문서 올리기' },
+        { id: 'later', label: '나중에 이어가기' },
+      ]
+      if (deathPending) {
+        message += ' 지금은 사망신고 준비가 가장 먼저야.'
+        prompt = '사망신고 준비부터 같이 해볼까?'
+        options = [{ id: 'show_death_report_steps', label: '준비 시작하기' }, { id: 'later', label: '나중에 이어가기' }]
+      } else if (financialPending) {
+        message += ' 다음으로 금융재산·채무 조회를 준비하는 게 좋아.'
+        prompt = '금융조회에 필요한 문서부터 확인해볼까?'
+        options = [{ id: 'onboarding_start_financial', label: '금융조회 준비하기' }, { id: 'later', label: '나중에 이어가기' }]
+      } else if (!oneStopCompleted) {
+        message += ' 다음으로 안심상속 원스톱 서비스 신청 여부를 정리하면 돼.'
+        prompt = '원스톱 서비스 준비를 이어갈까?'
+        options = [{ id: 'onboarding_start_one_stop', label: '준비하기' }, { id: 'later', label: '나중에 이어가기' }]
+      }
+      const ui: AgentUIBlock[] = [{ type: 'CHOICE', prompt, options }]
+      addAgent(`${message}\n\n${prompt}`, 'choice', ui)
+      return
+    }
+    if (actionId === 'onboarding_upload_documents' || actionId === 'onboarding_start_financial') {
+      addAgent(
+        actionId === 'onboarding_start_financial'
+          ? '금융조회 결과 문서가 있다면 올려줘. 문서에서 확인된 금융재산과 채무를 정리해줄게.'
+          : '가지고 있는 문서를 올려줘. 종류를 먼저 확인하고 필요한 내용만 하나씩 보여줄게.',
+        'upload',
+      )
+      return
+    }
+    if (actionId === 'onboarding_start_one_stop') {
+      addAgent('안심상속 원스톱 서비스 신청에 필요한 현재 정보를 먼저 확인할게. 공식 신청 경로와 준비 서류는 검증된 자료를 기준으로 연결해야 해.', 'upload')
+      return
+    }
     if ([
       'start_personal_procedure', 'show_first_task', 'collect_documents',
       'prepare_task', 'connect_official', 'confirm_completion', 'generate_next', 'continue',

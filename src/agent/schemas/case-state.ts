@@ -37,6 +37,15 @@ export const emotionalContextSchema = z.object({
   userRequestedPause: z.boolean(),
 })
 
+export const onboardingStatusSchema = z.enum(['UNKNOWN', 'COMPLETED', 'NOT_COMPLETED'])
+export const onboardingStepSchema = z.enum(['DEATH_REPORT', 'FINANCIAL_INQUIRY', 'ONE_STOP_SERVICE', 'COMPLETE'])
+export const onboardingStateSchema = z.object({
+  currentStep: onboardingStepSchema,
+  deathReportStatus: onboardingStatusSchema,
+  financialInquiryStatus: onboardingStatusSchema,
+  oneStopServiceStatus: onboardingStatusSchema,
+})
+
 export const extractedFieldSchema = z.object({
   key: z.string(),
   value: z.union([z.string(), z.number(), z.null()]),
@@ -134,6 +143,12 @@ export const caseStateSchema = z.object({
   warnings: z.array(caseWarningSchema),
   currentFocus: z.object({ type: z.string().nullable(), id: z.string().nullable() }),
   emotionalContext: emotionalContextSchema,
+  onboarding: onboardingStateSchema.default({
+    currentStep: 'DEATH_REPORT',
+    deathReportStatus: 'UNKNOWN',
+    financialInquiryStatus: 'UNKNOWN',
+    oneStopServiceStatus: 'UNKNOWN',
+  }),
   workflow: agentWorkflowSchema.default({
     phase: 'DOCUMENT_REVIEW',
     procedureGenerated: false,
