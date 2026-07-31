@@ -121,6 +121,31 @@ describe('Agent Harness', () => {
     expect(result.output.ui.some((block) => block.type === 'TASK_CARD')).toBe(true)
   })
 
+  it('완료한 원스톱 서비스는 다음 업무에서 다시 묻지 않는다', async () => {
+    const state = createInitialCaseState()
+    state.onboardingCompleted = true
+    state.onboarding = {
+      currentStep: 'COMPLETE',
+      deathReportStatus: 'COMPLETED',
+      financialInquiryStatus: 'NOT_COMPLETED',
+      oneStopServiceStatus: 'COMPLETED',
+    }
+    const result = await runAgent({
+      input: '다음은 뭐 해야 해?',
+      caseState: state,
+    }, {
+      llm: { complete: async () => '안심상속 원스톱 서비스를 신청했는지 다시 확인해볼게.' },
+    })
+
+    expect(result.output.meta.intent).toBe('ASK_NEXT_ACTION')
+    expect(result.output.message).toContain('금융조회 준비')
+    expect(result.output.message).not.toContain('원스톱 서비스가 아직')
+    expect(result.output.ui[0]).toMatchObject({
+      type: 'TASK_CARD',
+      title: '금융재산·채무 조회 준비',
+    })
+  })
+
   it('아직 사망신고를 못했다는 문장은 완료로 처리하지 않는다', async () => {
     const result = await runAgent({
       input: '아직 사망신고를 못했는데 뭘 준비해야 해?',

@@ -147,8 +147,13 @@ export class CaseToolsService implements CaseTools {
   async updateTaskStatus(caseId: string, taskId: string, status: TaskState['status']) {
     const state = await this.getCaseState(caseId)
     const parsedStatus = taskStatusSchema.parse(status)
-    const tasks = state.tasks.map((task) => task.id === idSchema.parse(taskId) ? { ...task, status: parsedStatus } : task)
-    return this.updateCaseState(caseId, { tasks })
+    const parsedTaskId = idSchema.parse(taskId)
+    const target = state.tasks.find((task) => task.id === parsedTaskId)
+    const tasks = state.tasks.map((task) => task.id === parsedTaskId ? { ...task, status: parsedStatus } : task)
+    const onboarding = target?.type === 'CONFIRM_DEATH_REPORT' && parsedStatus === 'COMPLETED'
+      ? { ...state.onboarding, deathReportStatus: 'COMPLETED' as const }
+      : state.onboarding
+    return this.updateCaseState(caseId, { tasks, onboarding })
   }
 
   async generatePersonalProcedure(caseId: string) {

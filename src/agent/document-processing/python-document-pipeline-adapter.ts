@@ -100,6 +100,37 @@ const labelMap: Record<string, string> = {
   paymentCount: '출자금 건수',
   guaranteeCount: '보증 건수',
   guaranteeAmount: '보증 금액',
+  hasUnclaimedDepositRecords: '미수령금 내역 존재 여부',
+  unclaimedDepositRecordCount: '미수령금 내역 수',
+  hasDebtRecords: '채무정보 내역 존재 여부',
+  debtRecordCount: '채무정보 내역 수',
+  productName: '상품명',
+  quantity: '수량',
+  quantityOrBalance: '수량 또는 잔액',
+  amountType: '금액 구분',
+  principalBalance: '원금 잔액',
+  depositBalance: '예금 잔액',
+  depositLoanAmount: '예금담보 대출금',
+  cardAmount: '카드 채무 금액',
+  policyholderLoanAmount: '보험계약 대출금',
+  insuranceRefundLoanAmount: '보험환급금 대출금',
+  evaluatedAmount: '평가 금액',
+  totalAmount: '합계 금액',
+  recordCategory: '자산·채무 구분',
+  debtType: '채무 종류',
+  status: '상태',
+  remarks: '비고',
+}
+
+const koreanFallbackLabel = (key: string): string => {
+  const parts = key.split('.')
+  const suffix = parts[parts.length - 1] ?? key
+  if (/amount|balance|principal/i.test(suffix)) return '확인 금액'
+  if (/count|quantity/i.test(suffix)) return '확인 건수'
+  if (/status/i.test(suffix)) return '확인 상태'
+  if (/date|time/i.test(suffix)) return '확인 일자'
+  if (/institution|organization/i.test(suffix)) return '확인 기관'
+  return '추가 확인 정보'
 }
 
 const sensitiveKey = /(resident|phone|email|address|domicile|account|customer|balanceNumber|contactNumber|사건번호)/i
@@ -117,7 +148,7 @@ const toFields = (
 ): PipelineExtractedField[] => {
   const topLevelFields = Object.entries(data)
     .filter(([key, value]) => !['documentType', 'records', 'warnings', 'notice', 'isMockSample'].includes(key) && value !== '' && value !== null && !sensitiveKey.test(key))
-    .map(([key, value]): [string, string, unknown] => [key, labelMap[key] ?? key, value])
+    .map(([key, value]): [string, string, unknown] => [key, labelMap[key] ?? koreanFallbackLabel(key), value])
   const records = Array.isArray(data.records) ? data.records : []
   const recordFields = records.flatMap((record, index): Array<[string, string, unknown]> => {
     if (!record || typeof record !== 'object' || Array.isArray(record)) return []
@@ -125,7 +156,7 @@ const toFields = (
     const institution = typeof values.institutionName === 'string' ? values.institutionName : `${index + 1}번 내역`
     return Object.entries(values)
       .filter(([key, value]) => !sensitiveKey.test(key) && value !== '' && value !== null)
-      .map(([key, value]) => [`records.${index}.${key}`, `${institution} · ${labelMap[key] ?? key}`, value])
+      .map(([key, value]) => [`records.${index}.${key}`, `${institution} · ${labelMap[key] ?? koreanFallbackLabel(key)}`, value])
   })
   return [...topLevelFields, ...recordFields]
     .map(([key, label, value]) => ({
@@ -232,6 +263,8 @@ export class PythonDocumentPipelineAdapter implements DocumentPipelineAdapter {
         }
 
         const extension = extname(file.fileName) || (inspection.detectedMimeType === 'application/pdf' ? '.pdf' : '.png')
+        // 원본 파일명은 표시용으로만 보존한다. 분석기는 생성된 ID의 경로만 받아
+        // `112.png` 같은 임의 파일명이나 기관명이 든 파일명에 의존할 수 없다.
         const temporaryPath = join(workingDirectory, `${file.fileId.replace(/[^a-zA-Z0-9_-]/g, '_')}${extension}`)
         await writeFile(temporaryPath, inspection.bytes)
         const parsed = await runPythonPipeline(

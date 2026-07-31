@@ -75,7 +75,7 @@ export function deterministicMessage(
     CONFIRM_EXTRACTION: '추출된 정보가 맞는지 확인하거나 수정해줘.',
     FINANCIAL_INPUT: '지금 알고 있는 자산이나 채무 금액을 입력해줘. 추정 금액도 따로 표시할 수 있어.',
     SHOW_STATUS: '지금 진행 상황을 정리했어.',
-    SHOW_NEXT_TASK: '지금 가장 먼저 확인할 한 가지를 골랐어.',
+    SHOW_NEXT_TASK: execution.facts[0] ?? '현재 저장된 상태를 기준으로 다음 업무를 확인했어.',
     SHOW_DOCUMENTS: '지금 업무에 필요한 서류를 정리했어.',
     SHOW_DEADLINE: execution.facts.join('\n'),
     CHECK_FINANCIAL_RISK: execution.financialSummary?.riskLevel === 'URGENT_REVIEW'
@@ -107,7 +107,7 @@ export async function composeMessage(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
 ) {
   const fallback = deterministicMessage(input, classification, selection, execution, state, safety)
-  if (!llm || safety.immediateRiskSuspected || ['ADVANCE_WORKFLOW', 'COMPLETE_DEATH_REPORT'].includes(selection.action)) return fallback
+  if (!llm || safety.immediateRiskSuspected || ['ADVANCE_WORKFLOW', 'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK'].includes(selection.action)) return fallback
   const policy = buildResponsePolicy(classification, selection, execution)
   try {
     const compose = (retryInstruction = '') => llm.complete(

@@ -4,6 +4,7 @@ import { DocumentPipelineAdapter, MockDocumentPipelineAdapter } from './document
 import { PythonDocumentPipelineAdapter } from './python-document-pipeline-adapter'
 import { createDocumentPipeline } from './document-pipeline-factory'
 import { confirmDocumentField, runDocumentPipeline } from './run-document-pipeline'
+import { documentPipelineResultSchema } from '../schemas/document-pipeline'
 
 const base64 = (bytes: number[]) => btoa(String.fromCharCode(...bytes))
 const png = base64([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
@@ -90,6 +91,44 @@ describe('Document Pipeline', () => {
   it('제품 파이프라인은 실제 Python 어댑터만 생성한다', () => {
     expect(createDocumentPipeline({ mode: 'python', environment: 'production', apiKey: 'test-key' }))
       .toBeInstanceOf(PythonDocumentPipelineAdapter)
+  })
+
+  it('임의 파일명이어도 본문에서 기관을 분류하고 금융 핵심 항목만 한국어로 보여준다', async () => {
+    const field = (key: string, label: string, value: string | number) => ({
+      key, label, value, normalizedValue: value,
+      source: { page: 1, textSnippet: null, boundingBox: null },
+      confidence: 0.94,
+      verificationStatus: 'NEEDS_USER_REVIEW' as const,
+    })
+    const contentBasedAdapter: DocumentPipelineAdapter = {
+      parse: async () => documentPipelineResultSchema.parse({
+        batchId: 'content-classification',
+        documents: [{
+          documentId: 'generic-name', fileName: '112.png', mimeType: 'image/png', inputForm: 'PHOTO',
+          documentType: 'FINANCIAL_DOCUMENT', classificationConfidence: 0.94, alternativeTypes: [], status: 'NEEDS_REVIEW',
+          extractedFields: [
+            field('organizationName', '기관명', '예금보험공사'),
+            field('hasUnclaimedDepositRecords', '미수령금 내역 존재 여부', '예'),
+            field('unclaimedDepositRecordCount', '미수령금 내역 수', 1),
+            field('hasDebtRecords', '채무정보 내역 존재 여부', '예'),
+            field('debtRecordCount', '채무정보 내역 수', 3),
+            field('organizationEvidence', '분류 근거', '본문 제목과 기관 안내 문구'),
+          ],
+          validationIssues: [],
+        }],
+        batchIssues: [], crossDocumentIssues: [], requiresUserConfirmation: true,
+        explanation: '추출한 내용을 확인해줘.',
+      }),
+    }
+
+    const result = await runDocumentPipeline(input(file('generic-name', '112.png')), createInitialCaseState(), contentBasedAdapter)
+    const review = result.output.ui.find((block) => block.type === 'DOCUMENT_EXTRACTION_REVIEW')
+    expect(result.output.message).toContain('본문을 확인한 결과 예금보험공사 금융거래 조회 결과')
+    expect(review).toEqual(expect.objectContaining({ documentTypeLabel: '예금보험공사 금융거래 조회 결과' }))
+    if (review?.type !== 'DOCUMENT_EXTRACTION_REVIEW') throw new Error('review block missing')
+    expect(review.items.map((item) => item.label)).toEqual(['미수령금 내역', '채무정보 내역'])
+    expect(review.items.map((item) => `${item.label} ${item.formattedValue}`).join(' '))
+      .not.toMatch(/hasUnclaimed|debtRecordCount|organizationEvidence/)
   })
 
   it('흐리거나 금액이 없는 문서에 재업로드·직접 확인 흐름을 제공한다', async () => {

@@ -73,7 +73,43 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
       case 'SHOW_NEXT_TASK': {
         const tasks = await run('getPrioritizedTasks', () => tools.getPrioritizedTasks(state.caseId))
         const task = tasks[0]
-        if (task) result.ui.push({ type: 'TASK_CARD', taskId: task.id, title: task.title, priority: task.priority, readiness: task.readiness, actions: [{ id: 'continue', label: '이어하기' }, { id: 'later', label: '나중에 확인' }] })
+        if (task) {
+          result.facts = [`다음 업무는 '${task.title}'이야.`]
+          result.ui.push({ type: 'TASK_CARD', taskId: task.id, title: task.title, priority: task.priority, readiness: task.readiness, actions: [{ id: 'continue', label: '이어하기' }, { id: 'later', label: '나중에 확인' }] })
+        } else if (state.onboarding.deathReportStatus !== 'COMPLETED') {
+          result.facts = ['사망신고가 아직 완료 상태가 아니어서, 사망신고 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-death-report',
+            title: '사망신고 준비',
+            priority: 'HIGH',
+            readiness: 0,
+            actions: [{ id: 'show_death_report_steps', label: '준비 시작하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else if (state.onboarding.financialInquiryStatus !== 'COMPLETED') {
+          result.facts = ['사망신고는 완료했고 금융재산·채무 조회가 아직이라, 금융조회 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-financial-inquiry',
+            title: '금융재산·채무 조회 준비',
+            priority: 'HIGH',
+            readiness: 0,
+            actions: [{ id: 'onboarding_start_financial', label: '금융조회 준비하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else if (state.onboarding.oneStopServiceStatus !== 'COMPLETED') {
+          result.facts = ['사망신고와 금융조회는 완료했고 원스톱 서비스가 아직이라, 안심상속 원스톱 서비스 신청 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-one-stop-service',
+            title: '안심상속 원스톱 서비스 신청 준비',
+            priority: 'NORMAL',
+            readiness: 0,
+            actions: [{ id: 'onboarding_start_one_stop', label: '준비하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else {
+          result.facts = ['사망신고, 금융조회, 안심상속 원스톱 서비스는 모두 완료 상태야. 다음 절차를 만들려면 현재 가진 문서를 확인하면 돼.']
+          result.ui.push({ type: 'DOCUMENT_UPLOAD', accept: ['.pdf', '.jpg', '.jpeg', '.png'], taskId: null })
+        }
         break
       }
       case 'SHOW_DOCUMENTS': {

@@ -333,6 +333,10 @@ export function useCaseAgent() {
     if (actionId === 'death_report_completed') {
       setAgentCaseState((state) => ({
         ...state,
+        onboarding: {
+          ...state.onboarding,
+          deathReportStatus: 'COMPLETED',
+        },
         tasks: state.tasks.map((task) => task.type === 'CONFIRM_DEATH_REPORT'
           ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
           : task),
@@ -437,37 +441,77 @@ export function useCaseAgent() {
     addAgent('서류 확인을 마치고 대시보드에 반영했어.', 'complete')
   }
 
+  const continueAfterDocumentVerification = async (verifiedState: typeof agentCaseState) => {
+    if (!verifiedState.documents.length || !verifiedState.documents.every((document) => document.status === 'VERIFIED')) return
+    setIsResponding(true)
+    setResponseStatus('확인한 문서를 바탕으로 다음 절차를 정리하고 있어요…')
+    try {
+      const reply = await requestSolarReply(
+        '문서 내용 확인을 마쳤어. 확인된 데이터를 사건 상태에 반영하고 개인별 다음 절차를 시작해줘.',
+        verifiedState,
+        'CONTINUE_WORKFLOW',
+        messages,
+      )
+      setAgentCaseState(reply.caseState)
+      addAgent(reply.output.message, blockFromUI(reply.output.ui), reply.output.ui)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '잠시 후 다시 시도해줘.'
+      addAgent(`문서 내용은 저장했지만 다음 절차를 만드는 중에 문제가 생겼어. ${message}`)
+    } finally {
+      setIsResponding(false)
+    }
+  }
+
+  const applyVerifiedDocumentState = (state: typeof agentCaseState, documentId: string) => {
+    const document = state.documents.find((item) => item.id === documentId)
+    if (!document || document.status !== 'VERIFIED') return state
+    const isFinancialDocument = [
+      'FINANCIAL_DOCUMENT',
+      'FINANCIAL_ASSET_DOCUMENT',
+      'FINANCIAL_DEBT_DOCUMENT',
+      'CARD_DEBT_DOCUMENT',
+    ].includes(document.type)
+    return {
+      ...state,
+      stage: 'CHECKING_MISSING_INFO' as const,
+      onboarding: isFinancialDocument
+        ? { ...state.onboarding, financialInquiryStatus: 'COMPLETED' as const }
+        : state.onboarding,
+      lastUpdatedAt: new Date().toISOString(),
+    }
+  }
+
   const confirmPipelineField = async (documentId: string, fieldKey: string, value: string | number | null) => {
     if (value === null) {
       addAgent('이 값은 직접 입력한 뒤 확인할 수 있어.', fieldKey === 'amount' ? 'finance' : 'extract')
       return
     }
-    const nextState = confirmDocumentField(agentCaseState, documentId, fieldKey, value)
+    const nextState = applyVerifiedDocumentState(confirmDocumentField(agentCaseState, documentId, fieldKey, value), documentId)
     setAgentCaseState(nextState)
     addAgent('확인한 값을 사건 상태와 대시보드에 반영했어.', 'complete')
-    if (nextState.documents.length > 0 && nextState.documents.every((document) => document.status === 'VERIFIED')) {
-      setIsResponding(true)
-      setResponseStatus('확인한 문서를 바탕으로 다음 업무를 정리하고 있어요…')
-      try {
-        const reply = await requestSolarReply('문서 확인이 끝났어. 개인별 절차를 시작해줘.', nextState, 'CONTINUE_WORKFLOW', messages)
-        setAgentCaseState(reply.caseState)
-        addAgent(reply.output.message, blockFromUI(reply.output.ui), reply.output.ui)
-      } finally {
-        setIsResponding(false)
-      }
-    }
+    await continueAfterDocumentVerification(nextState)
   }
 
-  const confirmPipelineDocument = (documentId: string) => {
-    const nextState = confirmAllDocumentFields(agentCaseState, documentId)
+  const confirmPipelineDocument = async (documentId: string) => {
+    const nextState = applyVerifiedDocumentState(confirmAllDocumentFields(agentCaseState, documentId), documentId)
     setAgentCaseState(nextState)
     const document = nextState.documents.find((item) => item.id === documentId)
+    const isFinancialDocument = document && [
+      'FINANCIAL_DOCUMENT',
+      'FINANCIAL_ASSET_DOCUMENT',
+      'FINANCIAL_DEBT_DOCUMENT',
+      'CARD_DEBT_DOCUMENT',
+    ].includes(document.type)
+    const financialSummary = isFinancialDocument && document?.status === 'VERIFIED'
+      ? `\n\n현재 확인된 합계는 자산 ${(nextState.financials.totalAssets ?? 0).toLocaleString('ko-KR')}원, 채무 ${(nextState.financials.totalDebts ?? 0).toLocaleString('ko-KR')}원이야.${nextState.financials.hasUnverifiedItems ? ' 아직 금액 확인이 필요한 항목이 있어.' : ''}`
+      : ''
     addAgent(
       document?.status === 'VERIFIED'
-        ? '확인한 내용을 사건 정보에 반영했어. 이제 이 문서를 기준으로 다음 업무를 정리할 수 있어.'
+        ? `확인한 내용을 사건 정보와 대시보드에 반영했어.${financialSummary}\n\n이제 확인된 자료로 개인별 다음 절차를 만들게.`
         : '확인한 값은 반영했어. 값이 비어 있거나 추가 확인이 필요한 항목은 하나씩 확인해줘.',
       'complete',
     )
+    if (document?.status === 'VERIFIED') await continueAfterDocumentVerification(nextState)
   }
 
   const saveFinance = () => {
