@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { Classification } from '../schemas/agent-output'
-import { CaseState } from '../schemas/case-state'
-import { selectActionPrompt } from '../prompts/select-action'
-import { AgentLLM, extractJson } from './llm-adapter'
+import { Classification } from '../../schemas/agent-output'
+import { CaseState } from '../../schemas/case-state'
+import { selectActionPrompt } from '../../prompts/select-action'
+import { AgentLLM, extractJson } from '../../shared/llm-adapter'
 
 export const actionNameSchema = z.enum([
   'CHAT', 'ONBOARD', 'UPLOAD', 'CONFIRM_EXTRACTION', 'FINANCIAL_INPUT',

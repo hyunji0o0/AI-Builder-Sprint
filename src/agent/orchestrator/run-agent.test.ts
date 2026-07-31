@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { createInitialCaseState } from '../state/initial-case'
 import { MemoryStateRepository } from '../state/state-repository'
 import { MockCaseTools } from '../tools/case-tools'
-import { classifyDeterministically, classifyIntent } from './intent-classifier'
+import { classifyDeterministically, classifyIntent } from '../agents/case-workflow/intent-classifier'
 import { runAgent } from './run-agent'
-import { responseSimilarity } from './response-composer'
+import { responseSimilarity } from '../agents/case-workflow/response-composer'
 
 describe('Agent Harness', () => {
   it('굿굿은 CASUAL_CHAT이며 분석 카드를 반복하지 않는다', async () => {

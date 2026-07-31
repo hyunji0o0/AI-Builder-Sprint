@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { runDocumentPipeline } from '../documents/run-document-pipeline'
-import { runAgent } from '../harness/run-agent'
+import { runDocumentPipeline } from '../document-processing/run-document-pipeline'
+import { runAgent } from '../orchestrator/run-agent'
 import { createInitialCaseState } from '../state/initial-case'
 import {
   createRepresentativeAgentCaseState,

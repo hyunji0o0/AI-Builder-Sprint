@@ -1,25 +1,11 @@
-import { Classification } from '../schemas/agent-output'
-import { CaseState } from '../schemas/case-state'
-import { composeResponsePrompt } from '../prompts/compose-response'
-import { legalDisclaimer, SafetyAssessment } from '../safety/safety-hooks'
+import { Classification } from '../../schemas/agent-output'
+import { CaseState } from '../../schemas/case-state'
+import { composeResponsePrompt } from '../../prompts/compose-response'
+import { legalDisclaimer, SafetyAssessment } from '../../safety/safety-hooks'
 import { ActionSelection } from './action-selector'
 import { ExecutionResult } from './tool-executor'
-import { AgentLLM } from './llm-adapter'
+import { AgentLLM } from '../../shared/llm-adapter'
 import { buildResponsePolicy, validateComposedResponse } from './response-policy'
-
-const casualMessage = (input: string) => {
-  const text = input.replace(/\s/g, '')
-  if (/굿굿|좋아/.test(text)) return '좋아. 필요할 때 여기서 이어서 확인해볼게.'
-  if (/고마워|감사/.test(text)) return '천천히 진행해도 괜찮아.'
-  if (/알겠/.test(text)) return '응, 지금 상태로 저장해둘게.'
-  const greetings = [
-    '안녕. 오늘은 어떤 도움이 필요한지 편하게 말해줘.',
-    '반가워. 궁금한 점이나 정리하고 싶은 일이 있다면 편하게 이야기해줘.',
-    '안녕. 서두르지 않아도 괜찮아. 편한 이야기부터 들려줘.',
-    '안녕. 지금 마음에 걸리는 일이나 궁금한 내용을 편하게 말해줘.',
-  ]
-  return greetings[Math.floor(Math.random() * greetings.length)]
-}
 
 const normalizedBigrams = (text: string) => {
   const normalized = text.replace(/[\s.,!?'"“”‘’]/g, '')
@@ -52,7 +38,7 @@ export function deterministicMessage(
     return '지금은 행정업무보다 안전을 먼저 확인해야 해. 혼자 감당하지 말고, 곁에 있는 믿을 수 있는 사람이나 지금 이용할 수 있는 검증된 긴급 지원에 바로 도움을 요청해줘.'
   }
   if (execution.failed) return '자동 처리를 끝내지 못했지만 지금 상태는 그대로 보존했어. 직접 입력하거나 나중에 다시 이어갈 수 있어.'
-  if (classification.intent === 'CASUAL_CHAT') return casualMessage(input)
+  if (classification.intent === 'CASUAL_CHAT') return '행정업무가 아닌 대화는 대화 Agent에서 이어갈게.'
   if (classification.intent === 'REQUEST_PAUSE') return '응, 지금 상태로 저장해둘게. 필요할 때 여기서 다시 이어갈 수 있어.'
   if (classification.intent === 'ASK_LEGAL_DECISION') {
     return `상속 방법을 대신 결정할 수는 없어. 지금 확인된 자료를 기준으로 위험 신호와 전문가 상담에 필요한 내용을 정리해줄게. ${legalDisclaimer}`
@@ -83,7 +69,7 @@ export function deterministicMessage(
       : '지금은 해야 할 일을 정하지 않아도 괜찮아. 잠시 멈춰 있고 싶다면 지금 상태 그대로 기다릴게.'
   }
   const messages: Record<ActionSelection['action'], string> = {
-    CHAT: casualMessage(input),
+    CHAT: '행정업무가 아닌 대화는 대화 Agent에서 이어갈게.',
     ONBOARD: '기본 상황부터 천천히 확인해볼게.',
     UPLOAD: '문서 종류를 미리 고르지 않아도 돼. 가진 서류를 한 번에 올려주면 종류와 중요한 정보를 먼저 정리한 뒤, 확인이 필요한 내용만 하나씩 보여줄게. JPG, PNG, WEBP, PDF 파일을 최대 10개까지 올릴 수 있어.',
     CONFIRM_EXTRACTION: '추출된 정보가 맞는지 확인하거나 수정해줘.',

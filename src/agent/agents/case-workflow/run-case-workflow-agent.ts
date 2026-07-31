@@ -1,34 +1,27 @@
-import { agentOutputSchema, AgentOutput } from '../schemas/agent-output'
-import { CaseState, caseStateSchema } from '../schemas/case-state'
-import { assessSafety } from '../safety/safety-hooks'
-import { guardOutput } from '../safety/output-guard'
-import { privacyFilter } from '../safety/privacy-filter'
-import { MemoryStateRepository } from '../state/state-repository'
-import { CaseTools, MockCaseTools } from '../tools/case-tools'
-import { selectAction } from './action-selector'
+import { agentOutputSchema } from '../../schemas/agent-output'
+import { caseStateSchema } from '../../schemas/case-state'
+import { assessSafety } from '../../safety/safety-hooks'
+import { guardOutput } from '../../safety/output-guard'
+import { privacyFilter } from '../../safety/privacy-filter'
+import { MemoryStateRepository } from '../../state/state-repository'
+import { MockCaseTools } from '../../tools/case-tools'
 import { classifyIntent } from './intent-classifier'
-import { AgentLLM } from './llm-adapter'
+import { RunAgentInput, RunAgentResult } from '../../shared/agent-run-contract'
+import { AgentLLM } from '../../shared/llm-adapter'
+import { CaseTools } from '../../tools/case-tools'
+import { selectAction } from './action-selector'
 import { composeMessage } from './response-composer'
 import { calculateProgress, executeSelection } from './tool-executor'
 
-export type RunAgentInput = {
-  input: string
-  caseState: CaseState
-  uiActionIntent?: AgentOutput['meta']['intent']
-  recentMessages?: Array<{ role: 'agent' | 'user'; text: string }>
-}
-
-export type RunAgentResult = {
-  output: AgentOutput
-  caseState: CaseState
-}
-
-export type RunAgentDependencies = {
+export type CaseWorkflowAgentDependencies = {
   llm?: AgentLLM
   tools?: CaseTools
 }
 
-export async function runAgent(request: RunAgentInput, dependencies: RunAgentDependencies = {}): Promise<RunAgentResult> {
+export async function runCaseWorkflowAgent(
+  request: RunAgentInput,
+  dependencies: CaseWorkflowAgentDependencies = {},
+): Promise<RunAgentResult> {
   const initialState = caseStateSchema.parse(request.caseState)
   const repository = new MemoryStateRepository(initialState)
   const tools = dependencies.tools || new MockCaseTools(repository)
@@ -51,7 +44,16 @@ export async function runAgent(request: RunAgentInput, dependencies: RunAgentDep
   }
   nextState = caseStateSchema.parse({ ...nextState, emotionalContext, lastUpdatedAt: new Date().toISOString() })
 
-  const message = await composeMessage(safeInput, classification, selection, execution, initialState, safety, dependencies.llm, request.recentMessages)
+  const message = await composeMessage(
+    safeInput,
+    classification,
+    selection,
+    execution,
+    initialState,
+    safety,
+    dependencies.llm,
+    request.recentMessages,
+  )
   const completedTasks = nextState.tasks.filter((task) => task.status === 'COMPLETED').length
   const output = guardOutput(agentOutputSchema.parse({
     message,

@@ -1,8 +1,7 @@
 import type { Connect, Plugin } from 'vite'
-import { createDocumentPipeline } from '../documents/document-pipeline-factory'
-import { runDocumentPipeline } from '../documents/run-document-pipeline'
-import { AgentLLM } from '../harness/llm-adapter'
-import { runAgent } from '../harness/run-agent'
+import { createDocumentProcessingTool } from '../tools/document-processing-tool'
+import { runAgent } from '../orchestrator/run-agent'
+import { AgentLLM } from '../shared/llm-adapter'
 import { systemPrompt } from '../prompts/system'
 import { agentRequestSchema } from '../schemas/agent-output'
 import { caseStateSchema } from '../schemas/case-state'
@@ -69,12 +68,14 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
       }
       try {
         const body = await readBody(req) as { input?: unknown; caseState?: unknown }
-        const pipeline = createDocumentPipeline({ ...config.documentPipeline, apiKey: config.apiKey })
-        const result = await runDocumentPipeline(
-          documentPipelineInputSchema.parse(body.input),
-          caseStateSchema.parse(body.caseState),
-          pipeline,
-        )
+        const documentTool = createDocumentProcessingTool({
+          ...config.documentPipeline,
+          apiKey: config.apiKey,
+        })
+        const result = await documentTool.execute({
+          input: documentPipelineInputSchema.parse(body.input),
+          caseState: caseStateSchema.parse(body.caseState),
+        })
         res.end(JSON.stringify(result))
       } catch (error) {
         res.statusCode = 422

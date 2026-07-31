@@ -16,4 +16,3 @@ export function createDocumentPipeline(config: DocumentPipelineConfig): Document
     ? new LiveDocumentPipelineAdapter(config.apiKey)
     : new MockDocumentPipelineAdapter()
 }
-

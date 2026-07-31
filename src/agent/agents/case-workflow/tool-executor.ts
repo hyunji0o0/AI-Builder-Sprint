@@ -1,6 +1,6 @@
-import { AgentUIBlock, SuggestedAction } from './types'
-import { CaseState } from '../schemas/case-state'
-import { CaseTools, FinancialSummary } from '../tools/case-tools'
+import { AgentUIBlock, SuggestedAction } from '../../shared/types'
+import { CaseState } from '../../schemas/case-state'
+import { CaseTools, FinancialSummary } from '../../tools/case-tools'
 import { ActionSelection } from './action-selector'
 
 export type ExecutionResult = {

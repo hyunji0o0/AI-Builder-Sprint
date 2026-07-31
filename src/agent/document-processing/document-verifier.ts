@@ -35,4 +35,3 @@ export class MockDocumentVerifier implements DocumentVerifier {
     }
   }
 }
-

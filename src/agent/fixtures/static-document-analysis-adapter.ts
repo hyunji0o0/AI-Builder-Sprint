@@ -1,4 +1,4 @@
-import { DocumentPipelineAdapter } from '../documents/document-pipeline'
+import { DocumentPipelineAdapter } from '../document-processing/document-pipeline'
 import {
   DocumentPipelineInput,
   DocumentPipelineResult,

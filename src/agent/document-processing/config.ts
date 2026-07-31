@@ -1,3 +1,4 @@
+/** 외부 OCR 결과를 검증하는 문서 처리 한계값입니다. */
 export const DOCUMENT_LIMITS = {
   maxFilesPerBatch: 10,
   maxFileBytes: 10 * 1024 * 1024,
@@ -8,4 +9,3 @@ export const DOCUMENT_LIMITS = {
 } as const
 
 export type DocumentPipelineMode = 'mock' | 'live'
-

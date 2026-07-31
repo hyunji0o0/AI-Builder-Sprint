@@ -1,7 +1,7 @@
 import { agentOutputSchema, AgentOutput, AgentUIBlock } from '../schemas/agent-output'
 import { CaseState, caseStateSchema } from '../schemas/case-state'
 import { DocumentPipelineInput, DocumentPipelineResult } from '../schemas/document-pipeline'
-import { calculateProgress } from '../harness/tool-executor'
+import { calculateProgress } from '../shared/state-summary'
 import { DocumentPipelineAdapter } from './document-pipeline'
 
 const criticalKeys = new Set(['deceasedName', 'deathDate', 'inheritanceAwarenessDate', 'institution', 'category', 'amount', 'referenceDate'])

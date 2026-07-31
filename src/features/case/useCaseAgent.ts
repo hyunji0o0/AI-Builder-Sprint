@@ -5,7 +5,7 @@ import { requestSolarReply } from '../../agent/client/agent-api'
 import { AgentUIBlock } from '../../agent/schemas/agent-output'
 import { DocumentProgress } from '../../agent/schemas/document-pipeline'
 import { processDocuments } from '../../agent/client/document-api'
-import { confirmDocumentField } from '../../agent/documents/run-document-pipeline'
+import { confirmDocumentField } from '../../agent/document-processing/run-document-pipeline'
 import { resolveCaseScenario } from './case.scenario'
 
 const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {

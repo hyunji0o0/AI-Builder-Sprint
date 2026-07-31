@@ -33,4 +33,3 @@ export function inspectFile(file: DocumentPipelineFile): InspectedFile {
 const issue = (code: string, severity: ValidationIssue['severity'], documentId: string, message: string, suggestedAction: string): ValidationIssue => ({
   code, severity, documentId, fieldKey: null, message, suggestedAction,
 })
-

@@ -1,7 +1,7 @@
-import { classificationSchema, Classification, UserIntent } from '../schemas/agent-output'
-import { CaseState } from '../schemas/case-state'
-import { classifyIntentPrompt } from '../prompts/classify-intent'
-import { AgentLLM, extractJson } from './llm-adapter'
+import { classificationSchema, Classification, UserIntent } from '../../schemas/agent-output'
+import { CaseState } from '../../schemas/case-state'
+import { classifyIntentPrompt } from '../../prompts/classify-intent'
+import { AgentLLM, extractJson } from '../../shared/llm-adapter'
 
 const includesAny = (text: string, patterns: string[]) => patterns.some((pattern) => text.includes(pattern))
 
@@ -31,7 +31,7 @@ export function classifyDeterministically(input: string): Classification {
   else if (/\d/.test(text) && includesAny(text, ['원', '만원', '억', '금액', '채무', '자산'])) intent = 'ADD_FINANCIAL_INFO'
   else if (includesAny(text, ['진행상황', '현재상태', '어디까지'])) intent = 'ASK_CURRENT_STATUS'
   else if (includesAny(text, [
-    '뭐부터', '무엇부터', '다음에뭐', '다음할일', '어떻게해야', '어떻게하면',
+    '뭐부터', '무엇부터', '다음에뭐', '다음할일', '다음업무', '어떻게해야', '어떻게하면',
     '내상황정리', '상황정리해', '먼저해야할일', '처음인데뭘',
   ])) intent = 'ASK_NEXT_ACTION'
   else if (includesAny(text, ['필요한서류', '준비서류', '부족한서류'])) intent = 'ASK_REQUIRED_DOCUMENTS'
