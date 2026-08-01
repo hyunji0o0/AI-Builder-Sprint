@@ -4,7 +4,7 @@ import { COMMUNITY_MAX_VISIBLE_PAGES, COMMUNITY_PAGE_SIZE } from '../constants/c
 import { CommunityController } from '../hooks/useCommunity'
 import {
   CategoryTabs, CommunityBoardRow, CommunityDisclaimer, CommunityHeader,
-  CommunitySearchBar, CommunityWriteButton, SimilarReviewFilter, navigateCommunity,
+  CommunitySearchBar, CommunityWriteButton, navigateCommunity,
 } from './CommunityCommon'
 
 export function CommunityPage({ controller: c }: { controller: CommunityController }) {
@@ -13,7 +13,6 @@ export function CommunityPage({ controller: c }: { controller: CommunityControll
       <CommunityHeader/>
       <CommunitySearchBar controller={c}/>
       <CategoryTabs controller={c}/>
-      <SimilarReviewFilter controller={c}/>
       <CommunityBoard controller={c}/>
       <CommunityDisclaimer/>
     </main>
@@ -40,7 +39,7 @@ export function CommunityBoard({ controller: c }: { controller: CommunityControl
 export function CommunityBoardHeader({ controller: c }: { controller: CommunityController }) {
   return <div className="cm-board-header"><div><strong>전체 후기</strong><span>{c.reviews.length}개</span></div>
     <select aria-label="후기 정렬" value={c.sort} onChange={(event) => c.setSort(event.target.value as CommunityController['sort'])}>
-      <option value="LATEST">최신순</option><option value="HELPFUL">도움순</option><option value="SIMILAR">나와 비슷한 순</option>
+      <option value="LATEST">최신순</option><option value="HELPFUL">도움순</option>
     </select>
   </div>
 }

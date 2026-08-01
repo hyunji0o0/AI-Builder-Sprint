@@ -31,20 +31,6 @@ export function CategoryTabs({ controller: c }: { controller: CommunityControlle
   </div>
 }
 
-export function SimilarReviewFilter({ controller: c }: { controller: CommunityController }) {
-  const contextTags = [
-    c.userContext.relation,
-    c.userContext.region,
-    c.userContext.financialStatus,
-    ...c.userContext.currentTaskTypes,
-  ].filter((value): value is string => Boolean(value))
-  return <div className="cm-similar da-glass">
-    <div><GlassIcon icon="sparkle" tone="peach"/><span>{contextTags.length ? '현재 사건 정보와 비슷한 후기를 찾아볼 수 있어요.' : '사건 정보가 입력되면 비슷한 후기를 추천할 수 있어요.'}</span></div>
-    {contextTags.length > 0 && <div className="cm-context-tags">{contextTags.map((tag) => <i key={tag}>{tag}</i>)}</div>}
-    <button disabled={!contextTags.length} className={c.similarOnly ? 'active' : ''} onClick={() => c.setSimilarOnly(!c.similarOnly)}>{c.similarOnly ? '전체 후기 보기' : '맞춤 후기만 보기'}</button>
-  </div>
-}
-
 export function ReviewCategoryBadge({ category }: { category: ReviewCategory }) {
   return <span className={`cm-category cm-category-${category.replace(/[·\s]/g,'')}`}>{category}</span>
 }
@@ -56,10 +42,6 @@ export function ReviewCategoryBadges({ categories, max }: { categories: ReviewCa
     {visible.map((category) => <ReviewCategoryBadge category={category} key={category}/>)}
     {hidden > 0 && <span className="cm-category cm-category-more">+{hidden}</span>}
   </span>
-}
-
-export function SimilarityBadge() {
-  return <span className="cm-similarity">내 상황과 유사</span>
 }
 
 export function CommunityDisclaimer({ children }: { children?: ReactNode }) {
@@ -74,7 +56,7 @@ export function CommunityBoardRow({ review, number, similarity }: { review: Comm
   return <button className={`cm-row ${review.isNotice ? 'notice' : ''}`} onClick={() => navigateCommunity(`/community/${review.id}`)}>
     <span className="cm-number">{review.isNotice ? '공지' : number}</span>
     <span><ReviewCategoryBadges categories={review.categories} max={2}/></span>
-    <strong title={review.title}>{review.title}{commentCount > 0 && <small>[{commentCount}]</small>}{similarity >= 40 && !review.isNotice && <SimilarityBadge/>}</strong>
+    <strong title={review.title}>{review.title}{commentCount > 0 && <small>[{commentCount}]</small>}</strong>
     <span>{review.authorName}</span><time>{review.createdAt.slice(5).replace('-','.')}</time>
     <span className="cm-helpful"><Icon name="heart" size={14}/>{review.helpfulCount}</span>
   </button>
