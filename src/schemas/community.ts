@@ -106,6 +106,10 @@ export type CommunityTip = z.infer<typeof communityTipSchema>
 // agent_and_ui의 COMMUNITY_REVIEW 블록으로 변환하는 어댑터.
 // 블록은 지금 reviews[0]만 렌더링하므로 가장 관련도 높은 팁이 앞에 오도록 그대로 넘김.
 // 블록 스키마가 바뀌면 이 함수만 고치면 됨.
+// 원본 게시물로 이동하는 경로. ReviewRouter가 /community/:id를 상세 페이지로 처리함
+// (src/features/community/routing/community.routes.ts).
+const communityPostUrl = (id: string) => `/community/${id}`
+
 export function toCommunityReviewBlock(tips: CommunityTip[], disclaimer = COMMUNITY_TIP_DISCLAIMER) {
   return {
     type: 'COMMUNITY_REVIEW' as const,
@@ -115,7 +119,7 @@ export function toCommunityReviewBlock(tips: CommunityTip[], disclaimer = COMMUN
       reason: tip.reason,
       createdAt: tip.relativeDate, // 블록이 값을 그대로 출력해서 ISO 대신 사람이 읽는 형태로 넘김
       helpfulCount: tip.helpfulCount,
-      url: null,
+      url: communityPostUrl(tip.id),
       label: '사용자 경험' as const,
     })),
     disclaimer,
@@ -129,7 +133,7 @@ export function toCommunityReviewItem(post: CommunityPost): CommunityReviewBlock
     reason: post.categories.map((cat) => CATEGORY_LABEL[cat]).join(' · '),
     createdAt: post.createdAt,
     helpfulCount: post.helpfulCount,
-    url: null,
+    url: communityPostUrl(post.id),
     label: '사용자 경험',
   }
 }
