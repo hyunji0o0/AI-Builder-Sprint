@@ -1,11 +1,11 @@
 /** Public domain models for the community feature. */
 export type ReviewCategory =
-  | '공지' | '사망신고' | '재산·채무' | '상속 관련 검토'
-  | '상담 준비' | '보험' | '자동차' | '통신·공과금' | '부산 지역' | '서류' | '질문'
+  | '상속포기·한정승인' | '상속세' | '명의이전'
+  | '보험청구' | '통신·구독해지' | '그냥 이야기' | '기타'
 
 export type CommunityReview = {
   id: string
-  category: ReviewCategory
+  categories: ReviewCategory[]
   title: string
   authorName: string
   isAnonymous: boolean
@@ -56,5 +56,5 @@ export interface CommunityRepository {
   getReviews(query: CommunitySearchQuery): Promise<CommunityReview[]>
   getReview(id: string): Promise<CommunityReview | null>
   createReview(input: CreateReviewInput): Promise<CommunityReview>
-  markHelpful(id: string): Promise<CommunityReview | null>
+  setHelpful(id: string, liked: boolean): Promise<CommunityReview | null>
 }

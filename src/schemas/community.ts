@@ -32,6 +32,8 @@ export const communityPostSchema = z.object({
   nickname: z.string().min(1).max(20),
   // 긴 팁 하나가 여러 주제를 다룰 수 있어서 카테고리를 배열로 허용함(중복 태깅).
   categories: z.array(communityCategorySchema).min(1),
+  // 첫 줄은 제목, 빈 줄 하나 띄우고 본문 — DB에 별도 title 컬럼 없이
+  // community.remote-repository.ts에서 조립/분리한다.
   content: z.string().min(1),
   createdAt: z.string(),
   helpfulCount: z.number().int().nonnegative().default(0),
