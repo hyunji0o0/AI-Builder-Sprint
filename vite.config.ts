@@ -7,6 +7,17 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
 
   return {
+    server: {
+      host: 'localhost',
+      port: 5173,
+      strictPort: true,
+      hmr: { host: 'localhost' },
+    },
+    preview: {
+      host: 'localhost',
+      port: 4173,
+      strictPort: true,
+    },
     plugins: [
       react(),
       createAgentServerPlugin({

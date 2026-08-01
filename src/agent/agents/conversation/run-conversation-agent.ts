@@ -29,7 +29,7 @@ export async function runConversationAgent(
     try {
       const response = await dependencies.llm.complete(
         conversationSystemPrompt,
-        JSON.stringify({ input, recentMessages: request.recentMessages?.slice(-8) ?? [] }),
+        JSON.stringify({ input, memory: state.memory, recentMessages: request.recentMessages?.slice(-12) ?? [] }),
       )
       if (response.trim() && /[가-힣]/.test(response)) message = response.trim()
     } catch {

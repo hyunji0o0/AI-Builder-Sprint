@@ -3,6 +3,12 @@ import { CaseState, caseStateSchema } from '../schemas/case-state'
 import { DocumentPipelineInput, DocumentPipelineResult } from '../schemas/document-pipeline'
 import { calculateProgress } from '../shared/state-summary'
 import { DocumentPipelineAdapter } from './document-pipeline'
+import {
+  analyzeFinancialDocumentCoverage,
+  isFinancialDecisionField,
+  isFinancialDocumentType,
+  selectFinancialDecisionFields,
+} from './financial-field-policy'
 
 const criticalKeys = new Set(['deceasedName', 'deathDate', 'inheritanceAwarenessDate', 'institution', 'category', 'amount', 'referenceDate'])
 const documentTypeLabels: Record<string, string> = {
@@ -27,6 +33,45 @@ const valueLabels: Record<string, string> = {
   no_records: '조회 내역 없음',
 }
 
+const financialSummaryKeys = new Set([
+  'message', 'recordCount', 'hasFinancialRecords',
+  'totalAssets', 'totalDebts', 'pendingInstitution',
+  'hasUnclaimedDepositRecords', 'unclaimedDepositRecordCount',
+  'hasDebtRecords', 'debtRecordCount', 'depositAccountCount',
+  'closedDepositCount', 'loanCount', 'loanAmount', 'paymentCount',
+  'guaranteeCount', 'guaranteeAmount',
+])
+
+const fieldValue = (document: DocumentPipelineResult['documents'][number], key: string) =>
+  document.extractedFields.find((field) => field.key === key)?.normalizedValue
+
+const organizationNameOf = (document: DocumentPipelineResult['documents'][number]) => {
+  const name = fieldValue(document, 'organizationName')
+  return typeof name === 'string' && name.trim() ? name.trim() : null
+}
+
+const documentLabelOf = (document: DocumentPipelineResult['documents'][number]) => {
+  const base = documentTypeLabels[document.documentType] ?? '문서 종류 확인 필요'
+  const organization = organizationNameOf(document)
+  return document.documentType === 'FINANCIAL_DOCUMENT' && organization
+    ? `${organization} 금융거래 조회 결과`
+    : base
+}
+
+const describeClassifiedDocuments = (pipelineResult: DocumentPipelineResult) => pipelineResult.documents.map((document) => {
+  if (document.status === 'FAILED' || document.status === 'UNSUPPORTED') {
+    return `‘${document.fileName}’은 문서 종류를 확인하지 못했어.`
+  }
+  const label = documentLabelOf(document)
+  if (document.documentType === 'UNKNOWN') {
+    return `‘${document.fileName}’은 어떤 문서인지 확실히 구분하지 못했어. 문서 종류를 직접 확인해줘.`
+  }
+  if (document.classificationConfidence < 0.8 || document.status === 'NEEDS_REVIEW') {
+    return `‘${document.fileName}’의 본문을 확인한 결과 ${label} 문서로 보이지만, 분류가 맞는지 한 번 확인해줘.`
+  }
+  return `‘${document.fileName}’의 본문을 확인한 결과 ${label} 문서로 확인됐어.`
+}).join('\n')
+
 const formatExtractedValue = (key: string, value: string | number | null) => {
   if (value === null || value === '') return '확인 필요'
   if (typeof value === 'number' && /amount|balance|total/i.test(key)) return `${value.toLocaleString('ko-KR')}원`
@@ -39,7 +84,7 @@ const buildReviewItems = (fields: Array<{
   label: string
   value?: string | number | null
   normalizedValue?: string | number | null
-}>) => {
+}>, financialOnly = false) => {
   const records = new Map<string, typeof fields>()
   const general = fields.filter((field) => {
     const prefix = field.key.match(/^(records\.\d+)\./)?.[1]
@@ -47,8 +92,30 @@ const buildReviewItems = (fields: Array<{
     records.set(prefix, [...(records.get(prefix) ?? []), field])
     return false
   })
+  const findGeneral = (key: string) => general.find((field) => field.key === key)
+  const pairedSummary = (
+    presentKey: string,
+    countKey: string,
+    label: string,
+  ) => {
+    const present = findGeneral(presentKey)
+    const count = findGeneral(countKey)
+    if (!present && !count) return null
+    const presentValue = present?.normalizedValue ?? present?.value
+    const countValue = count?.normalizedValue ?? count?.value
+    const parts = [presentValue === '예' ? '있음' : presentValue === '아니요' ? '없음' : null]
+    if (typeof countValue === 'number') parts.push(`${countValue.toLocaleString('ko-KR')}건`)
+    return { fieldKey: countKey, label, value: countValue ?? presentValue ?? null, formattedValue: parts.filter(Boolean).join(' · ') || '확인 필요' }
+  }
+  const grouped = financialOnly ? [
+    pairedSummary('hasUnclaimedDepositRecords', 'unclaimedDepositRecordCount', '미수령금 내역'),
+    pairedSummary('hasDebtRecords', 'debtRecordCount', '채무정보 내역'),
+  ].filter((item): item is NonNullable<typeof item> => item !== null) : []
+  const pairedKeys = new Set(['hasUnclaimedDepositRecords', 'unclaimedDepositRecordCount', 'hasDebtRecords', 'debtRecordCount'])
   const generalItems = general
-    .filter((field) => !['inquiryStatus', 'hasRecords'].includes(field.key))
+    .filter((field) => financialOnly
+      ? financialSummaryKeys.has(field.key) && !pairedKeys.has(field.key)
+      : !['inquiryStatus', 'hasRecords', 'organizationKey', 'organizationEvidence'].includes(field.key))
     .map((field) => ({
       fieldKey: field.key,
       label: field.label,
@@ -75,7 +142,7 @@ const buildReviewItems = (fields: Array<{
       formattedValue: details.join(' · ') || '상세 내용 확인 필요',
     }
   })
-  return [...generalItems, ...recordItems]
+  return [...grouped, ...generalItems, ...recordItems]
 }
 
 export type DocumentPipelineRunResult = {
@@ -98,7 +165,9 @@ export async function runDocumentPipeline(
       type: document.documentType,
       fileName: document.fileName,
       status: document.status === 'FAILED' || document.status === 'UNSUPPORTED' ? 'FAILED' as const : 'NEEDS_CONFIRMATION' as const,
-      extractedFields: document.extractedFields.map((field) => ({
+      extractedFields: (isFinancialDocumentType(document.documentType)
+        ? selectFinancialDecisionFields(document.extractedFields)
+        : document.extractedFields).map((field) => ({
         key: field.key,
         value: field.normalizedValue,
         sourcePage: field.source.page,
@@ -107,16 +176,38 @@ export async function runDocumentPipeline(
       })),
     })),
   ]
+  const coverage = analyzeFinancialDocumentCoverage(documents)
+  const receivedCoverageIds = new Set(coverage.received.map((institution) => `missing-financial-${institution.key}`))
   const nextState = caseStateSchema.parse({
     ...state,
     stage: pipelineResult.crossDocumentIssues.some((issue) => issue.severity === 'BLOCKING') ? 'CONFIRMING_EXTRACTION' : 'CONFIRMING_EXTRACTION',
     documents,
+    missingFields: state.missingFields.map((field) => receivedCoverageIds.has(field.id)
+      ? { ...field, resolved: true }
+      : field),
+    financialCoverage: coverage.hasFinancialDocuments ? {
+      status: coverage.missing.length ? 'PENDING' : 'COMPLETE',
+      receivedOrganizationKeys: coverage.received.map((institution) => institution.key),
+      missingOrganizationKeys: coverage.missing.map((institution) => institution.key),
+    } : state.financialCoverage,
+    // 새 문서를 확인한 뒤에는 이전 업무 단계에서 계속하지 않고, 갱신된 문서와
+    // 온보딩 상태를 기준으로 개인별 절차를 다시 계산한다.
+    workflow: {
+      ...state.workflow,
+      phase: 'DOCUMENT_REVIEW',
+      procedureGenerated: false,
+      priorityTaskId: null,
+      missingDocumentTypes: [],
+      preparationPackageReady: false,
+      officialConnectionReady: false,
+      completionPending: false,
+    },
     currentFocus: { type: 'DOCUMENT_BATCH', id: pipelineResult.batchId },
     lastUpdatedAt: new Date().toISOString(),
   })
   const ui = buildDocumentUI(pipelineResult)
   const output = agentOutputSchema.parse({
-    message: pipelineResult.explanation,
+    message: `${describeClassifiedDocuments(pipelineResult)}\n\n${pipelineResult.explanation}`,
     ui,
     suggestedActions: pipelineResult.requiresUserConfirmation
       ? [{ id: 'review_fields', label: '확인할 항목 보기' }, { id: 'upload_again', label: '다시 올리기' }, { id: 'later', label: '나중에 확인' }]
@@ -152,15 +243,20 @@ function buildDocumentUI(result: DocumentPipelineResult): AgentUIBlock[] {
         actions: [{ id: 'confirm_type', label: '맞아요' }, { id: 'select_type', label: '종류 선택' }, { id: 'later', label: '나중에 확인' }],
       })
     }
-    const reviewFields = document.extractedFields.filter((item) =>
-      criticalKeys.has(item.key) || item.verificationStatus === 'NEEDS_USER_REVIEW')
+    const isFinancialDocument = isFinancialDocumentType(document.documentType)
+    const reviewFields = document.extractedFields.filter((item) => {
+      if (isFinancialDocument) {
+        return isFinancialDecisionField(item.key) && item.key !== 'organizationKey' && item.key !== 'organizationName'
+      }
+      return criticalKeys.has(item.key) || item.verificationStatus === 'NEEDS_USER_REVIEW'
+    })
     if (reviewFields.length) ui.push({
       type: 'DOCUMENT_EXTRACTION_REVIEW',
       documentId: document.documentId,
       fileName: document.fileName,
-      documentTypeLabel: documentTypeLabels[document.documentType] ?? document.documentType,
+      documentTypeLabel: documentLabelOf(document),
       confidence: document.classificationConfidence,
-      items: buildReviewItems(reviewFields),
+      items: buildReviewItems(reviewFields, isFinancialDocument),
       notice: 'AI가 문서에서 읽은 값이야. 원본과 비교한 뒤 정확할 때만 확인해줘.',
       actions: [{ id: 'confirm_all', label: '모두 정확해요' }, { id: 'review_each', label: '하나씩 수정할게요' }],
     })

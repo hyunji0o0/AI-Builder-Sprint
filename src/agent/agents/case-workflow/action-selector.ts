@@ -8,7 +8,7 @@ export const actionNameSchema = z.enum([
   'CHAT', 'ONBOARD', 'UPLOAD', 'CONFIRM_EXTRACTION', 'FINANCIAL_INPUT',
   'SHOW_STATUS', 'SHOW_NEXT_TASK', 'SHOW_DOCUMENTS', 'SHOW_DEADLINE',
   'CHECK_FINANCIAL_RISK', 'SHOW_INSTITUTION', 'SHOW_COMMUNITY_REVIEW', 'SHOW_DEATH_REPORT',
-  'COMPLETE_TASK', 'COMPLETE_DEATH_REPORT', 'ADVANCE_WORKFLOW', 'LEGAL_BOUNDARY', 'PAUSE', 'FALLBACK',
+  'COMPLETE_TASK', 'COMPLETE_DEATH_REPORT', 'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE', 'LEGAL_BOUNDARY', 'PAUSE', 'FALLBACK',
 ])
 export type ActionName = z.infer<typeof actionNameSchema>
 
@@ -50,6 +50,8 @@ const deterministicSelection = (classification: Classification, state: CaseState
     ASK_LEGAL_DECISION: { action: 'LEGAL_BOUNDARY', tools: ['calculateFinancialSummary', 'calculateDeadlines'] },
     REQUEST_PAUSE: { action: 'PAUSE', tools: ['updateCaseState'] },
     CONTINUE_WORKFLOW: { action: 'ADVANCE_WORKFLOW', tools: [] },
+    START_CONSULTATION_PREPARATION: { action: 'START_CONSULTATION', tools: ['updateCaseState', 'calculateTaskReadiness'] },
+    PROCEED_WITH_AVAILABLE_DATA: { action: 'PROCEED_AVAILABLE', tools: ['updateCaseState', 'generatePersonalProcedure'] },
     UNSUPPORTED: { action: 'FALLBACK', tools: [] },
   }
   if (
@@ -68,7 +70,7 @@ export async function selectAction(classification: Classification, state: CaseSt
   try {
     const raw = await llm.complete(
       `${selectActionPrompt.template}\n허용 action: ${actionNameSchema.options.join(', ')}\n허용 tools: ${toolNameSchema.options.join(', ')}\nJSON만 반환`,
-      JSON.stringify({ classification, stage: state.stage, currentFocus: state.currentFocus, fallback }),
+      JSON.stringify({ classification, stage: state.stage, currentFocus: state.currentFocus, memory: state.memory, fallback }),
     )
     const proposal = selectionSchema.parse(extractJson(raw))
     if (['CASUAL_CHAT', 'ASK_LEGAL_DECISION', 'REQUEST_PAUSE'].includes(classification.intent)) return fallback

@@ -8,7 +8,7 @@ export const userIntentSchema = z.enum([
   'ASK_CURRENT_STATUS', 'ASK_NEXT_ACTION', 'ASK_REQUIRED_DOCUMENTS', 'ASK_DEADLINE',
   'ASK_FINANCIAL_RISK', 'ASK_INSTITUTION', 'ASK_COMMUNITY_TIP', 'ASK_DEATH_REPORT',
   'UPDATE_TASK_STATUS', 'DEATH_REPORT_COMPLETED', 'ASK_LEGAL_DECISION', 'REQUEST_PAUSE',
-  'CONTINUE_WORKFLOW', 'UNSUPPORTED',
+  'CONTINUE_WORKFLOW', 'START_CONSULTATION_PREPARATION', 'PROCEED_WITH_AVAILABLE_DATA', 'UNSUPPORTED',
 ])
 
 export const emotionalSignalSchema = z.enum(['DISTRESSED', 'NEUTRAL', 'POSITIVE'])
@@ -65,6 +65,10 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
       reason: z.string(),
       basisFacts: z.array(z.string()),
       dependencyTitles: z.array(z.string()),
+      requiredDocuments: z.array(z.object({
+        label: z.string(),
+        status: z.enum(['HELD', 'MISSING']),
+      })),
       applicability: z.enum(['CONFIRMED', 'REVIEW_REQUIRED']),
     })).max(6),
   }),
@@ -163,6 +167,24 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
     issues: z.array(validationIssueSchema),
     actions: z.array(actionSchema),
   }),
+  z.object({
+    type: z.literal('FINANCIAL_COVERAGE_REVIEW'),
+    title: z.string(),
+    receivedInstitutions: z.array(z.string()),
+    missingInstitutions: z.array(z.string()),
+    notice: z.string(),
+    actions: z.array(actionSchema).max(3),
+  }),
+  z.object({
+    type: z.literal('DOCUMENT_CORRECTION_RESULT'),
+    documentId: z.string(),
+    label: z.string(),
+    previousValue: z.number(),
+    nextValue: z.number(),
+    totalAssets: z.number().nullable(),
+    totalDebts: z.number().nullable(),
+    actions: z.array(actionSchema).max(2),
+  }),
 ])
 
 export const agentOutputSchema = z.object({
@@ -191,7 +213,7 @@ export const agentRequestSchema = z.object({
   recentMessages: z.array(z.object({
     role: z.enum(['agent', 'user']),
     text: z.string().max(4000),
-  })).max(8).optional(),
+  })).max(24).optional(),
 })
 
 export type UserIntent = z.infer<typeof userIntentSchema>

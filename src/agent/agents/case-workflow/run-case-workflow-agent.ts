@@ -12,6 +12,7 @@ import { CaseTools } from '../../tools/case-tools'
 import { selectAction } from './action-selector'
 import { composeMessage } from './response-composer'
 import { calculateProgress, executeSelection } from './tool-executor'
+import { recordAgentMemoryEvent, refreshAgentMemory } from '../../memory/agent-memory'
 
 export type CaseWorkflowAgentDependencies = {
   llm?: AgentLLM
@@ -22,7 +23,7 @@ export async function runCaseWorkflowAgent(
   request: RunAgentInput,
   dependencies: CaseWorkflowAgentDependencies = {},
 ): Promise<RunAgentResult> {
-  const initialState = caseStateSchema.parse(request.caseState)
+  const initialState = refreshAgentMemory(caseStateSchema.parse(request.caseState), request.recentMessages)
   const repository = new MemoryStateRepository(initialState)
   const tools = dependencies.tools || new CaseToolsService(repository)
   const safeInput = privacyFilter.mask(request.input)
@@ -43,6 +44,7 @@ export async function runCaseWorkflowAgent(
     userRequestedPause: classification.intent === 'REQUEST_PAUSE' || nextState.emotionalContext.userRequestedPause,
   }
   nextState = caseStateSchema.parse({ ...nextState, emotionalContext, lastUpdatedAt: new Date().toISOString() })
+  nextState = recordAgentMemoryEvent(nextState, 'AGENT_TURN', `사용자 요청을 ${classification.intent} 의도로 처리함`, classification.intent)
 
   const message = await composeMessage(
     safeInput,
