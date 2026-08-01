@@ -2,6 +2,7 @@ node_modules/
 .pnpm-store/
 dist/
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 vite.config.js
 vite.config.d.ts
 .env
@@ -9,3 +10,5 @@ vite.config.d.ts
 .env.*.local
 __pycache__/
 *.py[cod]
+data/community-posts.runtime.json
+data/community-comments.runtime.json

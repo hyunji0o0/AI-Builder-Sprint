@@ -5,7 +5,7 @@ export type IconName =
   | 'file' | 'clock' | 'alert' | 'wallet' | 'send' | 'calendar'
   | 'upload' | 'building' | 'heart' | 'edit'
   | 'search' | 'shield' | 'mapPin' | 'car' | 'phone' | 'arrowLeft'
-  | 'chevronLeft' | 'chevronRight'
+  | 'chevronLeft' | 'chevronRight' | 'close' | 'trash'
 
 const iconPaths: Record<IconName, ReactNode> = {
   sparkle: <><path d="m12 2 1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></>,
@@ -32,6 +32,8 @@ const iconPaths: Record<IconName, ReactNode> = {
   arrowLeft: <><path d="m15 5-7 7 7 7"/><path d="M8 12h12"/></>,
   chevronLeft: <path d="m15 5-7 7 7 7"/>,
   chevronRight: <path d="m9 5 7 7-7 7"/>,
+  close: <path d="M5 5 19 19M19 5 5 19"/>,
+  trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></>,
 }
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
