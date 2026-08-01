@@ -12,3 +12,4 @@ __pycache__/
 *.py[cod]
 data/community-posts.runtime.json
 data/community-comments.runtime.json
+.DS_Store
