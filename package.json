@@ -13,6 +13,7 @@
     "fixtures:generate": "node scripts/generate-document-fixtures.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
     "@vitejs/plugin-react": "^4.3.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
