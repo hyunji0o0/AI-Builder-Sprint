@@ -1,0 +1,24 @@
+[
+  { "label": "1. 사망신고", "stepId": "DEATH_REPORT" },
+  { "label": "2. 상속포기·한정승인", "stepId": "RENOUNCE_OR_LIMITED_ACCEPTANCE" },
+  { "label": "3. 안심상속 원스톱", "stepId": "SAFE_INHERITANCE_ONESTOP" },
+  { "label": "4. 상속세 신고·납부", "stepId": "INHERITANCE_TAX" },
+  { "label": "5. 부동산 취득세", "stepId": "PROPERTY_ACQUISITION_TAX" },
+  { "label": "6. 자동차 이전등록", "stepId": "VEHICLE_TRANSFER" },
+  { "label": "7. 보험금 청구", "stepId": "INSURANCE_CLAIM" },
+  { "label": "8. 국민연금 유족연금", "stepId": "SURVIVOR_PENSION" },
+
+  {
+    "label": "개인화: 빚 초과 + 기한 임박",
+    "stepId": "RENOUNCE_OR_LIMITED_ACCEPTANCE",
+    "context": { "relationToDeceased": "자녀", "region": "부산", "debtExceedsAssets": true, "daysRemaining": 12 }
+  },
+  {
+    "label": "개인화: 서류 부족",
+    "stepId": "INHERITANCE_TAX",
+    "context": { "hasUnverifiedItems": true, "missingDocuments": ["안심상속 조회 결과", "가족관계증명서"] }
+  },
+
+  { "label": "경계: 무관", "situation": "오늘 점심 메뉴 추천해줘 파스타 맛집" },
+  { "label": "경계: 감정", "situation": "아무것도 하기 싫고 너무 막막해요" }
+]

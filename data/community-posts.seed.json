@@ -1,0 +1,42 @@
+[
+  {
+    "id": "seed-1",
+    "nickname": "늦가을",
+    "category": "RENOUNCE",
+    "content": "안심상속 통지서에 캐피탈 대출이 찍혀서 놀랐는데, 지점 방문 없이 우편으로도 상속포기 서류 접수가 됐어요. 3개월 기한 꼭 확인하세요.",
+    "createdAt": "2026-07-27T09:00:00.000Z",
+    "helpfulCount": 12
+  },
+  {
+    "id": "seed-2",
+    "nickname": "해질무렵",
+    "category": "SUBSCRIPTION",
+    "content": "아버지 명의 통신사 자동이체가 4개나 있었어요. 명의자 사망 시 위약금 면제되는 경우가 많으니 상담원한테 꼭 물어보세요.",
+    "createdAt": "2026-07-26T09:00:00.000Z",
+    "helpfulCount": 9
+  },
+  {
+    "id": "seed-3",
+    "nickname": "작은배",
+    "category": "INSURANCE",
+    "content": "보험금 청구할 때 사망진단서 원본 대신 사본도 가능한 보험사가 있더라고요. 콜센터에 먼저 전화로 확인하고 방문했어요.",
+    "createdAt": "2026-07-24T09:00:00.000Z",
+    "helpfulCount": 6
+  },
+  {
+    "id": "seed-4",
+    "nickname": "느린오후",
+    "category": "TAX",
+    "content": "상속세 신고 전에 세무사 무료 상담을 지역 세무서에서 해줘요. 예약하고 가면 기본적인 방향은 잡을 수 있어요.",
+    "createdAt": "2026-07-22T09:00:00.000Z",
+    "helpfulCount": 15
+  },
+  {
+    "id": "seed-5",
+    "nickname": "먼구름",
+    "category": "TRANSFER",
+    "content": "자동차 명의이전, 생각보다 서류가 간단했어요. 상속인 전원 인감 대신 대표상속인 위임장으로도 처리 가능했습니다.",
+    "createdAt": "2026-07-21T09:00:00.000Z",
+    "helpfulCount": 4
+  }
+]

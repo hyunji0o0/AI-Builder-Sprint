@@ -1,19 +1,9 @@
-import { CommunityRepository, CommunityReview, CommunitySearchQuery, CommunityUserContext, CreateReviewInput } from '../model/community.types'
+import { CommunityRepository, CommunityReview, CommunitySearchQuery, CreateReviewInput } from '../model/community.types'
+import { filterAndSortReviews } from './community.filter'
+import { SupabaseCommunityRepository } from './community.remote-repository'
 
-export const calculateReviewSimilarity = (review: CommunityReview, context: CommunityUserContext) => {
-  let score = 0
-  if (context.relation && review.relation === context.relation) score += 30
-  if (context.region && review.region?.includes(context.region)) score += 25
-  if (context.currentTaskTypes.some((task) => review.taskType.includes(task) || review.situationTags.some((tag) => tag.includes(task)))) score += 25
-  if (context.financialStatus && review.situationTags.includes(context.financialStatus)) score += 10
-  if (context.preparingConsultation && review.situationTags.includes('전문가 상담 준비')) score += 10
-  return score
-}
-
-const reviewText = (review: CommunityReview) => [
-  review.title, review.body.situation, review.body.difficulty, review.body.actionTaken,
-  review.body.usefulTip, review.body.caution, review.region || '', review.taskType,
-].join(' ').toLowerCase()
+export { calculateReviewSimilarity } from './community.filter'
+export { filterAndSortReviews }
 
 export class InMemoryCommunityRepository implements CommunityRepository {
   private reviews: CommunityReview[]
@@ -24,27 +14,9 @@ export class InMemoryCommunityRepository implements CommunityRepository {
 
   async getReviews(query: CommunitySearchQuery) {
     const notices = this.reviews.filter((review) => review.isNotice)
-    let reviews = this.reviews.filter((review) => !review.isNotice)
-    if (query.category && query.category !== '전체') reviews = reviews.filter((review) =>
-      review.category === query.category || (query.category === '부산 지역' && review.region === '부산'))
-    if (query.region) reviews = reviews.filter((review) => review.region === query.region)
-    if (query.ids) reviews = reviews.filter((review) => query.ids?.includes(review.id))
-    if (query.text.trim()) {
-      const keyword = query.text.trim().toLowerCase()
-      reviews = reviews.filter((review) => {
-        if (query.scope === 'TITLE') return review.title.toLowerCase().includes(keyword)
-        if (query.scope === 'AUTHOR') return review.authorName.toLowerCase().includes(keyword)
-        if (query.scope === 'CONTENT') return reviewText(review).includes(keyword) && !review.title.toLowerCase().includes(keyword)
-        return reviewText(review).includes(keyword) || review.authorName.toLowerCase().includes(keyword)
-      })
-    }
-    if (query.similarOnly && query.userContext) reviews = reviews.filter((review) => calculateReviewSimilarity(review, query.userContext!) >= 40)
-    reviews.sort((a, b) => query.sort === 'HELPFUL'
-      ? b.helpfulCount - a.helpfulCount
-      : query.sort === 'SIMILAR' && query.userContext
-        ? calculateReviewSimilarity(b, query.userContext) - calculateReviewSimilarity(a, query.userContext)
-        : b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))
-    return query.ids || query.text || query.category || query.similarOnly ? reviews : [...notices, ...reviews]
+    const nonNotices = this.reviews.filter((review) => !review.isNotice)
+    const filtered = filterAndSortReviews(nonNotices, query)
+    return query.ids || query.text || query.category || query.similarOnly ? filtered : [...notices, ...filtered]
   }
 
   async getReview(id: string) {
@@ -65,8 +37,10 @@ export class InMemoryCommunityRepository implements CommunityRepository {
     return review
   }
 
-  async markHelpful(id: string) {
-    this.reviews = this.reviews.map((review) => review.id === id ? { ...review, helpfulCount: review.helpfulCount + 1 } : review)
+  async setHelpful(id: string, liked: boolean) {
+    this.reviews = this.reviews.map((review) => review.id === id
+      ? { ...review, helpfulCount: liked ? review.helpfulCount + 1 : Math.max(0, review.helpfulCount - 1) }
+      : review)
     return this.getReview(id)
   }
 }
@@ -92,7 +66,7 @@ export const markReviewHelpfulOnce = async (
   if (storage.getItem(storageKey)) {
     return { updated: false, review: await repository.getReview(reviewId) }
   }
-  const review = await repository.markHelpful(reviewId)
+  const review = await repository.setHelpful(reviewId, true)
   if (review) storage.setItem(storageKey, '1')
   return { updated: Boolean(review), review }
 }
@@ -104,4 +78,4 @@ export const paginateCommunityReviews = <T>(items: T[], page: number, pageSize: 
   return items.slice(start, start + safeSize)
 }
 
-export const communityRepository = new InMemoryCommunityRepository()
+export const communityRepository: CommunityRepository = new SupabaseCommunityRepository()
