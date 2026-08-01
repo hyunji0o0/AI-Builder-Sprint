@@ -1,5 +1,6 @@
 import { AgentOutput } from '../schemas/agent-output'
 import { CaseState } from '../schemas/case-state'
+import { refreshAgentMemory } from '../memory/agent-memory'
 
 type RecentAgentMessage = {
   role: 'agent' | 'user'
@@ -17,10 +18,11 @@ export async function requestSolarReply(
   uiActionIntent?: AgentOutput['meta']['intent'],
   recentMessages: RecentAgentMessage[] = [],
 ): Promise<AgentApiResponse> {
+  const stateWithMemory = refreshAgentMemory(caseState, recentMessages)
   const response = await fetch('/api/agent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input, caseState, uiActionIntent, recentMessages: recentMessages.slice(-8) }),
+    body: JSON.stringify({ input, caseState: stateWithMemory, uiActionIntent, recentMessages: recentMessages.slice(-20) }),
   })
 
   const data = (await response.json().catch(() => ({}))) as Partial<AgentApiResponse> & {

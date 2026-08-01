@@ -21,6 +21,8 @@ type PythonPipelineResult = {
   success?: boolean
   documentType?: string
   resultCategory?: string
+  sourceOrganization?: string
+  organizationKey?: string
   classification?: {
     confidence?: number
     needsConfirmation?: boolean
@@ -307,7 +309,15 @@ export class PythonDocumentPipelineAdapter implements DocumentPipelineAdapter {
           classificationConfidence: confidence,
           alternativeTypes: [],
           status: !succeeded ? 'FAILED' : needsReview ? 'NEEDS_REVIEW' : 'PARSED',
-          extractedFields: succeeded ? toFields(parsed.data ?? {}, confidence) : [],
+          extractedFields: succeeded ? toFields({
+            ...(parsed.data ?? {}),
+            // 기관 분류는 파일명이 아니라 OCR/Document Parse 본문을 바탕으로
+            // Python 분류기가 만든 결과다. 추출 데이터와 함께 사건 상태까지 보존한다.
+            organizationKey: parsed.organizationKey
+              || (typeof parsed.data?.organizationKey === 'string' ? parsed.data.organizationKey : ''),
+            organizationName: parsed.sourceOrganization
+              || (typeof parsed.data?.organizationName === 'string' ? parsed.data.organizationName : ''),
+          }, confidence) : [],
           validationIssues,
         }))
       }

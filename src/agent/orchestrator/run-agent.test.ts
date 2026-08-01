@@ -7,6 +7,17 @@ import { runAgent } from './run-agent'
 import { responseSimilarity } from '../agents/case-workflow/response-composer'
 
 describe('Agent Harness', () => {
+  it('이전 세션의 대부금융협회 항목을 금융조회 대상에서 제거한다', async () => {
+    const state = createInitialCaseState()
+    state.financialCoverage = {
+      status: 'PENDING',
+      receivedOrganizationKeys: [],
+      missingOrganizationKeys: ['consumer_finance', 'credit_union'],
+    }
+    const result = await runAgent({ input: '현재 상태 알려줘', caseState: state })
+    expect(result.caseState.financialCoverage.missingOrganizationKeys).toEqual(['credit_union'])
+  })
+
   it('굿굿은 CASUAL_CHAT이며 분석 카드를 반복하지 않는다', async () => {
     const result = await runAgent({ input: '굿굿', caseState: createInitialCaseState() })
     expect(result.output.meta.intent).toBe('CASUAL_CHAT')
@@ -20,6 +31,59 @@ describe('Agent Harness', () => {
     expect(result.intent).toBe('ASK_DEADLINE')
     expect(result.emotion.signal).toBe('DISTRESSED')
     expect(result.emotion.intensity).toBe('HIGH')
+  })
+
+  it('금융 문서를 그만 확인하고 넘어가자는 요청은 현재 자료 진행으로 분류한다', async () => {
+    const state = createInitialCaseState()
+    state.financialCoverage = {
+      status: 'HELP_REQUESTED',
+      receivedOrganizationKeys: ['financial_investment'],
+      missingOrganizationKeys: ['savings_bank', 'credit_union'],
+    }
+
+    const result = await runAgent({ input: '금융 조회는 이제 그만하고 다음 단계로 넘어가자', caseState: state })
+
+    expect(result.output.meta.intent).toBe('PROCEED_WITH_AVAILABLE_DATA')
+    expect(result.caseState.financialCoverage.status).toBe('PROCEED_WITH_AVAILABLE')
+    expect(result.caseState.financials.hasUnverifiedItems).toBe(true)
+    expect(result.caseState.workflow.procedureGenerated).toBe(true)
+    expect(result.output.ui[0]?.type).toBe('PROCEDURE_PLAN')
+    expect(result.caseState.tasks.map((task) => task.id)).not.toContain('verify-pending-financial-result')
+    expect(result.output.message).toContain('같은 자료를 다시 요청하지 않고')
+    expect(result.output.message).not.toContain('올려')
+
+    const consultation = await runAgent({
+      input: '2단계 과정 같이 알려줘',
+      caseState: result.caseState,
+    })
+    expect(consultation.output.meta.intent).toBe('START_CONSULTATION_PREPARATION')
+    expect(consultation.caseState.stage).toBe('PREPARING_CONSULTATION')
+    expect(consultation.output.ui[0]).toMatchObject({ type: 'MISSING_INFORMATION_QUESTION' })
+    expect(consultation.output.message).not.toContain('문서를 올려')
+
+    const afterDate = consultation.caseState
+    afterDate.deceased.inheritanceAwarenessDate = '2026-08-01'
+    afterDate.missingFields = afterDate.missingFields.map((field) =>
+      field.field === 'deceased.inheritanceAwarenessDate' ? { ...field, resolved: true } : field)
+    afterDate.tasks = afterDate.tasks.map((task) => task.type === 'CONFIRM_INHERITANCE_AWARENESS_DATE'
+      ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
+      : task)
+    const continuedConsultation = await runAgent({
+      input: '날짜 확인을 마쳤으니 전문가 상담 준비를 이어서 진행해줘',
+      caseState: afterDate,
+      uiActionIntent: 'START_CONSULTATION_PREPARATION',
+    })
+    expect(continuedConsultation.caseState.workflow.phase).toBe('PREPARING_TASK')
+    expect(continuedConsultation.caseState.currentFocus.type).toBe('PREPARE_INHERITANCE_CONSULTATION')
+    expect(continuedConsultation.output.ui[0]).toMatchObject({ type: 'TASK_READINESS' })
+
+    const next = await runAgent({
+      input: '가장 먼저 할 일 알려줘',
+      caseState: result.caseState,
+      uiActionIntent: 'CONTINUE_WORKFLOW',
+    })
+    expect(next.caseState.workflow.priorityTaskId).not.toBe('verify-pending-financial-result')
+    expect(next.output.ui[0]).toMatchObject({ type: 'TASK_CARD' })
   })
 
   it('부채가 자산보다 많으면 URGENT_REVIEW를 만든다', async () => {

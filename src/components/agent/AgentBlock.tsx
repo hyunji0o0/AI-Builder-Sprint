@@ -78,8 +78,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   if (structured?.type === 'PROCEDURE_PLAN') return (
     <div className="da-procedure-plan">
       <header>
-        <span>개인별 사후 절차</span>
-        <strong>지금 자료를 기준으로 정리한 순서야</strong>
+        <div><span>개인별 사후 절차</span><b>{structured.steps.length}개의 업무</b></div>
+        <strong>확인된 자료와 미확인 항목을 함께 반영한 순서야</strong>
       </header>
       <div className="da-procedure-steps">
         {structured.steps.map((step, index) => {
@@ -90,10 +90,26 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
               <span className="da-procedure-number">{index + 1}</span>
               <div>
                 <strong>{step.title}</strong>
-                <small>{priorityLabel} · {statusLabel} · {step.applicability === 'CONFIRMED' ? '현재 정보로 필요 확인' : '공식 기준 검토 필요'}</small>
+                <small className="da-procedure-meta">
+                  <span>{priorityLabel}</span><span>{statusLabel}</span>
+                  <span>{step.applicability === 'CONFIRMED' ? '현재 정보로 필요 확인' : '공식 기준 검토 필요'}</span>
+                </small>
                 <p>{step.reason}</p>
-                {step.basisFacts.length > 0 && <em>근거: {step.basisFacts.join(' · ')}</em>}
-                {step.dependencyTitles.length > 0 && <em>먼저 할 일: {step.dependencyTitles.join(', ')}</em>}
+                <details className="da-procedure-detail">
+                  <summary>업무 상세 보기 <Icon name="chevronRight" size={16}/></summary>
+                  <section>
+                    <div><b>왜 필요한가요?</b><span>{step.reason}</span></div>
+                    <div><b>판단 근거</b><span>{step.basisFacts.length ? step.basisFacts.join(' · ') : '현재 확인된 사건 정보를 기준으로 생성했어.'}</span></div>
+                    <div><b>필요 서류</b><span>{step.requiredDocuments.length ? step.requiredDocuments.map((document) => `${document.label}(${document.status === 'HELD' ? '확인됨' : '아직 필요'})`).join(' · ') : '현재 단계에서 별도 서류는 없어.'}</span></div>
+                    <div><b>미확인 정보</b><span>{step.applicability === 'REVIEW_REQUIRED' ? '공식 기준이나 추가 자료를 더 확인해야 해.' : '현재 자료에서 필요한 것으로 확인됐어.'}</span></div>
+                    <div><b>다음 단계</b><span>{step.dependencyTitles.length ? `${step.dependencyTitles.join(', ')}부터 먼저 처리해.` : '이 업무를 선택하면 필요한 정보와 서류를 하나씩 확인해.'}</span></div>
+                  </section>
+                </details>
+                {step.taskId === 'prepare-inheritance-consultation' && (
+                  <button className="da-procedure-task-start" onClick={() => c.handleUiAction('start_consultation', '이 단계 함께 준비하기')}>
+                    이 단계 함께 준비하기 <Icon name="chevronRight" size={16}/>
+                  </button>
+                )}
               </div>
             </article>
           )
@@ -114,44 +130,117 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   )
 
   if (structured?.type === 'TASK_READINESS') return (
-    <div className="da-checklist">
-      <div><strong>{structured.title}</strong><span>현재 준비도 {structured.readiness}%</span></div>
-      {structured.documents.map((document) => (
-        <div key={document.type}>
-          <strong>{document.label}</strong>
-          <span>{document.status === 'HELD' ? '보유' : document.status === 'NEEDS_REVIEW' ? '확인 필요' : document.status === 'MISSING' ? '부족' : '해당 없음'}</span>
-        </div>
-      ))}
-      <label className="da-mini-upload"><Icon name="upload" size={16}/>부족한 서류 업로드<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={c.upload}/></label>
-      <button onClick={c.advanceWorkflow}>현재 자료로 준비하기</button>
-    </div>
-  )
-
-  if (structured?.type === 'PREPARATION_PACKAGE') return (
-    <div className="da-review">
-      <div className="da-review-head"><GlassIcon icon="file" tone="sage"/><div><small>상담·방문 준비 패키지</small><strong>{structured.title}</strong></div></div>
-      <p>준비도 {structured.readiness}%</p>
-      {structured.confirmedFacts.map((fact) => <p key={fact}>확인 · {fact}</p>)}
-      {structured.unresolvedItems.map((item) => <p key={item}>확인 필요 · {item}</p>)}
-      <strong>전문가에게 물어볼 질문</strong>
-      {structured.questionsForExpert.map((question) => <p key={question}>{question}</p>)}
-      <small>{structured.disclaimer}</small>
-      <button onClick={c.advanceWorkflow}>공식 처리 단계 확인</button>
-    </div>
-  )
-
-  if (structured?.type === 'OFFICIAL_PROCESS') return (
-    <div className="da-institution">
-      <GlassIcon icon="building" tone="blue"/>
-      <div>
-        <small>공식 정보 확인 필요</small>
-        <strong>{structured.institutions[0]?.name ?? '연결할 기관 확인 필요'}</strong>
-        <span>{structured.institutions[0]?.district}</span>
-        {structured.checklist.map((item) => <p key={item}>· {item}</p>)}
+    <div className="da-task-readiness">
+      <header>
+        <div><small>현재 업무</small><strong>{structured.title}</strong><p>지금 가진 자료와 아직 확인하지 못한 자료를 함께 살펴봤어.</p></div>
+        <div className="da-readiness-score"><b>{structured.readiness}%</b><span>준비됨</span></div>
+      </header>
+      <div className="da-readiness-progress"><i style={{ width: `${structured.readiness}%` }}/></div>
+      <div className="da-readiness-documents">
+        {structured.documents.map((document) => {
+          const financialResult = document.type === 'FINANCIAL_DEBT_DOCUMENT' || document.label.includes('안심상속')
+          const label = financialResult ? '금융기관별 조회 결과' : document.label
+          const status = document.status === 'HELD' ? '확인됨' : document.status === 'NEEDS_REVIEW' ? '내용 확인 필요' : document.status === 'MISSING' ? '아직 준비되지 않음' : '현재는 필요 없음'
+          const description = financialResult && document.status !== 'HELD'
+            ? '아직 확인하지 못한 금융기관의 조회 결과가 있어.'
+            : document.status === 'MISSING' ? '이 업무를 진행하려면 추가로 확인해야 해.' : '현재 사건 자료에 반영되어 있어.'
+          return <article className={document.status.toLowerCase()} key={document.type}>
+            <span><Icon name={document.status === 'HELD' ? 'check' : 'file'} size={20}/></span>
+            <div><strong>{label}</strong><p>{description}</p></div>
+            <b>{status}</b>
+          </article>
+        })}
       </div>
-      <button onClick={c.advanceWorkflow}>처리 완료로 기록</button>
+      <footer>
+        <label className="da-readiness-upload"><Icon name="upload" size={19}/>필요한 자료 올리기<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={c.upload}/></label>
+        <button onClick={c.advanceWorkflow}>미확인 항목을 남기고 현재 자료로 준비하기</button>
+      </footer>
     </div>
   )
+
+  if (structured?.type === 'PREPARATION_PACKAGE') {
+    const unresolvedFinancial = structured.unresolvedItems.filter((item) => item.includes('조회 결과'))
+    const unresolvedOther = structured.unresolvedItems.filter((item) => !item.includes('조회 결과'))
+    return (
+      <div className="da-preparation-package">
+        <header>
+          <div className="da-preparation-title">
+            <GlassIcon icon="file" tone="sage"/>
+            <div><small>상담·방문 준비 패키지</small><strong>{structured.title}</strong><p>현재 확인된 자료를 기준으로 상담 전에 볼 내용을 정리했어.</p></div>
+          </div>
+          <div className="da-preparation-score"><b>{structured.readiness}%</b><span>준비도</span></div>
+        </header>
+
+        <section className="da-preparation-section confirmed">
+          <h4><Icon name="check" size={20}/>확인된 정보</h4>
+          <div className="da-preparation-grid">
+            {structured.confirmedFacts.length
+              ? structured.confirmedFacts.map((fact) => <article key={fact}><span><Icon name="check" size={17}/></span><p>{fact}</p></article>)
+              : <p className="da-preparation-empty">아직 확정된 정보가 없어.</p>}
+          </div>
+        </section>
+
+        <section className="da-preparation-section unresolved">
+          <h4><Icon name="alert" size={20}/>상담할 때 함께 알려줄 내용</h4>
+          {unresolvedFinancial.length > 0 && (
+            <details>
+              <summary>금융기관 조회 결과 {unresolvedFinancial.length}곳 미확인 <span>목록 보기</span></summary>
+              <p>{unresolvedFinancial.join(' · ')}</p>
+            </details>
+          )}
+          <div className="da-preparation-grid">
+            {unresolvedOther.map((item) => <article key={item}><span><Icon name="alert" size={17}/></span><p>{item}</p></article>)}
+            {!structured.unresolvedItems.length && <p className="da-preparation-empty">현재 기록된 미확인 항목은 없어.</p>}
+          </div>
+        </section>
+
+        <section className="da-preparation-section questions">
+          <h4><Icon name="sparkle" size={20}/>전문가에게 물어볼 질문</h4>
+          <ol>{structured.questionsForExpert.map((question) => <li key={question}>{question}</li>)}</ol>
+        </section>
+
+        <aside><Icon name="alert" size={19}/><p>{structured.disclaimer}</p></aside>
+        <button className="da-preparation-next" onClick={c.advanceWorkflow}>공식 처리 단계 확인 <Icon name="chevronRight" size={18}/></button>
+      </div>
+    )
+  }
+
+  if (structured?.type === 'OFFICIAL_PROCESS') {
+    const institution = structured.institutions[0]
+    return (
+      <section className="da-official-process-card">
+        <header>
+          <div className="da-official-process-heading">
+            <GlassIcon icon="building" tone="blue"/>
+            <div>
+              <small>공식 처리 단계</small>
+              <strong>{structured.title || '공식 기관 처리 준비'}</strong>
+              <p>{institution?.name ?? '연결할 기관을 확인해야 해'}</p>
+            </div>
+          </div>
+          <span className="da-official-process-badge">공식 정보 재확인 필요</span>
+        </header>
+        <div className="da-official-process-checks">
+          <h4><Icon name="check" size={20}/> 방문·상담 전 체크사항</h4>
+          <div>
+            {structured.checklist.map((item, index) => (
+              <article key={item}><span>{index + 1}</span><p>{item}</p></article>
+            ))}
+          </div>
+        </div>
+        {institution && (
+          <div className="da-official-process-institution">
+            <div><small>확인할 기관</small><strong>{institution.name}</strong>{institution.district && <span>{institution.district}</span>}</div>
+            {institution.sourceUrl && <a href={institution.sourceUrl} target="_blank" rel="noreferrer">공식 안내 보기 <Icon name="chevronRight" size={18}/></a>}
+          </div>
+        )}
+        <footer>
+          <p><Icon name="alert" size={19}/> 기관마다 접수 방법과 준비 서류가 다를 수 있으니 실제 방문 전에 다시 확인해줘.</p>
+          <button onClick={c.advanceWorkflow}>처리 완료로 기록 <Icon name="check" size={19}/></button>
+        </footer>
+      </section>
+    )
+  }
 
   if (structured?.type === 'COMPLETION_CONFIRMATION') return (
     <div className="da-complete da-completion-banner">
@@ -211,7 +300,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       </div>
       <footer>
         <button onClick={() => c.confirmPipelineDocument(structured.documentId)}>모두 정확해요</button>
-        <button onClick={() => c.addAgent('수정할 항목의 이름과 정확한 값을 알려줘. 확인한 뒤 반영할게.')}>수정할 내용이 있어요</button>
+        <button onClick={() => c.startDocumentCorrection(structured.documentId)}>수정할 내용이 있어요</button>
       </footer>
     </section>
   )
@@ -240,6 +329,31 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div><small>문서 간 교차검증</small><strong>{structured.title}</strong>{structured.issues.map((issue) => <span key={issue.code}>{issue.message}</span>)}</div>
       <button onClick={() => c.addAgent('충돌한 항목을 원문과 함께 하나씩 확인할게.', 'extract')}>하나씩 확인</button>
     </div>
+  )
+
+  if (structured?.type === 'FINANCIAL_COVERAGE_REVIEW') return (
+    <section className="da-coverage-review">
+      <header><GlassIcon icon="file" tone="amber"/><div><small>금융조회 문서 확인</small><strong>{structured.title}</strong></div></header>
+      <div className="da-coverage-columns">
+        <div><span>확인한 기관</span><p>{structured.receivedInstitutions.length ? structured.receivedInstitutions.join(' · ') : '아직 확인된 기관 결과가 없어'}</p></div>
+        <div><span>아직 받지 않은 기관</span><p>{structured.missingInstitutions.join(' · ')}</p></div>
+      </div>
+      <p className="da-coverage-notice">{structured.notice}</p>
+      <footer>{structured.actions.map((action) => <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>)}</footer>
+    </section>
+  )
+
+  if (structured?.type === 'DOCUMENT_CORRECTION_RESULT') return (
+    <section className="da-correction-result">
+      <header><GlassIcon icon="check" tone="sage"/><div><small>문서 값 수정 완료</small><strong>{structured.label}</strong></div></header>
+      <div className="da-correction-values">
+        <div><span>기존 추출값</span><strong>{structured.previousValue.toLocaleString('ko-KR')}원</strong></div>
+        <b>→</b>
+        <div><span>수정해 반영한 값</span><strong>{structured.nextValue.toLocaleString('ko-KR')}원</strong></div>
+      </div>
+      <p>현재 확인 합계 · 자산 {(structured.totalAssets ?? 0).toLocaleString('ko-KR')}원 · 채무 {(structured.totalDebts ?? 0).toLocaleString('ko-KR')}원</p>
+      <footer>{structured.actions.map((action) => <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>)}</footer>
+    </section>
   )
 
   if (!block || block === 'text') return null

@@ -3,6 +3,12 @@ import { CaseState, caseStateSchema } from '../schemas/case-state'
 import { DocumentPipelineInput, DocumentPipelineResult } from '../schemas/document-pipeline'
 import { calculateProgress } from '../shared/state-summary'
 import { DocumentPipelineAdapter } from './document-pipeline'
+import {
+  analyzeFinancialDocumentCoverage,
+  isFinancialDecisionField,
+  isFinancialDocumentType,
+  selectFinancialDecisionFields,
+} from './financial-field-policy'
 
 const criticalKeys = new Set(['deceasedName', 'deathDate', 'inheritanceAwarenessDate', 'institution', 'category', 'amount', 'referenceDate'])
 const documentTypeLabels: Record<string, string> = {
@@ -159,7 +165,9 @@ export async function runDocumentPipeline(
       type: document.documentType,
       fileName: document.fileName,
       status: document.status === 'FAILED' || document.status === 'UNSUPPORTED' ? 'FAILED' as const : 'NEEDS_CONFIRMATION' as const,
-      extractedFields: document.extractedFields.map((field) => ({
+      extractedFields: (isFinancialDocumentType(document.documentType)
+        ? selectFinancialDecisionFields(document.extractedFields)
+        : document.extractedFields).map((field) => ({
         key: field.key,
         value: field.normalizedValue,
         sourcePage: field.source.page,
@@ -168,10 +176,32 @@ export async function runDocumentPipeline(
       })),
     })),
   ]
+  const coverage = analyzeFinancialDocumentCoverage(documents)
+  const receivedCoverageIds = new Set(coverage.received.map((institution) => `missing-financial-${institution.key}`))
   const nextState = caseStateSchema.parse({
     ...state,
     stage: pipelineResult.crossDocumentIssues.some((issue) => issue.severity === 'BLOCKING') ? 'CONFIRMING_EXTRACTION' : 'CONFIRMING_EXTRACTION',
     documents,
+    missingFields: state.missingFields.map((field) => receivedCoverageIds.has(field.id)
+      ? { ...field, resolved: true }
+      : field),
+    financialCoverage: coverage.hasFinancialDocuments ? {
+      status: coverage.missing.length ? 'PENDING' : 'COMPLETE',
+      receivedOrganizationKeys: coverage.received.map((institution) => institution.key),
+      missingOrganizationKeys: coverage.missing.map((institution) => institution.key),
+    } : state.financialCoverage,
+    // 새 문서를 확인한 뒤에는 이전 업무 단계에서 계속하지 않고, 갱신된 문서와
+    // 온보딩 상태를 기준으로 개인별 절차를 다시 계산한다.
+    workflow: {
+      ...state.workflow,
+      phase: 'DOCUMENT_REVIEW',
+      procedureGenerated: false,
+      priorityTaskId: null,
+      missingDocumentTypes: [],
+      preparationPackageReady: false,
+      officialConnectionReady: false,
+      completionPending: false,
+    },
     currentFocus: { type: 'DOCUMENT_BATCH', id: pipelineResult.batchId },
     lastUpdatedAt: new Date().toISOString(),
   })
@@ -213,10 +243,10 @@ function buildDocumentUI(result: DocumentPipelineResult): AgentUIBlock[] {
         actions: [{ id: 'confirm_type', label: '맞아요' }, { id: 'select_type', label: '종류 선택' }, { id: 'later', label: '나중에 확인' }],
       })
     }
-    const isFinancialDocument = ['FINANCIAL_DOCUMENT', 'FINANCIAL_ASSET_DOCUMENT', 'FINANCIAL_DEBT_DOCUMENT', 'CARD_DEBT_DOCUMENT'].includes(document.documentType)
+    const isFinancialDocument = isFinancialDocumentType(document.documentType)
     const reviewFields = document.extractedFields.filter((item) => {
       if (isFinancialDocument) {
-        return item.key.startsWith('records.') || financialSummaryKeys.has(item.key) || criticalKeys.has(item.key)
+        return isFinancialDecisionField(item.key) && item.key !== 'organizationKey' && item.key !== 'organizationName'
       }
       return criticalKeys.has(item.key) || item.verificationStatus === 'NEEDS_USER_REVIEW'
     })

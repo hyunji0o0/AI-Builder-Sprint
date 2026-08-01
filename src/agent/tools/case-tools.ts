@@ -70,7 +70,14 @@ export class CaseToolsService implements CaseTools {
   }
 
   updateCaseState(caseId: string, patch: Partial<CaseState>) {
-    return this.repository.updateCaseState(idSchema.parse(caseId), caseStateSchema.partial().parse(patch))
+    const parsedPatch = caseStateSchema.partial().parse(patch)
+    // `caseStateSchema`에는 이전 버전 상태를 위한 default 필드가 있다. partial 파싱 시
+    // 요청에 없던 default 필드까지 생기면 작은 후속 patch가 이미 저장된 상태를
+    // 초기값으로 되돌릴 수 있으므로, 실제 입력된 키만 저장소에 전달한다.
+    const providedPatch = Object.fromEntries(
+      Object.keys(patch).map((key) => [key, parsedPatch[key as keyof CaseState]]),
+    ) as Partial<CaseState>
+    return this.repository.updateCaseState(idSchema.parse(caseId), providedPatch)
   }
 
   async parseDocument(fileId: string) {
@@ -122,8 +129,10 @@ export class CaseToolsService implements CaseTools {
 
   async getPrioritizedTasks(caseId: string) {
     const rank = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 }
-    return (await this.getCaseState(caseId)).tasks
+    const state = await this.getCaseState(caseId)
+    return state.tasks
       .filter((task) => task.status !== 'COMPLETED' && task.status !== 'NOT_APPLICABLE')
+      .filter((task) => !(task.type === 'CONFIRM_DEATH_REPORT' && state.onboarding.deathReportStatus === 'COMPLETED'))
       .sort((a, b) => rank[a.priority] - rank[b.priority])
   }
 
@@ -164,7 +173,7 @@ export class CaseToolsService implements CaseTools {
     const required = [
       ['DEATH_CERTIFICATE', '사망진단서'],
       ['FAMILY_RELATION_CERTIFICATE', '가족관계증명서'],
-      ['FINANCIAL_DEBT_DOCUMENT', '안심상속 조회 결과'],
+      ['FINANCIAL_DEBT_DOCUMENT', '금융기관별 조회 결과'],
       ['BASIC_CERTIFICATE', '고인의 기본증명서'],
       ['RESIDENT_REGISTRATION', '상속인의 주민등록등본'],
     ] as const
@@ -174,12 +183,16 @@ export class CaseToolsService implements CaseTools {
       required: true,
       verified: verifiedTypes.has(type),
     }))
-    const hasPendingFinancialResult = state.financials.hasUnverifiedItems
+    const hasUnverifiedFinancialInfo = state.financials.hasUnverifiedItems
+    // 사용자가 "현재 자료로 진행"을 선택한 뒤에는 누락 기관을 분석의 한계로만
+    // 보존한다. 다시 확인해야 하는 선행 업무로 만들면 같은 업로드 단계가 반복된다.
+    const shouldVerifyMissingFinancialResults = hasUnverifiedFinancialInfo
+      && state.financialCoverage.status !== 'PROCEED_WITH_AVAILABLE'
     const awarenessDateMissing = state.deceased.inheritanceAwarenessDate === null
     const debtExceedsAssets = state.financials.difference !== null && state.financials.difference < 0
     const tasks: TaskState[] = []
 
-    if (hasPendingFinancialResult) {
+    if (shouldVerifyMissingFinancialResults) {
       tasks.push({
         id: 'verify-pending-financial-result',
         type: 'VERIFY_PENDING_FINANCIAL_RESULT',
@@ -219,7 +232,7 @@ export class CaseToolsService implements CaseTools {
       })
     }
 
-    if (debtExceedsAssets || hasPendingFinancialResult) {
+    if (debtExceedsAssets || hasUnverifiedFinancialInfo) {
       tasks.push({
         id: 'prepare-inheritance-consultation',
         type: 'PREPARE_INHERITANCE_CONSULTATION',
@@ -236,7 +249,7 @@ export class CaseToolsService implements CaseTools {
           ? '현재 확인된 채무가 자산보다 많아 법률적 결론을 내리기 전에 전문가 검토 준비가 필요해요.'
           : '금융 조회가 모두 끝난 뒤 확인된 자료를 바탕으로 전문가에게 검토받을 준비가 필요해요.',
         dependsOnTaskIds: [
-          ...(hasPendingFinancialResult ? ['verify-pending-financial-result'] : []),
+          ...(shouldVerifyMissingFinancialResults ? ['verify-pending-financial-result'] : []),
           ...(awarenessDateMissing ? ['confirm-inheritance-awareness-date'] : []),
         ],
         basisFacts: [
@@ -248,23 +261,28 @@ export class CaseToolsService implements CaseTools {
       })
     }
 
-    tasks.push({
-      id: 'confirm-death-report',
-      type: 'CONFIRM_DEATH_REPORT',
-      title: '사망신고 처리 여부 확인',
-      priority: 'NORMAL',
-      status: 'NOT_STARTED',
-      deadline: null,
-      daysRemaining: null,
-      readiness: verifiedTypes.has('DEATH_CERTIFICATE') ? 100 : 0,
-      requiredDocuments: requiredDocuments.filter((item) => item.type === 'DEATH_CERTIFICATE'),
-      officialSourceIds: [],
-      category: 'OFFICIAL_PROCESS',
-      reason: '사망진단서는 확인됐지만 실제 신고 처리 완료 여부는 문서 분석 결과만으로 알 수 없어 별도 확인이 필요해요.',
-      dependsOnTaskIds: [],
-      basisFacts: [verifiedTypes.has('DEATH_CERTIFICATE') ? '사망진단서 보유' : '사망진단서 미확인', '사망신고 완료 여부 미확인'],
-      applicability: 'REVIEW_REQUIRED',
-    })
+    // 온보딩에서 사용자가 이미 사망신고를 마쳤다고 확인했다면 같은 질문을
+    // 개인별 절차에 다시 만들지 않는다. 업로드한 사망신고서는 보유 문서일 뿐,
+    // 앞에서 확정한 신고 상태를 되돌리는 근거가 될 수 없다.
+    if (state.onboarding.deathReportStatus !== 'COMPLETED') {
+      tasks.push({
+        id: 'confirm-death-report',
+        type: 'CONFIRM_DEATH_REPORT',
+        title: '사망신고 처리 여부 확인',
+        priority: 'NORMAL',
+        status: 'NOT_STARTED',
+        deadline: null,
+        daysRemaining: null,
+        readiness: verifiedTypes.has('DEATH_CERTIFICATE') ? 100 : 0,
+        requiredDocuments: requiredDocuments.filter((item) => item.type === 'DEATH_CERTIFICATE'),
+        officialSourceIds: [],
+        category: 'OFFICIAL_PROCESS',
+        reason: '실제 신고 처리 완료 여부가 아직 확인되지 않아 한 번만 확인이 필요해요.',
+        dependsOnTaskIds: [],
+        basisFacts: [verifiedTypes.has('DEATH_CERTIFICATE') ? '사망진단서 보유' : '사망진단서 미확인', '사망신고 완료 여부 미확인'],
+        applicability: 'REVIEW_REQUIRED',
+      })
+    }
 
     const previousById = new Map(state.tasks.map((task) => [task.id, task]))
     const personalizedTasks = tasks.map((task) => {

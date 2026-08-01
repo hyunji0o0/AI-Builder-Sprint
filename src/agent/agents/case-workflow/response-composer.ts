@@ -43,6 +43,19 @@ export function deterministicMessage(
   if (classification.intent === 'ASK_LEGAL_DECISION') {
     return `상속 방법을 대신 결정할 수는 없어. 지금 확인된 자료를 기준으로 위험 신호와 전문가 상담에 필요한 내용을 정리해줄게. ${legalDisclaimer}`
   }
+  if (selection.action === 'PROCEED_AVAILABLE') {
+    return '알겠어. 아직 확인하지 못한 금융기관 자료는 미확인 상태로 남겨뒀어. 같은 자료를 다시 요청하지 않고, 지금 확인된 내용만 기준으로 다음 절차를 만들었어. 아래에서 가장 먼저 할 일을 확인하면 돼.'
+  }
+  if (selection.action === 'START_CONSULTATION') {
+    const blockType = execution.ui[0]?.type
+    if (blockType === 'MISSING_INFORMATION_QUESTION') {
+      return '전문가 상담 준비를 시작했어. 먼저 검토 기한과 상담 순서를 정하는 데 필요한 날짜 하나를 확인할게. 아래에서 날짜를 알려주면, 다음 준비 항목으로 바로 이어갈게.'
+    }
+    if (blockType === 'TASK_READINESS') {
+      return '전문가 상담에 가져갈 자료를 확인된 것과 아직 확인이 필요한 것으로 나눴어. 없는 자료를 무조건 다시 요구하지 않고, 지금 가진 자료를 기준으로 상담 준비를 이어갈게.'
+    }
+    return '전문가 상담 준비 업무를 선택했어. 선행 항목부터 하나씩 이어서 확인할게.'
+  }
   if (selection.action === 'ADVANCE_WORKFLOW') {
     const blockType = execution.ui[0]?.type
     const workflowMessages: Partial<Record<typeof blockType, string>> = {
@@ -89,6 +102,8 @@ export function deterministicMessage(
       ? `사망신고를 마친 것으로 반영했어.\n\n${execution.facts[0]}부터 이어서 확인해보자. 아래 버튼을 누르면 바로 시작할 수 있어.`
       : '사망신고를 마친 것으로 반영했어.\n\n지금 상태를 기준으로 다음 업무를 확인했어.',
     ADVANCE_WORKFLOW: '지금 사건 상태를 반영해 다음 준비 단계로 이동했어.',
+    START_CONSULTATION: '전문가 상담 준비를 시작했어.',
+    PROCEED_AVAILABLE: '미확인 자료는 그대로 표시하고, 현재 확인된 자료를 기준으로 다음 단계로 이동했어.',
     LEGAL_BOUNDARY: `법률적 결정을 대신할 수는 없지만, 지금 확인된 자료와 검토할 항목을 정리해줄게. ${legalDisclaimer}`,
     PAUSE: '응, 지금 상태로 저장해둘게.',
     FALLBACK: '요청을 정확히 이해하지 못했어. 지금 할 일, 필요한 서류, 기한 중 하나를 골라줘.',
@@ -107,7 +122,7 @@ export async function composeMessage(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
 ) {
   const fallback = deterministicMessage(input, classification, selection, execution, state, safety)
-  if (!llm || safety.immediateRiskSuspected || ['ADVANCE_WORKFLOW', 'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK'].includes(selection.action)) return fallback
+  if (!llm || safety.immediateRiskSuspected || ['ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE', 'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK'].includes(selection.action)) return fallback
   const policy = buildResponsePolicy(classification, selection, execution)
   try {
     const compose = (retryInstruction = '') => llm.complete(
@@ -134,7 +149,8 @@ ${retryInstruction}
         prohibitedExpressions: policy.prohibitedExpressions,
         style: policy.style,
         tonePreference: state.emotionalContext.tonePreference,
-        recentConversation: recentMessages.slice(-6),
+        memory: state.memory,
+        recentConversation: recentMessages.slice(-12),
       }),
     )
     const first = (await compose()).trim()

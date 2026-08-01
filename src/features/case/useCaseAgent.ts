@@ -7,6 +7,26 @@ import { DocumentProgress } from '../../agent/schemas/document-pipeline'
 import { processDocuments } from '../../agent/client/document-api'
 import { confirmAllDocumentFields, confirmDocumentField } from '../../agent/document-processing/run-document-pipeline'
 import { resolveCaseScenario } from './case.scenario'
+import { financialInstitutionRegistry } from '../../agent/document-processing/financial-field-policy'
+import { applyDocumentCorrectionInput, beginDocumentCorrection } from '../../agent/document-processing/document-correction'
+import { persistCaseSession, restoreCaseSession } from './case-session-storage'
+
+const institutionNames = (keys: string[]) => keys.flatMap((key) => {
+  const institution = financialInstitutionRegistry.find((item) => item.key === key)
+  return institution ? [institution.name] : []
+})
+
+const financialCoverageBlock = (state: ReturnType<typeof resolveCaseScenario>['caseState']): AgentUIBlock => ({
+  type: 'FINANCIAL_COVERAGE_REVIEW',
+  title: '아직 받지 않은 금융조회 결과가 있어',
+  receivedInstitutions: institutionNames(state.financialCoverage.receivedOrganizationKeys),
+  missingInstitutions: institutionNames(state.financialCoverage.missingOrganizationKeys),
+  notice: '금융조회는 전체 안내 화면 1종과 확인 가능한 기관별 결과 13종으로 나뉠 수 있어. 빠진 문서가 실제로 없는 것인지 확인하거나, 현재 자료만으로 미확인 표시를 남긴 채 계속 진행할 수 있어.',
+  actions: [
+    { id: 'coverage_help', label: '찾는 방법 같이 알아보기' },
+    { id: 'coverage_proceed', label: '미확인으로 남기고 진행' },
+  ],
+})
 
 const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
   const map: Partial<Record<AgentUIBlock['type'], AgentBlockKind>> = {
@@ -27,18 +47,19 @@ const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
 
 export function useCaseAgent() {
   const [scenario] = useState(() => resolveCaseScenario(window.location.search))
-  const [agentCaseState, setAgentCaseState] = useState(scenario.caseState)
+  const [restoredSession] = useState(() => restoreCaseSession(window.location.search, scenario))
+  const [agentCaseState, setAgentCaseState] = useState(restoredSession.caseState)
   const [caseUi, setCaseUi] = useState({
     selectedDate: '',
     uploadedFile: '',
     extractionConfirmed: false,
     checklist: [true, true, false, false],
   })
-  const [messages, setMessages] = useState<AgentMessage[]>(scenario.messages)
+  const [messages, setMessages] = useState<AgentMessage[]>(restoredSession.messages)
   const [input, setInput] = useState('')
   const [activeMenu, setActiveMenu] = useState('AI 홈')
-  const [assetDraft, setAssetDraft] = useState(scenario.caseState.financials.totalAssets === null ? '' : String(scenario.caseState.financials.totalAssets))
-  const [debtDraft, setDebtDraft] = useState(scenario.caseState.financials.totalDebts === null ? '' : String(scenario.caseState.financials.totalDebts))
+  const [assetDraft, setAssetDraft] = useState(restoredSession.caseState.financials.totalAssets === null ? '' : String(restoredSession.caseState.financials.totalAssets))
+  const [debtDraft, setDebtDraft] = useState(restoredSession.caseState.financials.totalDebts === null ? '' : String(restoredSession.caseState.financials.totalDebts))
   const [isResponding, setIsResponding] = useState(false)
   const [responseStatus, setResponseStatus] = useState('답변을 준비하고 있어요…')
   const [documentProgress, setDocumentProgress] = useState<DocumentProgress[]>([])
@@ -51,6 +72,10 @@ export function useCaseAgent() {
   useEffect(() => {
     uploadedDocumentsRef.current = uploadedDocuments
   }, [uploadedDocuments])
+
+  useEffect(() => {
+    persistCaseSession(window.location.search, agentCaseState, messages)
+  }, [agentCaseState, messages])
 
   useEffect(() => () => {
     uploadedDocumentsRef.current.forEach((document) => URL.revokeObjectURL(document.url))
@@ -69,13 +94,16 @@ export function useCaseAgent() {
       || agentCaseState.financials.debts.length > 0
     const financialsDone = agentCaseState.financials.totalAssets !== null
       && agentCaseState.financials.totalDebts !== null
-      && !agentCaseState.financials.hasUnverifiedItems
+      && (!agentCaseState.financials.hasUnverifiedItems
+        || agentCaseState.financialCoverage.status === 'PROCEED_WITH_AVAILABLE')
     const consultationTasks = agentCaseState.tasks.filter((task) => task.category === 'CONSULTATION')
     const consultationStarted = consultationTasks.length > 0
     const consultationDone = consultationStarted
       && consultationTasks.every((task) => task.status === 'COMPLETED' || task.status === 'NOT_APPLICABLE')
 
-    const currentIndex = !basicDone ? 0 : !documentsDone ? 1 : !financialsDone ? 2 : 3
+    const consultationActive = agentCaseState.stage === 'PREPARING_CONSULTATION'
+      || agentCaseState.tasks.some((task) => task.category === 'CONSULTATION' && task.id === agentCaseState.currentFocus.id)
+    const currentIndex = consultationActive ? 3 : !basicDone ? 0 : !documentsDone ? 1 : !financialsDone ? 2 : 3
     return [
       { label: '기본 정보 확인', state: basicDone ? '완료' : onboardingStarted ? '확인 중' : '시작 전', done: basicDone },
       { label: '서류 확인', state: documentsDone ? '완료' : documentsStarted ? '확인 중' : '대기', done: documentsDone },
@@ -155,6 +183,34 @@ export function useCaseAgent() {
     setMessages(nextMessages)
     setInput('')
 
+    if (agentCaseState.currentFocus.type === 'DOCUMENT_CORRECTION') {
+      const correction = applyDocumentCorrectionInput(agentCaseState, question)
+      if (correction.status === 'NEEDS_DETAILS') {
+        addAgent(correction.message)
+        return
+      }
+      setAgentCaseState(correction.state)
+      const ui: AgentUIBlock[] = [{
+        type: 'DOCUMENT_CORRECTION_RESULT',
+        documentId: correction.documentId,
+        label: correction.label,
+        previousValue: correction.previousValue,
+        nextValue: correction.nextValue,
+        totalAssets: correction.state.financials.totalAssets,
+        totalDebts: correction.state.financials.totalDebts,
+        actions: [
+          { id: 'continue_document_review', label: '수정 내용 확인 완료' },
+          { id: 'correct_another_field', label: '다른 항목도 수정' },
+        ],
+      }]
+      addAgent(
+        `${correction.label}의 기존 값 ${correction.previousValue.toLocaleString('ko-KR')}원을 ${correction.nextValue.toLocaleString('ko-KR')}원으로 수정해서 사건 정보에 반영했어. 아래에서 변경 전후와 합계를 확인해줘.`,
+        undefined,
+        ui,
+      )
+      return
+    }
+
     if (/(문서|서류|파일).*(보낼|보내|올릴|올려|업로드|첨부)|(?:보낼|올릴|업로드|첨부).*(문서|서류|파일)/.test(question.replace(/\s+/g, ''))) {
       addAgent('좋아. 아래에서 문서를 선택해줘. 파일을 올리면 문서 종류와 중요한 내용을 확인해서 보기 쉽게 정리해줄게.', 'upload')
       return
@@ -202,6 +258,71 @@ export function useCaseAgent() {
         lastUpdatedAt: new Date().toISOString(),
       }))
       addAgent('응, 지금까지 확인한 상태로 저장해둘게. 준비되면 여기서 다시 이어가면 돼.')
+      return
+    }
+    if (actionId === 'coverage_help') {
+      const missingNames = institutionNames(agentCaseState.financialCoverage.missingOrganizationKeys)
+      setAgentCaseState((state) => ({
+        ...state,
+        financialCoverage: { ...state.financialCoverage, status: 'HELP_REQUESTED' },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent(
+        `아직 확인하지 못한 곳은 ${missingNames.join(', ')}야.\n\n먼저 안심상속 금융조회 결과 화면이나 접수증에서 해당 기관의 조회 상태를 같이 확인해보자. 결과가 완료됐다면 기관 결과를 내려받거나 화면을 캡처해서 올려줘. 결과 위치를 찾기 어렵다면 확인할 기관 이름을 말해주면 그 기관에 맞는 확인 경로부터 안내할게.`,
+        'upload',
+      )
+      return
+    }
+    if (actionId === 'coverage_proceed') {
+      const missingKeys = agentCaseState.financialCoverage.missingOrganizationKeys
+      const missingNames = institutionNames(missingKeys)
+      const existingMissingIds = new Set(agentCaseState.missingFields.map((field) => field.id))
+      const nextState = {
+        ...agentCaseState,
+        financialCoverage: { ...agentCaseState.financialCoverage, status: 'PROCEED_WITH_AVAILABLE' as const },
+        financials: { ...agentCaseState.financials, hasUnverifiedItems: missingKeys.length > 0 || agentCaseState.financials.hasUnverifiedItems },
+        missingFields: [
+          ...agentCaseState.missingFields,
+          ...missingKeys.filter((key) => !existingMissingIds.has(`missing-financial-${key}`)).map((key) => ({
+            id: `missing-financial-${key}`,
+            field: `financialCoverage.${key}`,
+            label: `${financialInstitutionRegistry.find((institution) => institution.key === key)?.name ?? key} 조회 결과`,
+            resolved: false,
+          })),
+        ],
+        stage: 'CHECKING_MISSING_INFO' as const,
+        lastUpdatedAt: new Date().toISOString(),
+      }
+      setAgentCaseState(nextState)
+      addAgent(`알겠어. ${missingNames.length}개 기관 결과는 미확인으로 남기고, 지금 확인된 자료만으로 진행할게. 이후 분석에서는 이 누락을 함께 표시할게.`)
+      void continueAfterDocumentVerification(nextState, true)
+      return
+    }
+    if (actionId === 'coverage_later') {
+      setAgentCaseState((state) => ({
+        ...state,
+        financialCoverage: { ...state.financialCoverage, status: 'PENDING' },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent('응, 지금까지 확인한 문서는 저장해둘게. 나머지 기관 결과를 준비한 뒤 이어서 올리면 돼.')
+      return
+    }
+    if (actionId === 'correct_another_field') {
+      setAgentCaseState((state) => ({
+        ...state,
+        currentFocus: { type: 'DOCUMENT_CORRECTION', id: state.currentFocus.id },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent('좋아. 같은 문서에서 수정할 항목과 정확한 값을 말해줘. 예: “삼성증권 CMA는 120만원이야”')
+      return
+    }
+    if (actionId === 'continue_document_review') {
+      setAgentCaseState((state) => ({
+        ...state,
+        currentFocus: { type: 'DOCUMENT_BATCH', id: null },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent('수정한 값을 저장했어. 나머지 추출 내용도 맞다면 ‘모두 정확해요’를 눌러 확인을 마쳐줘.')
       return
     }
     if (actionId === 'onboarding_death_completed' || actionId === 'onboarding_death_not_completed') {
@@ -322,6 +443,10 @@ export function useCaseAgent() {
       void advanceWorkflow()
       return
     }
+    if (actionId === 'start_consultation') {
+      void chooseQuick('전문가 상담 준비를 같이 시작해줘', 'next')
+      return
+    }
     if (actionId === 'show_death_report_steps') {
       setInput('사망신고 준비물을 정리해줘')
       return
@@ -355,20 +480,43 @@ export function useCaseAgent() {
     addAgent(`${label}을 선택했어.`)
   }
 
-  const saveAwarenessDate = () => {
+  const saveAwarenessDate = async () => {
+    if (isResponding) return
     if (!caseUi.selectedDate) {
       addAgent('날짜를 선택한 뒤 저장해줘.')
       return
     }
-    setAgentCaseState((state) => ({
-      ...state,
-      deceased: { ...state.deceased, inheritanceAwarenessDate: caseUi.selectedDate },
-      missingFields: state.missingFields.map((field) => field.field === 'deceased.inheritanceAwarenessDate'
+    const nextState = {
+      ...agentCaseState,
+      deceased: { ...agentCaseState.deceased, inheritanceAwarenessDate: caseUi.selectedDate },
+      missingFields: agentCaseState.missingFields.map((field) => field.field === 'deceased.inheritanceAwarenessDate'
         ? { ...field, resolved: true }
         : field),
+      tasks: agentCaseState.tasks.map((task) => task.type === 'CONFIRM_INHERITANCE_AWARENESS_DATE'
+        ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
+        : task),
       lastUpdatedAt: new Date().toISOString(),
-    }))
+    }
+    setAgentCaseState(nextState)
     addAgent('상속 사실을 알게 된 날짜를 저장했어. 기한을 계산할 때는 공식 기준도 함께 확인해야 해.', 'complete')
+    setIsResponding(true)
+    setResponseStatus('다음 상담 준비 항목을 정리하고 있어요…')
+    try {
+      const continuationInput = '날짜 확인을 마쳤으니 전문가 상담 준비를 이어서 진행해줘'
+      const reply = await requestSolarReply(
+        continuationInput,
+        nextState,
+        'START_CONSULTATION_PREPARATION',
+        [...messages, { role: 'user', text: continuationInput }],
+      )
+      setAgentCaseState(reply.caseState)
+      addAgent(reply.output.message, blockFromUI(reply.output.ui), reply.output.ui)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '잠시 후 다시 시도해줘.'
+      addAgent(`날짜는 저장했지만 다음 상담 준비를 불러오지 못했어. ${message}`)
+    } finally {
+      setIsResponding(false)
+    }
   }
 
   const chooseQuick = async (label: string, block: AgentBlockKind) => {
@@ -441,8 +589,20 @@ export function useCaseAgent() {
     addAgent('서류 확인을 마치고 대시보드에 반영했어.', 'complete')
   }
 
-  const continueAfterDocumentVerification = async (verifiedState: typeof agentCaseState) => {
+  const continueAfterDocumentVerification = async (verifiedState: typeof agentCaseState, skipCoverageReview = false) => {
     if (!verifiedState.documents.length || !verifiedState.documents.every((document) => document.status === 'VERIFIED')) return
+    if (!skipCoverageReview
+      && verifiedState.financialCoverage.status === 'PENDING'
+      && verifiedState.financialCoverage.missingOrganizationKeys.length > 0) {
+      const ui = [financialCoverageBlock(verifiedState)]
+      const received = institutionNames(verifiedState.financialCoverage.receivedOrganizationKeys)
+      addAgent(
+        `지금 올린 금융조회 문서는 ${received.length ? received.join(', ') : '기관을 확인 중인 문서'} 결과야.\n\n아직 보내지 않은 기관 결과가 있어. 그 문서들은 지금 없는 거야? 찾는 방법을 같이 볼 수도 있고, 미확인 상태로 남긴 채 현재 자료만으로 진행할 수도 있어.`,
+        undefined,
+        ui,
+      )
+      return
+    }
     setIsResponding(true)
     setResponseStatus('확인한 문서를 바탕으로 다음 절차를 정리하고 있어요…')
     try {
@@ -490,6 +650,11 @@ export function useCaseAgent() {
     setAgentCaseState(nextState)
     addAgent('확인한 값을 사건 상태와 대시보드에 반영했어.', 'complete')
     await continueAfterDocumentVerification(nextState)
+  }
+
+  const startDocumentCorrection = (documentId: string) => {
+    setAgentCaseState((state) => beginDocumentCorrection(state, documentId))
+    addAgent('수정할 항목의 이름과 정확한 값을 함께 말해줘. 예: “예수금은 300만원이야” 또는 “삼성증권 CMA는 120만원이야”. 확인한 뒤 기존 추출값을 바꿔서 반영할게.')
   }
 
   const confirmPipelineDocument = async (documentId: string) => {
@@ -586,6 +751,7 @@ export function useCaseAgent() {
     upload,
     confirmExtraction,
     confirmPipelineField,
+    startDocumentCorrection,
     confirmPipelineDocument,
     saveFinance,
     completeTask,

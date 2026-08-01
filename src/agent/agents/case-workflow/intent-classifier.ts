@@ -14,8 +14,13 @@ export function classifyDeterministically(input: string): Classification {
   const saysDeathReportCompleted = mentionsDeathReport
     && !saysDeathReportIncomplete
     && /사망신고.*(했|마쳤|끝냈|완료|처리했)/.test(text)
+  const proceedWithAvailableData = (
+    includesAny(text, ['현재자료로진행', '있는자료로진행', '이대로진행', '미확인으로남기고진행'])
+    || /(?:금융|조회|문서|서류|자료).*(?:그만|생략|넘어).*(?:다음|진행|넘어)/.test(text)
+  )
 
-  if (includesAny(text, ['나중에할게', '쉬고싶', '잠시쉴', '그만할게'])) intent = 'REQUEST_PAUSE'
+  if (proceedWithAvailableData) intent = 'PROCEED_WITH_AVAILABLE_DATA'
+  else if (includesAny(text, ['나중에할게', '쉬고싶', '잠시쉴', '그만할게'])) intent = 'REQUEST_PAUSE'
   else if (includesAny(text, ['절차시작', '준비시작', '계속진행', '다음준비단계', '워크플로시작'])) intent = 'CONTINUE_WORKFLOW'
   else if (saysDeathReportCompleted) intent = 'DEATH_REPORT_COMPLETED'
   else if (includesAny(text, ['상속포기해야', '한정승인해야', '단순승인해야'])) intent = 'ASK_LEGAL_DECISION'
@@ -57,6 +62,7 @@ type RecentMessage = { role: 'agent' | 'user'; text: string }
 
 const isHighPrecisionGuard = (intent: UserIntent) =>
   intent === 'REQUEST_PAUSE' || intent === 'ASK_LEGAL_DECISION'
+  || intent === 'PROCEED_WITH_AVAILABLE_DATA' || intent === 'START_CONSULTATION_PREPARATION'
 
 const resolveClassification = (
   llmClassification: Classification,
@@ -87,7 +93,29 @@ export async function classifyIntent(
   const compactInput = input.replace(/\s/g, '').toLowerCase()
   const isDeathReportFollowUp = state.currentFocus.type === 'CONFIRM_DEATH_REPORT'
     && includesAny(compactInput, ['준비해', '제출해야', '신고하지않았', '아직안했', '필요한서류', '신고서'])
-  const deterministic = baseDeterministic.intent === 'UNSUPPORTED' && isDeathReportFollowUp
+  const isCoverageProceedFollowUp = state.financialCoverage.missingOrganizationKeys.length > 0
+    && includesAny(compactInput, ['넘어가', '넘어가자', '다음단계', '현재자료로', '있는자료로', '이대로진행', '그만하고'])
+  const consultationTask = state.tasks.find((task) => task.category === 'CONSULTATION')
+  const secondStepIsConsultation = state.tasks[1]?.category === 'CONSULTATION'
+  const isConsultationHelpRequest = Boolean(consultationTask) && (
+    (includesAny(compactInput, ['상담', '전문가검토', '전문가상담'])
+      && includesAny(compactInput, ['도와', '준비', '진행', '시작', '알려']))
+    || (secondStepIsConsultation && compactInput.includes('2단계')
+      && includesAny(compactInput, ['도와', '진행', '시작', '알려', '같이']))
+  )
+  const deterministic = isCoverageProceedFollowUp
+    ? {
+      intent: 'PROCEED_WITH_AVAILABLE_DATA',
+      emotion: baseDeterministic.emotion,
+      confidence: 0.98,
+    } satisfies Classification
+    : isConsultationHelpRequest
+    ? {
+      intent: 'START_CONSULTATION_PREPARATION',
+      emotion: baseDeterministic.emotion,
+      confidence: 0.98,
+    } satisfies Classification
+    : baseDeterministic.intent === 'UNSUPPORTED' && isDeathReportFollowUp
     ? {
       intent: 'ASK_DEATH_REPORT',
       emotion: baseDeterministic.emotion,
@@ -110,7 +138,8 @@ export async function classifyIntent(
         currentFocus: state.currentFocus,
         completedTasks,
         activeTasks,
-        recentMessages: recentMessages.slice(-6),
+        memory: state.memory,
+        recentMessages: recentMessages.slice(-12),
         tonePreference: state.emotionalContext.tonePreference,
       }),
     )
