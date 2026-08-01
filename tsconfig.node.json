@@ -9,6 +9,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["vite.config.ts", "src/agent/**/*.ts"],
+  "include": ["vite.config.ts", "src/agent/**/*.ts", "src/server/**/*.ts", "src/schemas/**/*.ts"],
   "exclude": ["src/agent/client/**", "src/**/*.test.ts"]
 }

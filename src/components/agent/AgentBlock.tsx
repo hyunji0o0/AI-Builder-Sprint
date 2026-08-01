@@ -1,6 +1,7 @@
 import { checklistItems } from '../../features/case/case.data'
 import { AgentBlockKind } from '../../features/case/case.types'
 import { CaseAgentController } from '../../features/case/useCaseAgent'
+import { navigateCommunity } from '../../features/community/routing/community.routes'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 import { AgentUIBlock } from '../../agent/schemas/agent-output'
@@ -176,7 +177,7 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div className="da-review">
         <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><small>{review.label}</small><strong>비슷한 경험자의 팁</strong></div></div>
         <blockquote>“{review.excerpt}”</blockquote>
-        <footer><span><Icon name="heart" size={15}/> 도움이 됐어요 {review.helpfulCount}</span><span>{review.createdAt}</span></footer>
+        <footer><span><Icon name="heart" size={15}/> 도움이 됐어요 {review.helpfulCount}</span><span>{review.createdAt}</span>{review.url && <button onClick={() => navigateCommunity(review.url!)}>원본 글 보기</button>}</footer>
         <p>추천 이유: {review.reason}<br/>{structured.disclaimer}</p>
       </div>
     ) : null
