@@ -5,6 +5,7 @@ import {
   RunAgentInput,
   RunAgentResult,
 } from '../shared/agent-run-contract'
+import { TipProvider } from '../shared/tip-provider'
 import { routeAgent } from './agent-router'
 import { refreshAgentMemory } from '../memory/agent-memory'
 
@@ -23,7 +24,7 @@ export async function runAgent(
     : await routeAgent(request.input, dependencies.llm, request.recentMessages, caseStateWithMemory.memory)
 
   if (route === 'CONVERSATION') {
-    return runConversationAgent(enrichedRequest, { llm: dependencies.llm })
+    return runConversationAgent(enrichedRequest, { llm: dependencies.llm, tips: dependencies.tips })
   }
   return runCaseWorkflowAgent(enrichedRequest, dependencies)
 }
@@ -32,4 +33,7 @@ export type {
   RunAgentInput,
   RunAgentResult,
 } from '../shared/agent-run-contract'
-export type RunAgentDependencies = CaseWorkflowAgentDependencies
+export type RunAgentDependencies = CaseWorkflowAgentDependencies & {
+  /** 대화 Agent가 도메인 질문에 커뮤니티 경험담을 붙일 때 쓴다. */
+  tips?: TipProvider
+}

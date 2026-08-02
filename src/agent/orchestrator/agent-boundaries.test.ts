@@ -25,15 +25,25 @@ describe('독립 Agent 경계', () => {
     expect(source).not.toContain('document-processing/')
   })
 
-  it('일상대화는 상태 변경과 Tool Call 없이 conversation-agent에서 끝난다', async () => {
+  it('일상대화는 사건 데이터 변경과 Tool Call 없이 conversation-agent에서 끝난다', async () => {
     const state = createInitialCaseState()
-    const snapshot = JSON.stringify(state)
+    // memory는 대화 기록용이라 매 턴 갱신된다. 지켜야 하는 경계는 "사건 데이터를
+    // 건드리지 않는 것"이므로 memory를 뺀 나머지를 비교한다.
+    const withoutMemory = ({ memory, ...rest }: ReturnType<typeof createInitialCaseState>) => rest
+    const snapshot = JSON.stringify(withoutMemory(state))
     const result = await runAgent({ input: '안녕', caseState: state })
 
     expect(result.output.meta.intent).toBe('CASUAL_CHAT')
     expect(result.output.meta.usedTools).toEqual([])
     expect(result.output.ui).toEqual([])
-    expect(JSON.stringify(result.caseState)).toBe(snapshot)
+    expect(JSON.stringify(withoutMemory(result.caseState))).toBe(snapshot)
+  })
+
+  it('일상대화 턴도 memory에는 남는다', async () => {
+    const result = await runAgent({ input: '안녕', caseState: createInitialCaseState() })
+
+    expect(result.caseState.memory.lastIntent).toBe('CASUAL_CHAT')
+    expect(result.caseState.memory.recentEvents.at(-1)?.type).toBe('CONVERSATION_TURN')
   })
 
   it('사후 행정 질문은 case-workflow-agent로 전달된다', async () => {

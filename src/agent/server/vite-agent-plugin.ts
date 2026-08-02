@@ -1,7 +1,10 @@
 import type { Connect, Plugin } from 'vite'
+import { toCommunityReviewBlock } from '../../schemas/community'
+import { recommendCommunityTips } from '../../server/community-recommend'
 import { createDocumentProcessingTool } from '../document-processing/tool/document-processing-tool'
 import { runAgent } from '../orchestrator/run-agent'
 import { AgentLLM } from '../shared/llm-adapter'
+import { TipProvider } from '../shared/tip-provider'
 import { systemPrompt } from '../prompts/system'
 import { agentRequestSchema } from '../schemas/agent-output'
 import { caseStateSchema } from '../schemas/case-state'
@@ -54,9 +57,22 @@ const readBody = async (req: NodeJS.ReadableStream) => {
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
 }
 
+/**
+ * 대화 Agent에 주입할 커뮤니티 경험담 조회 구현.
+ * Agent 쪽은 TipProvider 인터페이스만 알고, Supabase·임베딩 검색·Solar 요약은 여기서 끝난다.
+ * toCommunityReviewBlock이 COMMUNITY_REVIEW 블록 모양으로 바꿔주므로 카드 배열만 넘긴다.
+ */
+const createTipProvider = (): TipProvider => ({
+  async search({ situation, limit }) {
+    const result = await recommendCommunityTips({ situation, limit })
+    return toCommunityReviewBlock(result.tips).reviews
+  },
+})
+
 export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
   const installApi = (middlewares: Connect.Server) => {
     const solar = createSolarAdapter(config.apiKey, config.model)
+    const tips = createTipProvider()
 
     middlewares.use('/api/documents', async (req, res) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -104,7 +120,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
           caseState: caseStateSchema.parse(body.caseState),
           uiActionIntent: body.uiActionIntent,
           recentMessages: body.recentMessages,
-        }, { llm: solar })
+        }, { llm: solar, tips })
         res.end(JSON.stringify(result))
       } catch {
         res.statusCode = 502
