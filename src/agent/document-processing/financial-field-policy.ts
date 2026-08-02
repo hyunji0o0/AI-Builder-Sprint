@@ -28,8 +28,9 @@ const essentialTopLevelKeys = new Set([
 ])
 
 const essentialRecordKeys = new Set([
-  'institutionName', 'recordType', 'recordCategory', 'productName', 'debtType',
+  'institutionName', 'creditUnionName', 'recordType', 'recordCategory', 'productName', 'debtType',
   'amount', 'balance', 'depositBalance', 'principalBalance', 'loanAmount',
+  'depositAndContributionAmount', 'loanMaturityDate',
   'cardAmount', 'policyholderLoanAmount', 'insuranceRefundLoanAmount',
   'evaluatedAmount', 'totalAmount', 'quantity', 'quantityOrBalance',
   'recordStatus', 'status', 'statusMessage', 'amountType',

@@ -7,7 +7,7 @@ import { AgentLLM, extractJson } from '../../shared/llm-adapter'
 export const actionNameSchema = z.enum([
   'CHAT', 'ONBOARD', 'UPLOAD', 'CONFIRM_EXTRACTION', 'FINANCIAL_INPUT',
   'SHOW_STATUS', 'SHOW_NEXT_TASK', 'SHOW_DOCUMENTS', 'SHOW_DEADLINE',
-  'CHECK_FINANCIAL_RISK', 'SHOW_INSTITUTION', 'SHOW_COMMUNITY_REVIEW', 'SHOW_DEATH_REPORT',
+  'CHECK_FINANCIAL_RISK', 'SHOW_COMMUNITY_REVIEW', 'SHOW_DEATH_REPORT',
   'COMPLETE_TASK', 'COMPLETE_DEATH_REPORT', 'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE', 'LEGAL_BOUNDARY', 'PAUSE', 'FALLBACK',
 ])
 export type ActionName = z.infer<typeof actionNameSchema>
@@ -15,7 +15,7 @@ export type ActionName = z.infer<typeof actionNameSchema>
 const toolNameSchema = z.enum([
   'getCaseState', 'updateCaseState', 'parseDocument', 'confirmExtractedField',
   'calculateFinancialSummary', 'calculateDeadlines', 'detectMissingInformation',
-  'getPrioritizedTasks', 'matchRequiredDocuments', 'findLocalInstitutions',
+  'getPrioritizedTasks', 'matchRequiredDocuments',
   'searchCommunityReviews', 'updateTaskStatus',
   'generatePersonalProcedure', 'selectPriorityTask', 'calculateTaskReadiness',
   'buildPreparationPackage', 'confirmTaskCompletion', 'generateNextTask',
@@ -29,6 +29,14 @@ const selectionSchema = z.object({
 export type ActionSelection = z.infer<typeof selectionSchema>
 
 const deterministicSelection = (classification: Classification, state: CaseState): ActionSelection => {
+  if (state.stage === 'COMPLETED' && state.workflow.phase === 'ALL_TASKS_COMPLETED') {
+    const completedCaseReadOnlyActions: Partial<Record<Classification['intent'], ActionSelection>> = {
+      ASK_CURRENT_STATUS: { action: 'SHOW_STATUS', tools: ['getCaseState'] },
+      ASK_FINANCIAL_RISK: { action: 'CHECK_FINANCIAL_RISK', tools: ['calculateFinancialSummary'] },
+      ASK_COMMUNITY_TIP: { action: 'SHOW_COMMUNITY_REVIEW', tools: ['searchCommunityReviews'] },
+    }
+    return completedCaseReadOnlyActions[classification.intent] ?? { action: 'CHAT', tools: [] }
+  }
   const mapping: Record<Classification['intent'], ActionSelection> = {
     CASUAL_CHAT: { action: 'CHAT', tools: [] },
     START_ONBOARDING: { action: 'ONBOARD', tools: ['updateCaseState'] },
@@ -42,12 +50,12 @@ const deterministicSelection = (classification: Classification, state: CaseState
     ASK_REQUIRED_DOCUMENTS: { action: 'SHOW_DOCUMENTS', tools: ['getPrioritizedTasks', 'matchRequiredDocuments'] },
     ASK_DEADLINE: { action: 'SHOW_DEADLINE', tools: ['calculateDeadlines'] },
     ASK_FINANCIAL_RISK: { action: 'CHECK_FINANCIAL_RISK', tools: ['calculateFinancialSummary'] },
-    ASK_INSTITUTION: { action: 'SHOW_INSTITUTION', tools: ['findLocalInstitutions'] },
     ASK_COMMUNITY_TIP: { action: 'SHOW_COMMUNITY_REVIEW', tools: ['searchCommunityReviews'] },
     ASK_DEATH_REPORT: { action: 'SHOW_DEATH_REPORT', tools: ['getCaseState'] },
     UPDATE_TASK_STATUS: { action: 'COMPLETE_TASK', tools: ['getPrioritizedTasks', 'updateTaskStatus'] },
     DEATH_REPORT_COMPLETED: { action: 'COMPLETE_DEATH_REPORT', tools: ['updateTaskStatus', 'getPrioritizedTasks'] },
     ASK_LEGAL_DECISION: { action: 'LEGAL_BOUNDARY', tools: ['calculateFinancialSummary', 'calculateDeadlines'] },
+    ASK_LEGAL_INFORMATION: { action: 'CHAT', tools: [] },
     REQUEST_PAUSE: { action: 'PAUSE', tools: ['updateCaseState'] },
     CONTINUE_WORKFLOW: { action: 'ADVANCE_WORKFLOW', tools: [] },
     START_CONSULTATION_PREPARATION: { action: 'START_CONSULTATION', tools: ['updateCaseState', 'calculateTaskReadiness'] },
@@ -66,6 +74,7 @@ const deterministicSelection = (classification: Classification, state: CaseState
 
 export async function selectAction(classification: Classification, state: CaseState, llm?: AgentLLM): Promise<ActionSelection> {
   const fallback = deterministicSelection(classification, state)
+  if (state.stage === 'COMPLETED' && state.workflow.phase === 'ALL_TASKS_COMPLETED') return fallback
   if (!llm) return fallback
   try {
     const raw = await llm.complete(
