@@ -203,12 +203,12 @@
 .cm-comment-list{list-style:none;margin:0 0 14px;padding:0 0 0 24px;display:grid;gap:12px}
 .cm-comment{border-bottom:1px solid rgba(255,255,255,.62);padding-bottom:10px}
 .cm-comment-body{display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px}
-.cm-comment-identity{position:relative;flex:0 0 110px;padding-left:6px}
+.cm-comment-identity{position:relative;flex:0 0 110px;padding-left:0}
 .cm-comment-identity strong{display:block;width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#42546c;font-size:11px;line-height:1.7}
 .cm-comment-identity::before{content:"";position:absolute;left:8px;top:19px;width:11px;height:15px;border-left:1.5px solid rgba(165,84,63,.35);border-bottom:1.5px solid rgba(165,84,63,.35);border-bottom-left-radius:9px}
 .cm-comment-body time{flex:0 0 auto;font-size:10px;color:#7d8999}
 .cm-comment-body p{flex:1;min-width:160px;margin:0;padding-left:1em;font-size:14px;line-height:1.7;color:#4a5b71}
-.cm-comment-reply-toggle{display:block;margin-top:4px;margin-left:28px;border:0;background:transparent;color:#a5543f;font-size:9px;font-weight:700;cursor:pointer;padding:2px 0}
+.cm-comment-reply-toggle{display:block;margin-top:4px;margin-left:34px;border:0;background:transparent;color:#a5543f;font-size:9px;font-weight:700;cursor:pointer;padding:2px 0}
 .cm-comment-replies{list-style:none;margin:10px 0 0;padding:0 0 0 20px;border-left:2px solid rgba(255,255,255,.62);display:grid;gap:10px}
 .cm-comment-reply{padding-bottom:0;border-bottom:0}
 .cm-comment-form{display:grid;grid-template-columns:120px 1fr auto;gap:8px;margin-top:8px}
