@@ -10,6 +10,14 @@ const moneyUnits: Record<string, number> = {
 const amountPattern = /(\d+(?:\.\d+)?)\s*(억원|천만원|백만원|십만원|만원|천원|억|만|원)/
 const amountKeyPattern = /(^|\.)(amount|balance)$|Amount$|Balance$/i
 
+export const isDocumentReviewConfirmation = (input: string) => {
+  const text = input.replace(/\s+/g, '').toLowerCase()
+  return [
+    '다확인했어', '전부확인했어', '모두확인했어', '확인끝', '확인완료',
+    '다맞아', '전부맞아', '모두맞아', '이상없어', '나머지도맞아',
+  ].some((phrase) => text.includes(phrase))
+}
+
 export const beginDocumentCorrection = (state: CaseState, documentId: string): CaseState =>
   caseStateSchema.parse({
     ...state,

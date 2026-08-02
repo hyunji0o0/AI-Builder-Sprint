@@ -86,6 +86,26 @@ describe('Agent Harness', () => {
     expect(next.output.ui[0]).toMatchObject({ type: 'TASK_CARD' })
   })
 
+  it.each([
+    '지금 있는 문서들로만 진행해줘',
+    '현재 서류만으로 다음 단계로 넘어가자',
+    '업로드한 문서로만 계속 진행해줘',
+  ])('현재 가진 문서만으로 진행하라는 자연스러운 표현을 처리한다: %s', async (input) => {
+    const state = createInitialCaseState()
+    state.financialCoverage = {
+      status: 'PENDING',
+      receivedOrganizationKeys: ['financial_investment'],
+      missingOrganizationKeys: ['savings_bank', 'credit_union'],
+    }
+
+    const result = await runAgent({ input, caseState: state })
+
+    expect(result.output.meta.intent).toBe('PROCEED_WITH_AVAILABLE_DATA')
+    expect(result.caseState.financialCoverage.status).toBe('PROCEED_WITH_AVAILABLE')
+    expect(result.caseState.workflow.procedureGenerated).toBe(true)
+    expect(result.output.ui[0]?.type).toBe('PROCEDURE_PLAN')
+  })
+
   it('부채가 자산보다 많으면 URGENT_REVIEW를 만든다', async () => {
     const state = createInitialCaseState()
     state.financials = {

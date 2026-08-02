@@ -15,7 +15,12 @@ export function classifyDeterministically(input: string): Classification {
     && !saysDeathReportIncomplete
     && /사망신고.*(했|마쳤|끝냈|완료|처리했)/.test(text)
   const proceedWithAvailableData = (
-    includesAny(text, ['현재자료로진행', '있는자료로진행', '이대로진행', '미확인으로남기고진행'])
+    includesAny(text, [
+      '현재자료로진행', '있는자료로진행', '현재문서로진행', '있는문서로진행',
+      '현재서류로진행', '있는서류로진행', '올린문서로진행', '업로드한문서로진행',
+      '지금가진것으로진행', '지금있는것으로진행', '이대로진행', '미확인으로남기고진행',
+    ])
+    || /(?:현재|지금|있는|가진|올린|업로드한).*(?:자료|문서|서류|것).*(?:만|으로).*(?:진행|계속|넘어)/.test(text)
     || /(?:금융|조회|문서|서류|자료).*(?:그만|생략|넘어).*(?:다음|진행|넘어)/.test(text)
   )
 
@@ -94,7 +99,14 @@ export async function classifyIntent(
   const isDeathReportFollowUp = state.currentFocus.type === 'CONFIRM_DEATH_REPORT'
     && includesAny(compactInput, ['준비해', '제출해야', '신고하지않았', '아직안했', '필요한서류', '신고서'])
   const isCoverageProceedFollowUp = state.financialCoverage.missingOrganizationKeys.length > 0
-    && includesAny(compactInput, ['넘어가', '넘어가자', '다음단계', '현재자료로', '있는자료로', '이대로진행', '그만하고'])
+    && (
+      includesAny(compactInput, [
+        '넘어가', '넘어가자', '다음단계', '현재자료로', '있는자료로',
+        '현재문서로', '있는문서로', '현재서류로', '있는서류로',
+        '올린문서로', '업로드한문서로', '이대로진행', '그만하고',
+      ])
+      || /(?:현재|지금|있는|가진|올린|업로드한).*(?:자료|문서|서류|것).*(?:만|으로).*(?:진행|계속|넘어)/.test(compactInput)
+    )
   const consultationTask = state.tasks.find((task) => task.category === 'CONSULTATION')
   const secondStepIsConsultation = state.tasks[1]?.category === 'CONSULTATION'
   const isConsultationHelpRequest = Boolean(consultationTask) && (

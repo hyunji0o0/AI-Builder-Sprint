@@ -8,7 +8,11 @@ import { processDocuments } from '../../agent/client/document-api'
 import { confirmAllDocumentFields, confirmDocumentField } from '../../agent/document-processing/run-document-pipeline'
 import { resolveCaseScenario } from './case.scenario'
 import { financialInstitutionRegistry } from '../../agent/document-processing/financial-field-policy'
-import { applyDocumentCorrectionInput, beginDocumentCorrection } from '../../agent/document-processing/document-correction'
+import {
+  applyDocumentCorrectionInput,
+  beginDocumentCorrection,
+  isDocumentReviewConfirmation,
+} from '../../agent/document-processing/document-correction'
 import { persistCaseSession, restoreCaseSession } from './case-session-storage'
 
 const institutionNames = (keys: string[]) => keys.flatMap((key) => {
@@ -211,6 +215,15 @@ export function useCaseAgent() {
       return
     }
 
+    if (
+      agentCaseState.currentFocus.type === 'DOCUMENT_CORRECTION_REVIEW'
+      && agentCaseState.currentFocus.id
+      && isDocumentReviewConfirmation(question)
+    ) {
+      await confirmPipelineDocument(agentCaseState.currentFocus.id)
+      return
+    }
+
     if (/(문서|서류|파일).*(보낼|보내|올릴|올려|업로드|첨부)|(?:보낼|올릴|업로드|첨부).*(문서|서류|파일)/.test(question.replace(/\s+/g, ''))) {
       addAgent('좋아. 아래에서 문서를 선택해줘. 파일을 올리면 문서 종류와 중요한 내용을 확인해서 보기 쉽게 정리해줄게.', 'upload')
       return
@@ -317,12 +330,12 @@ export function useCaseAgent() {
       return
     }
     if (actionId === 'continue_document_review') {
-      setAgentCaseState((state) => ({
-        ...state,
-        currentFocus: { type: 'DOCUMENT_BATCH', id: null },
-        lastUpdatedAt: new Date().toISOString(),
-      }))
-      addAgent('수정한 값을 저장했어. 나머지 추출 내용도 맞다면 ‘모두 정확해요’를 눌러 확인을 마쳐줘.')
+      const documentId = agentCaseState.currentFocus.id
+      if (!documentId) {
+        addAgent('확인할 문서를 찾지 못했어. 추출 결과 카드에서 문서를 다시 선택해줘.')
+        return
+      }
+      void confirmPipelineDocument(documentId)
       return
     }
     if (actionId === 'onboarding_death_completed' || actionId === 'onboarding_death_not_completed') {
@@ -576,17 +589,31 @@ export function useCaseAgent() {
     }
   }
 
-  const confirmExtraction = () => {
+  const confirmExtraction = async () => {
     setCaseUi((state) => ({ ...state, extractionConfirmed: true }))
-    setAgentCaseState((state) => ({
-      ...state,
-      documents: state.documents.map((document) => document.status === 'NEEDS_CONFIRMATION'
-        ? { ...document, status: 'VERIFIED' as const }
-        : document),
+    const pendingDocumentIds = agentCaseState.documents
+      .filter((document) => document.status === 'NEEDS_CONFIRMATION')
+      .map((document) => document.id)
+    let nextState = pendingDocumentIds.reduce(
+      (state, documentId) => confirmAllDocumentFields(state, documentId),
+      agentCaseState,
+    )
+    nextState = {
+      ...nextState,
       stage: 'CHECKING_MISSING_INFO',
+      currentFocus: { type: null, id: null },
       lastUpdatedAt: new Date().toISOString(),
-    }))
-    addAgent('서류 확인을 마치고 대시보드에 반영했어.', 'complete')
+    }
+    setAgentCaseState(nextState)
+    const allVerified = nextState.documents.length > 0
+      && nextState.documents.every((document) => document.status === 'VERIFIED')
+    addAgent(
+      allVerified
+        ? '서류 확인을 마치고 대시보드에 반영했어. 이제 확인된 자료를 기준으로 다음 절차를 이어갈게.'
+        : '확인한 값은 반영했어. 아직 값이 비어 있거나 원문 확인이 필요한 항목이 있어 해당 항목을 먼저 확인해줘.',
+      allVerified ? 'complete' : 'extract',
+    )
+    if (allVerified) await continueAfterDocumentVerification(nextState)
   }
 
   const continueAfterDocumentVerification = async (verifiedState: typeof agentCaseState, skipCoverageReview = false) => {
@@ -658,9 +685,17 @@ export function useCaseAgent() {
   }
 
   const confirmPipelineDocument = async (documentId: string) => {
-    const nextState = applyVerifiedDocumentState(confirmAllDocumentFields(agentCaseState, documentId), documentId)
+    let nextState = applyVerifiedDocumentState(confirmAllDocumentFields(agentCaseState, documentId), documentId)
+    const confirmedDocument = nextState.documents.find((item) => item.id === documentId)
+    nextState = {
+      ...nextState,
+      currentFocus: confirmedDocument?.status === 'VERIFIED'
+        ? { type: null, id: null }
+        : { type: 'DOCUMENT_BATCH', id: null },
+      lastUpdatedAt: new Date().toISOString(),
+    }
     setAgentCaseState(nextState)
-    const document = nextState.documents.find((item) => item.id === documentId)
+    const document = confirmedDocument
     const isFinancialDocument = document && [
       'FINANCIAL_DOCUMENT',
       'FINANCIAL_ASSET_DOCUMENT',
