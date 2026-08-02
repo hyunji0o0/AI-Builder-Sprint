@@ -56,6 +56,9 @@ export function deterministicMessage(
     }
     return '전문가 상담 준비 업무를 선택했어. 선행 항목부터 하나씩 이어서 확인할게.'
   }
+  if (selection.action === 'SHOW_COMMUNITY_REVIEW' && !execution.ui.some((block) => block.type === 'COMMUNITY_REVIEW')) {
+    return '지금 질문과 직접 관련된 사용자 경험은 찾지 못했어. 다른 표현으로 다시 물어보거나 맞춤 후기 추천에서 상황을 조금 더 자세히 적어줘.'
+  }
   if (selection.action === 'ADVANCE_WORKFLOW') {
     const blockType = execution.ui[0]?.type
     const workflowMessages: Partial<Record<typeof blockType, string>> = {
@@ -122,7 +125,9 @@ export async function composeMessage(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
 ) {
   const fallback = deterministicMessage(input, classification, selection, execution, state, safety)
-  if (!llm || safety.immediateRiskSuspected || [
+  if (!llm || safety.immediateRiskSuspected
+    || (selection.action === 'SHOW_COMMUNITY_REVIEW' && !execution.ui.some((block) => block.type === 'COMMUNITY_REVIEW'))
+    || [
     'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE',
     'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK', 'CHECK_FINANCIAL_RISK',
   ].includes(selection.action)) return fallback

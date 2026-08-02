@@ -141,10 +141,78 @@ describe('Agent Harness', () => {
     expect(result.output.meta.requiresDisclaimer).toBe(true)
   })
 
-  it('팁 요청에 COMMUNITY_REVIEW UI Block을 반환한다', async () => {
-    const result = await runAgent({ input: '팁 추천해줘', caseState: createInitialCaseState() })
+  it('사건 업무 Agent의 팁 요청도 실제 추천기를 통해 COMMUNITY_REVIEW 카드를 반환한다', async () => {
+    let searchedSituation = ''
+    const tips = {
+      search: async ({ situation, limit }: { situation: string; limit: number }) => {
+        searchedSituation = situation
+        return Array.from({ length: limit }, (_, index) => ({
+          id: `review-${index + 1}`,
+          excerpt: `장례식장 관련 경험 ${index + 1}`,
+          reason: '사용자 질문과 관련된 경험담이야.',
+          createdAt: '오늘',
+          helpfulCount: index,
+          url: `/community/review-${index + 1}`,
+          label: '사용자 경험' as const,
+        }))
+      },
+    }
+    const result = await runAgent(
+      { input: '장례식장 아주머니한테 팁 드려야해?', caseState: createInitialCaseState() },
+      { tips },
+    )
+
     expect(result.output.meta.intent).toBe('ASK_COMMUNITY_TIP')
     expect(result.output.ui[0]?.type).toBe('COMMUNITY_REVIEW')
+    expect(result.output.ui[0]?.type === 'COMMUNITY_REVIEW' && result.output.ui[0].reviews).toHaveLength(3)
+    expect(searchedSituation).toBe('장례식장 아주머니한테 팁 드려야해?')
+  })
+
+  it('관련 경험담이 없으면 카드를 찾았다고 말하지 않는다', async () => {
+    const tips = { search: async () => [] }
+    const result = await runAgent(
+      { input: '팁 추천해줘', caseState: createInitialCaseState() },
+      { tips },
+    )
+
+    expect(result.output.ui).toEqual([])
+    expect(result.output.message).toContain('찾지 못했어')
+  })
+
+  it('사건 데이터가 필요 없는 해지 질문에는 관련 경험담 카드를 함께 반환한다', async () => {
+    let searchedSituation = ''
+    const tips = {
+      search: async ({ situation }: { situation: string; limit: number }) => {
+        searchedSituation = situation
+        return [{
+          id: 'phone-cancellation-review',
+          excerpt: '휴대폰을 해지하기 전에 남은 이용대금과 명의 변경 가능 여부를 확인했어.',
+          reason: '고인 명의 휴대폰 처리 경험이 질문과 관련돼.',
+          createdAt: '오늘',
+          helpfulCount: 2,
+          url: '/community/phone-cancellation-review',
+          label: '사용자 경험' as const,
+        }]
+      },
+    }
+
+    const result = await runAgent(
+      { input: '고인 휴대폰 바로 해지해도 됨?', caseState: createInitialCaseState() },
+      { tips },
+    )
+
+    expect(result.output.meta.intent).toBe('ASK_COMMUNITY_TIP')
+    expect(result.output.ui[0]).toMatchObject({ type: 'COMMUNITY_REVIEW' })
+    expect(searchedSituation).toBe('고인 휴대폰 바로 해지해도 됨?')
+  })
+
+  it('상속 방법 결정 질문은 일반 조언으로 보내지 않는다', async () => {
+    const result = await runAgent(
+      { input: '상속포기해도 됨?', caseState: createInitialCaseState() },
+      { tips: { search: async () => { throw new Error('결정 질문에서 팁 검색을 호출하면 안 됨') } } },
+    )
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_DECISION')
   })
 
   it('사망신고 질문에는 금융 조회가 아닌 실행 가능한 준비 패키지를 반환한다', async () => {
@@ -413,7 +481,7 @@ describe('Agent Harness', () => {
       },
     }
     const result = await runAgent({
-      input: '빚까지 있다고 하니까 너무 막막해. 나 진짜 너무 힘들어',
+      input: '빚 관련 서류를 확인해줘',
       caseState: createInitialCaseState(),
       recentMessages: [
         { role: 'user', text: '정신이 없어서 뭘 해야 할지 모르겠어' },

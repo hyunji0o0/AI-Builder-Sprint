@@ -2,6 +2,7 @@ import { AgentUIBlock, SuggestedAction } from '../../shared/types'
 import { CaseState } from '../../schemas/case-state'
 import { CaseTools, FinancialSummary } from '../../tools/case-tools'
 import { ActionSelection } from './action-selector'
+import { TipProvider } from '../../shared/tip-provider'
 
 export type ExecutionResult = {
   state: CaseState
@@ -13,11 +14,21 @@ export type ExecutionResult = {
   financialSummary?: FinancialSummary
 }
 
+type ExecutionDependencies = {
+  tips?: TipProvider
+  situation?: string
+}
+
 const logTool = (caseId: string, tool: string, success: boolean, startedAt: number) => {
   console.info(JSON.stringify({ caseId, tool, success, durationMs: Date.now() - startedAt }))
 }
 
-export async function executeSelection(selection: ActionSelection, state: CaseState, tools: CaseTools): Promise<ExecutionResult> {
+export async function executeSelection(
+  selection: ActionSelection,
+  state: CaseState,
+  tools: CaseTools,
+  dependencies: ExecutionDependencies = {},
+): Promise<ExecutionResult> {
   const result: ExecutionResult = { state, ui: [], facts: [], suggestedActions: [], usedTools: [], failed: false }
 
   const run = async <T>(name: string, operation: () => Promise<T>): Promise<T> => {
@@ -263,8 +274,14 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
         break
       }
       case 'SHOW_COMMUNITY_REVIEW': {
-        const reviews = await run('searchCommunityReviews', () => tools.searchCommunityReviews({ taskType: state.currentFocus.type || undefined, relation: state.user.relationToDeceased, region: state.user.region.city, limit: 3 }))
-        result.ui.push({ type: 'COMMUNITY_REVIEW', reviews, disclaimer: '개인의 경험이며 공식 안내나 법률 자문이 아닙니다. 필요한 서류는 공식 기관에도 확인해 주세요.' })
+        const reviews = await run('searchCommunityReviews', () => dependencies.tips
+          ? dependencies.tips.search({ situation: dependencies.situation ?? '', limit: 3 })
+          : tools.searchCommunityReviews({ taskType: state.currentFocus.type || undefined, relation: state.user.relationToDeceased, region: state.user.region.city, limit: 3 }))
+        if (reviews.length) {
+          result.ui.push({ type: 'COMMUNITY_REVIEW', reviews, disclaimer: '개인의 경험이며 공식 안내나 법률 자문이 아닙니다. 필요한 서류는 공식 기관에도 확인해 주세요.' })
+        } else {
+          result.facts.push('현재 질문과 직접 관련된 사용자 경험을 찾지 못했어.')
+        }
         break
       }
       case 'SHOW_DEATH_REPORT': {

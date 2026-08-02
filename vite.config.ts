@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
       createAgentServerPlugin({
         apiKey: env.UPSTAGE_API_KEY,
         model: env.UPSTAGE_MODEL || 'solar-pro3',
+        simpleModel: env.UPSTAGE_SIMPLE_MODEL || 'solar-mini',
         documentPipeline: {
           mode: 'python',
           environment: mode,

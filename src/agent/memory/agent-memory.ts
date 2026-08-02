@@ -1,4 +1,5 @@
 import { CaseState, caseStateSchema } from '../schemas/case-state'
+import { CASE_WORKFLOW_HANDOFF_INTERACTION } from '../shared/domain-vocabulary'
 
 type MemoryMessage = { role: 'agent' | 'user'; text: string }
 
@@ -51,11 +52,13 @@ export const refreshAgentMemory = (state: CaseState, messages: MemoryMessage[] =
       ...state.memory,
       conversationSummary: messages.length ? summarizeConversation(messages) : state.memory.conversationSummary,
       confirmedFacts: deriveConfirmedFacts(state),
-      pendingInteraction: state.currentFocus.type ? {
-        type: state.currentFocus.type,
-        targetId: state.currentFocus.id,
-        expectedInput: expectedInputFor(state.currentFocus.type),
-      } : null,
+      pendingInteraction: state.memory.pendingInteraction?.type === CASE_WORKFLOW_HANDOFF_INTERACTION
+        ? state.memory.pendingInteraction
+        : state.currentFocus.type ? {
+            type: state.currentFocus.type,
+            targetId: state.currentFocus.id,
+            expectedInput: expectedInputFor(state.currentFocus.type),
+          } : null,
     },
   })
 
