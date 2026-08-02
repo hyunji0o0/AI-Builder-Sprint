@@ -43,10 +43,12 @@ export function ReviewComments({ postId }: { postId: string }) {
 
 function CommentBody({ comment, children }: { comment: CommunityComment; children?: ReactNode }) {
   return <div className="cm-comment-body">
-    <strong>{comment.nickname}</strong>
+    <div className="cm-comment-identity">
+      <strong>{comment.nickname}</strong>
+      {children}
+    </div>
     <p>{comment.content}</p>
     <time>{toKstDate(comment.createdAt)}</time>
-    {children}
   </div>
 }
 
