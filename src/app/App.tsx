@@ -7,10 +7,13 @@ import { useCaseAgent } from '../features/case/useCaseAgent'
 import { CaseSectionView } from '../features/case/CaseSectionView'
 import { CommunityRouter, useCommunity } from '../features/community'
 import { DocumentPreview } from '../components/documents/DocumentPreview'
+import { useAuth } from '../features/auth/useAuth'
+import { LoginScreen } from '../features/auth/LoginScreen'
 import { MobileUserGuideTrigger, UserGuide } from '../features/user-guide'
 import '../dashboard.css'
 
 export default function App() {
+  const auth = useAuth()
   const controller = useCaseAgent()
   const community = useCommunity()
   const [path, setPath] = useState(window.location.pathname)
@@ -38,10 +41,13 @@ export default function App() {
 
   const activeMenu = isCommunity ? '경험 나눔' : controller.activeMenu
 
+  if (auth.isLoading) return <div className="da-page da-login-page"/>
+  if (!auth.user) return <LoginScreen onSignIn={auth.signInWithGoogle} error={auth.error}/>
+
   return (
     <div className="da-page">
       <main className="da-shell">
-        <Sidebar activeMenu={activeMenu} menuAction={menuAction} onOpenGuide={() => setGuideOpen(true)}/>
+        <Sidebar activeMenu={activeMenu} menuAction={menuAction} user={auth.user} onSignOut={auth.signOut} onOpenGuide={() => setGuideOpen(true)}/>
         {isCommunity ? <CommunityRouter path={path} controller={community}/> : <>
         <section className="da-main">
           {activeMenu === 'AI 홈' ? <>

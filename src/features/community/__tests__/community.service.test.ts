@@ -8,7 +8,20 @@ import {
   markReviewHelpfulOnce,
   InMemoryCommunityRepository,
   paginateCommunityReviews,
+  getVisibleCommunityPages,
+  filterAndSortReviews,
 } from '../services/community.service'
+import { CommunityReview } from '../model/community.types'
+import { mapPostToReview } from '../services/community.remote-repository'
+import { CommunityPost } from '../../../schemas/community'
+import { toKstDate } from '../services/community.format'
+
+const makeReview = (id: string, createdAt: string): CommunityReview => ({
+  id, createdAt, categories: ['기타'], title: id, authorName: '익명', isAnonymous: true,
+  region: null, relation: null, taskType: '기타', situationTags: [],
+  body: { situation: '', difficulty: '', actionTaken: '', preparedDocuments: [], usefulTip: '', caution: '' },
+  helpfulCount: 0, commentCount: 0, isNotice: false, isSynthetic: false,
+})
 
 const repository = () => new InMemoryCommunityRepository(communityReviews)
 const base = { text: '', scope: 'ALL' as const, category: null, region: null, sort: 'LATEST' as const, userContext: communityUserContext }
@@ -35,6 +48,36 @@ describe('community feature', () => {
     expect(reviews[0].helpfulCount).toBeGreaterThanOrEqual(reviews[1].helpfulCount)
   })
 
+  it('같은 날 작성된 글도 시간까지 반영해 최신순으로 정렬한다', () => {
+    // id는 UUID처럼 작성 시간과 무관한 순서. 날짜만 비교하면 id 순서로 뒤섞이던 버그의 회귀 테스트.
+    const reviews = [
+      makeReview('c-uuid', '2026-08-02T09:00:00.000Z'),
+      makeReview('a-uuid', '2026-08-02T15:00:00.000Z'),
+      makeReview('b-uuid', '2026-08-02T12:00:00.000Z'),
+    ]
+    const sorted = filterAndSortReviews(reviews, { ...base, sort: 'LATEST' })
+    expect(sorted.map((review) => review.id)).toEqual(['a-uuid', 'b-uuid', 'c-uuid'])
+  })
+
+  it('createdAt을 한국시간(KST) 기준 날짜로 변환한다', () => {
+    // 실제 DB 데이터: 한국시간 8/2 01:21에 올린 글이 UTC로는 8/1 16:21.
+    // UTC 날짜(08-01)가 아니라 KST 날짜(08-02)로 표기돼야 한다.
+    expect(toKstDate('2026-08-01T16:21:59.567263+00:00')).toBe('2026-08-02')
+    // 자정 직전(한국시간 8/1 23:00)은 그대로 8/1.
+    expect(toKstDate('2026-08-01T14:00:00.000Z')).toBe('2026-08-01')
+    // 시간 없는 날짜 문자열(시드 데이터)은 그대로 둔다.
+    expect(toKstDate('2026-07-29')).toBe('2026-07-29')
+  })
+
+  it('원격 글 매핑 시 createdAt의 시간 정보를 자르지 않는다', () => {
+    // slice(0,10)로 날짜만 남기면 같은 날 글이 전부 동시각 취급돼 최신순이 깨졌던 버그의 회귀 테스트.
+    const post: CommunityPost = {
+      id: 'uuid-1', nickname: '익명', categories: ['ETC'],
+      content: '제목\n\n본문', createdAt: '2026-08-02T15:04:05.000Z', helpfulCount: 0,
+    }
+    expect(mapPostToReview(post, 0).createdAt).toBe('2026-08-02T15:04:05.000Z')
+  })
+
   it('비슷한 상황순으로 정렬한다', async () => {
     const reviews = await repository().getReviews({ ...base, sort: 'SIMILAR' })
     expect(calculateReviewSimilarity(reviews[0], communityUserContext))
@@ -48,6 +91,12 @@ describe('community feature', () => {
 
   it('페이지 단위로 자른다', () => {
     expect(paginateCommunityReviews([1, 2, 3, 4, 5], 2, 2)).toEqual([3, 4])
+  })
+
+  it('6페이지로 이동하면 페이지 번호 범위에 6을 표시한다', () => {
+    expect(getVisibleCommunityPages(1, 10, 5)).toEqual([1, 2, 3, 4, 5])
+    expect(getVisibleCommunityPages(6, 10, 5)).toEqual([4, 5, 6, 7, 8])
+    expect(getVisibleCommunityPages(10, 10, 5)).toEqual([6, 7, 8, 9, 10])
   })
 
   it('목록·상세·작성 경로를 구분한다', () => {
