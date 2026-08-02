@@ -1,12 +1,14 @@
 import { z } from 'zod'
 import { AgentLLM, extractJson } from '../shared/llm-adapter'
 import { AgentMemory } from '../schemas/case-state'
+import { isLegalInformationQuestion } from '../legal/legal-retriever'
 import {
   hasEmotionalSignal,
   hasPendingCaseWorkflowHandoff,
   acceptsCaseWorkflowHandoff,
   isCasualGreeting,
   isDomainQuestion,
+  isGeneralLifeQuestion,
   mentionsDomain,
   needsCaseData,
 } from '../shared/domain-vocabulary'
@@ -51,6 +53,8 @@ export async function routeAgent(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
   memory?: AgentMemory,
 ): Promise<AgentRoute> {
+  if (isLegalInformationQuestion(input)) return 'CONVERSATION'
+  if (isGeneralLifeQuestion(input)) return 'CONVERSATION'
   if (hasPendingCaseWorkflowHandoff(memory)) {
     return acceptsCaseWorkflowHandoff(input) ? 'CASE_WORKFLOW' : 'CONVERSATION'
   }

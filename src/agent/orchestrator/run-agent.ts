@@ -21,7 +21,23 @@ export async function runAgent(
   request: RunAgentInput,
   dependencies: RunAgentDependencies = {},
 ): Promise<RunAgentResult> {
-  const refreshedState = refreshAgentMemory(request.caseState, request.recentMessages)
+  const stateWithMemory = refreshAgentMemory(request.caseState, request.recentMessages)
+  const terminalConsultationCompleted = stateWithMemory.tasks.some((task) => (
+    task.category === 'CONSULTATION' && task.status === 'COMPLETED'
+  ))
+  const refreshedState = terminalConsultationCompleted
+    ? {
+        ...stateWithMemory,
+        stage: 'COMPLETED' as const,
+        currentFocus: { type: null, id: null },
+        workflow: {
+          ...stateWithMemory.workflow,
+          phase: 'ALL_TASKS_COMPLETED' as const,
+          priorityTaskId: null,
+          completionPending: false,
+        },
+      }
+    : stateWithMemory
   const handoffAccepted = hasPendingCaseWorkflowHandoff(refreshedState.memory)
     && acceptsCaseWorkflowHandoff(request.input)
   const consumesHandoff = hasPendingCaseWorkflowHandoff(refreshedState.memory)

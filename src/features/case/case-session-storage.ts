@@ -26,25 +26,81 @@ export const restoreCaseSession = (
     const stored = JSON.parse(raw) as Partial<StoredSession>
     if (stored.version !== VERSION || !stored.caseState || !Array.isArray(stored.messages)) return fallback
     const parsedState = caseStateSchema.parse(stored.caseState)
-    // 이전 버전에서 완료한 사망신고 업무가 다시 NOT_STARTED로 생성된 세션도
-    // 온보딩의 확정 사실을 기준으로 즉시 바로잡는다.
-    const reconciledState: CaseState = parsedState.onboarding.deathReportStatus === 'COMPLETED'
+    const wasLegacyFinancialStep = parsedState.onboarding.currentStep === 'FINANCIAL_INQUIRY'
+    const migratedState: CaseState = wasLegacyFinancialStep
       ? {
           ...parsedState,
-          tasks: parsedState.tasks.map((task) => task.type === 'CONFIRM_DEATH_REPORT'
-            ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
-            : task),
-          currentFocus: parsedState.currentFocus.type === 'CONFIRM_DEATH_REPORT'
-            ? { type: null, id: null }
-            : parsedState.currentFocus,
+          onboarding: { ...parsedState.onboarding, currentStep: 'ONE_STOP_SERVICE' },
         }
       : parsedState
+    // 이전 버전에서 완료한 사망신고 업무가 다시 NOT_STARTED로 생성된 세션도
+    // 온보딩의 확정 사실을 기준으로 즉시 바로잡는다.
+    const reconciledState: CaseState = migratedState.onboarding.deathReportStatus === 'COMPLETED'
+      ? {
+          ...migratedState,
+          tasks: migratedState.tasks.map((task) => task.type === 'CONFIRM_DEATH_REPORT'
+            ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
+            : task),
+          currentFocus: migratedState.currentFocus.type === 'CONFIRM_DEATH_REPORT'
+            ? { type: null, id: null }
+            : migratedState.currentFocus,
+        }
+      : migratedState
+    const consultationCompleted = reconciledState.tasks.some((task) => (
+      task.category === 'CONSULTATION' && task.status === 'COMPLETED'
+    ))
+    const terminalState: CaseState = consultationCompleted
+      ? {
+          ...reconciledState,
+          stage: 'COMPLETED',
+          currentFocus: { type: null, id: null },
+          workflow: {
+            ...reconciledState.workflow,
+            phase: 'ALL_TASKS_COMPLETED',
+            priorityTaskId: null,
+            completionPending: false,
+          },
+        }
+      : reconciledState
     return {
-      caseState: reconciledState,
+      caseState: terminalState,
       messages: stored.messages
         .filter((message) => message?.role === 'agent' || message?.role === 'user')
         .slice(-100)
-        .map((message) => ({ ...message, attachments: undefined })),
+        .map((message) => {
+          const isLegacyFinancialQuestion = wasLegacyFinancialStep
+            && message.role === 'agent'
+            && message.ui?.some((block) => block.type === 'CHOICE'
+              && block.options.some((option) => option.id.startsWith('onboarding_financial_')))
+          if (!isLegacyFinancialQuestion) {
+            return {
+              ...message,
+              attachments: undefined,
+              ui: message.ui?.map((block) => (
+                consultationCompleted
+                && block.type === 'COMPLETION_CONFIRMATION'
+                && block.taskId === 'prepare-inheritance-consultation'
+                  ? { ...block, actions: [] }
+                  : block
+              )),
+            }
+          }
+          return {
+            ...message,
+            text: '사망신고 상태를 저장했어.\n\n이제 안심상속 원스톱 서비스 신청 여부만 확인할게. 원스톱 서비스는 신청했어?',
+            block: 'choice' as const,
+            attachments: undefined,
+            ui: [{
+              type: 'CHOICE' as const,
+              prompt: '안심상속 원스톱 서비스는 신청했어?',
+              options: [
+                { id: 'onboarding_one_stop_completed', label: '신청했어' },
+                { id: 'onboarding_one_stop_not_completed', label: '아직 안 했어' },
+                { id: 'onboarding_pause', label: '나중에 확인할게' },
+              ],
+            }],
+          }
+        }),
     }
   } catch {
     return fallback
@@ -63,5 +119,13 @@ export const persistCaseSession = (search: string, caseState: CaseState, message
     window.sessionStorage.setItem(caseSessionStorageKey(search), JSON.stringify(value))
   } catch {
     // 저장 실패가 대화 진행 자체를 막지 않게 한다.
+  }
+}
+
+export const clearCaseSession = (search: string) => {
+  try {
+    window.sessionStorage.removeItem(caseSessionStorageKey(search))
+  } catch {
+    // 저장소 접근이 차단된 환경에서도 화면 초기화는 계속 진행한다.
   }
 }

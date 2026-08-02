@@ -6,6 +6,7 @@ import { ActionSelection } from './action-selector'
 import { ExecutionResult } from './tool-executor'
 import { AgentLLM } from '../../shared/llm-adapter'
 import { buildResponsePolicy, validateComposedResponse } from './response-policy'
+import { completedConsultationMessage } from '../../safety/service-capabilities'
 
 const normalizedBigrams = (text: string) => {
   const normalized = text.replace(/[\s.,!?'"“”‘’]/g, '')
@@ -26,6 +27,16 @@ const isRepeatedResponse = (message: string, recentMessages: Array<{ role: 'agen
     .slice(-3)
     .some((item) => responseSimilarity(message, item.text) >= 0.62)
 
+const workflowBlockMessage = (execution: ExecutionResult) => {
+  if (execution.ui.some((block) => block.type === 'PREPARATION_PACKAGE')) {
+    return '현재 확인된 자료로 전문가 상담 준비 패키지를 만들었어.\n\n확인된 내용과 미확인 항목, 전문가에게 물어볼 질문을 살펴본 뒤 ‘공식 처리 단계 확인’을 누르면 다음으로 이어갈 수 있어.'
+  }
+  if (execution.ui.some((block) => block.type === 'OFFICIAL_PROCESS')) {
+    return '상담할 기관과 방문 전에 확인할 내용을 정리했어.\n\n실제로 상담이나 방문을 마친 뒤 처리 결과를 완료로 기록하면 다음 업무로 이어갈 수 있어.'
+  }
+  return null
+}
+
 export function deterministicMessage(
   input: string,
   classification: Classification,
@@ -38,6 +49,20 @@ export function deterministicMessage(
     return '지금은 행정업무보다 안전을 먼저 확인해야 해. 혼자 감당하지 말고, 곁에 있는 믿을 수 있는 사람이나 지금 이용할 수 있는 검증된 긴급 지원에 바로 도움을 요청해줘.'
   }
   if (execution.failed) return '자동 처리를 끝내지 못했지만 지금 상태는 그대로 보존했어. 직접 입력하거나 나중에 다시 이어갈 수 있어.'
+  const completedCaseReadOnlyActions = new Set<ActionSelection['action']>([
+    'SHOW_STATUS',
+    'CHECK_FINANCIAL_RISK',
+    'SHOW_COMMUNITY_REVIEW',
+  ])
+  if (
+    execution.state.stage === 'COMPLETED'
+    && execution.state.workflow.phase === 'ALL_TASKS_COMPLETED'
+    && !completedCaseReadOnlyActions.has(selection.action)
+  ) {
+    return completedConsultationMessage
+  }
+  const fixedWorkflowMessage = workflowBlockMessage(execution)
+  if (fixedWorkflowMessage) return fixedWorkflowMessage
   if (classification.intent === 'CASUAL_CHAT') return '행정업무가 아닌 대화는 대화 Agent에서 이어갈게.'
   if (classification.intent === 'REQUEST_PAUSE') return '응, 지금 상태로 저장해둘게. 필요할 때 여기서 다시 이어갈 수 있어.'
   if (classification.intent === 'ASK_LEGAL_DECISION') {
@@ -68,7 +93,7 @@ export function deterministicMessage(
       TASK_READINESS: '지금 가진 서류와 부족한 서류를 연결해 준비도를 계산했어.',
       PREPARATION_PACKAGE: '확인된 정보와 아직 확인할 내용을 상담·방문 준비 패키지로 정리했어.',
       OFFICIAL_PROCESS: '준비한 내용을 실제 처리로 이어갈 수 있도록 공식 확인 단계와 방문 전 체크사항을 연결했어.',
-      COMPLETION_CONFIRMATION: '처리 완료를 사건 상태에 반영했어. 이어서 다음 업무를 만들 수 있어.',
+      COMPLETION_CONFIRMATION: '처리 완료를 사건 상태에 반영했어.',
     }
     return workflowMessages[blockType] ?? '지금 사건 상태를 반영해 다음 준비 단계로 이동했어.'
   }
@@ -97,7 +122,6 @@ export function deterministicMessage(
     CHECK_FINANCIAL_RISK: execution.financialSummary?.riskLevel === 'URGENT_REVIEW'
       ? `지금 확인된 자료에서는 부채가 자산보다 ${Math.abs(execution.financialSummary.difference).toLocaleString('ko-KR')}원 많아. 미확인 항목과 검토 기한을 함께 확인하고 전문가 상담을 준비해줘. ${legalDisclaimer}`
       : `지금 입력된 자산과 채무를 비교했어. ${legalDisclaimer}`,
-    SHOW_INSTITUTION: '지금은 검증된 기관 데이터가 연결되지 않아서, 방문 기관은 공식 출처에서 한 번 더 확인해야 해.',
     SHOW_COMMUNITY_REVIEW: '비슷한 상황의 사용자 경험을 찾았어. 개인 경험이니 공식 기관 안내도 함께 확인해줘.',
     SHOW_DEATH_REPORT: '사망신고에 필요한 서류와 공식 양식을 준비했어. 아래에서 준비물을 확인하고 신고서를 내려받은 뒤, 방문이나 우편 접수를 준비하면 돼.',
     COMPLETE_TASK: '업무를 완료 처리하고 진행 상황에 반영했어.',
@@ -125,7 +149,9 @@ export async function composeMessage(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
 ) {
   const fallback = deterministicMessage(input, classification, selection, execution, state, safety)
-  if (!llm || safety.immediateRiskSuspected
+  const workflowIsComplete = execution.state.stage === 'COMPLETED'
+    && execution.state.workflow.phase === 'ALL_TASKS_COMPLETED'
+  if (!llm || workflowIsComplete || safety.immediateRiskSuspected
     || (selection.action === 'SHOW_COMMUNITY_REVIEW' && !execution.ui.some((block) => block.type === 'COMMUNITY_REVIEW'))
     || [
     'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE',

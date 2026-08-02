@@ -50,7 +50,6 @@ export function classifyDeterministically(input: string): Classification {
   else if (includesAny(text, ['필요한서류', '준비서류', '부족한서류'])) intent = 'ASK_REQUIRED_DOCUMENTS'
   else if (includesAny(text, ['기한', '며칠남', '언제까지'])) intent = 'ASK_DEADLINE'
   else if (includesAny(text, ['부채가더많', '채무가더많', '금융위험'])) intent = 'ASK_FINANCIAL_RISK'
-  else if (includesAny(text, ['부산에서어디', '기관', '어디로가'])) intent = 'ASK_INSTITUTION'
   else if (includesAny(text, ['팁', '후기', '비슷한사람'])) intent = 'ASK_COMMUNITY_TIP'
   else if (includesAny(text, ['완료', '다했어'])) intent = 'UPDATE_TASK_STATUS'
 
@@ -70,6 +69,7 @@ type RecentMessage = { role: 'agent' | 'user'; text: string }
 
 const isHighPrecisionGuard = (intent: UserIntent) =>
   intent === 'REQUEST_PAUSE' || intent === 'ASK_LEGAL_DECISION'
+  || intent === 'ASK_LEGAL_INFORMATION'
   || intent === 'PROCEED_WITH_AVAILABLE_DATA' || intent === 'START_CONSULTATION_PREPARATION'
 
 const resolveClassification = (

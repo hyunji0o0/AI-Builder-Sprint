@@ -1,4 +1,8 @@
 import { AgentOutput } from '../schemas/agent-output'
+import {
+  promisesUnsupportedCapability,
+  unsupportedCapabilityFallback,
+} from './service-capabilities'
 
 const prohibited = [
   /상속포기(?:를)?\s*하세요/g,
@@ -11,6 +15,8 @@ export function guardOutput(output: AgentOutput): AgentOutput {
   for (const pattern of prohibited) {
     message = message.replace(pattern, '전문가와 신속히 검토해 주세요')
   }
+  if (promisesUnsupportedCapability(message)) {
+    message = unsupportedCapabilityFallback
+  }
   return { ...output, message }
 }
-

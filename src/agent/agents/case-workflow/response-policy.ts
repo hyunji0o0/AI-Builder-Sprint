@@ -15,6 +15,10 @@ export function buildResponsePolicy(
   execution: ExecutionResult,
 ): ResponsePolicy {
   const requiredMeaningGroups: string[][] = []
+  const hasDateInput = execution.ui.some((block) => (
+    block.type === 'DATE_INPUT'
+    || (block.type === 'MISSING_INFORMATION_QUESTION' && block.inputType === 'DATE')
+  ))
   if (selection.action === 'UPLOAD') {
     requiredMeaningGroups.push(['10개', '열 개'], ['PDF'], ['JPG', 'JPEG', '이미지'])
   }
@@ -23,9 +27,6 @@ export function buildResponsePolicy(
   }
   if (selection.action === 'LEGAL_BOUNDARY') {
     requiredMeaningGroups.push(['결정', '판단'], ['법률 자문', '전문가'])
-  }
-  if (selection.action === 'SHOW_INSTITUTION') {
-    requiredMeaningGroups.push(['공식', '확인 필요', '추가 확인'])
   }
   if (selection.action === 'SHOW_COMMUNITY_REVIEW') {
     requiredMeaningGroups.push(['사용자 경험', '개인 경험'], ['공식', '기관 확인'])
@@ -43,6 +44,20 @@ export function buildResponsePolicy(
       '무조건 한정승인',
       '힘내세요',
       '긍정적으로 생각하세요',
+      '일정도 함께 잡',
+      '일정을 대신 잡',
+      '예약을 대신',
+      '예약해줄',
+      '예약해드릴',
+      '신청해줄',
+      '신청해드릴',
+      '제출해줄',
+      '제출해드릴',
+      '접수해줄',
+      '접수해드릴',
+      '일정을 잡아줄',
+      '일정을 잡아드릴',
+      ...(!hasDateInput ? ['상담 일정', '일정 잡기', '상담 예약', '원하는 날짜와 시간'] : []),
     ],
     style: classification.emotion.signal === 'DISTRESSED'
       ? '감정을 단정하지 말고 짧게 인정한 뒤, 부담을 줄이는 문장과 선택 가능한 행동 하나를 제시'

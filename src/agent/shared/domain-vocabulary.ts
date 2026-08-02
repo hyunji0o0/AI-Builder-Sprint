@@ -52,6 +52,10 @@ export const CASE_WORKFLOW_HANDOFF_INTERACTION = 'CASE_WORKFLOW_HANDOFF'
 
 const compact = (input: string) => input.replace(/\s/g, '')
 
+/** 사건 상태를 바꾸지 않고 설명만 해야 하는 생활 정리 질문. */
+export const isGeneralLifeQuestion = (input: string) =>
+  /핸드폰|휴대폰|휴대전화|통신사|요금제|약정|명의변경|서비스해지/.test(compact(input))
+
 /** 사건을 실제로 처리해야 하는 요청인가. */
 export const needsCaseData = (input: string) => caseOperationPattern.test(compact(input))
 

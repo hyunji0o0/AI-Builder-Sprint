@@ -24,11 +24,6 @@ export function ProgressDashboard({ caseState, stages, addAgent }: Props) {
           </button>
         ))}
       </div>
-      <div className="da-readiness">
-        <span>전체 준비도 <strong>{caseState.readiness}%</strong></span>
-        <div><i style={{ width: `${caseState.readiness}%` }}/></div>
-        <button onClick={() => addAgent('오늘 처리할 업무를 정리했어요.', 'next')}>오늘 할 일 <strong>{caseState.todayTasks}개</strong></button>
-      </div>
     </header>
   )
 }

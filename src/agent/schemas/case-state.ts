@@ -58,6 +58,8 @@ export const agentMemorySchema = z.object({
 })
 
 export const onboardingStatusSchema = z.enum(['UNKNOWN', 'COMPLETED', 'NOT_COMPLETED'])
+// FINANCIAL_INQUIRY는 이전에 저장된 세션을 읽기 위한 호환 값이다.
+// 새 온보딩 흐름에서는 DEATH_REPORT -> ONE_STOP_SERVICE -> COMPLETE만 사용한다.
 export const onboardingStepSchema = z.enum(['DEATH_REPORT', 'FINANCIAL_INQUIRY', 'ONE_STOP_SERVICE', 'COMPLETE'])
 export const onboardingStateSchema = z.object({
   currentStep: onboardingStepSchema,

@@ -10,6 +10,7 @@ import { DocumentPreview } from '../components/documents/DocumentPreview'
 import { useAuth } from '../features/auth/useAuth'
 import { LoginScreen } from '../features/auth/LoginScreen'
 import { MobileUserGuideTrigger, UserGuide } from '../features/user-guide'
+import { CaseResetDialog, MobileCaseResetTrigger } from '../features/case-reset/CaseResetDialog'
 import '../dashboard.css'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const community = useCommunity()
   const [path, setPath] = useState(window.location.pathname)
   const [guideOpen, setGuideOpen] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
   const isCommunity = path.startsWith('/community')
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function App() {
   return (
     <div className="da-page">
       <main className="da-shell">
-        <Sidebar activeMenu={activeMenu} menuAction={menuAction} onOpenGuide={() => setGuideOpen(true)}/>
+        <Sidebar activeMenu={activeMenu} menuAction={menuAction} user={auth.user} onSignOut={auth.signOut} onOpenGuide={() => setGuideOpen(true)} onResetCase={() => setResetOpen(true)}/>
         {isCommunity ? <CommunityRouter path={path} controller={community}/> : <>
         <section className="da-main">
           {activeMenu === 'AI 홈' ? <>
@@ -70,7 +72,9 @@ export default function App() {
       <MobileNav activeMenu={activeMenu} menuAction={menuAction}/>
       <DocumentPreview document={controller.previewDocument} onClose={() => controller.setPreviewDocument(null)}/>
       <MobileUserGuideTrigger onClick={() => setGuideOpen(true)}/>
+      <MobileCaseResetTrigger onClick={() => setResetOpen(true)}/>
       <UserGuide open={guideOpen} onClose={() => setGuideOpen(false)}/>
+      <CaseResetDialog open={resetOpen} onCancel={() => setResetOpen(false)} onConfirm={controller.resetCase}/>
     </div>
   )
 }

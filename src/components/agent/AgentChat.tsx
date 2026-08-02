@@ -8,7 +8,6 @@ import { AgentBlock } from './AgentBlock'
 const quickQuestions: [string, AgentBlockKind][] = [
   ['지금 가장 급한 일', 'urgent'],
   ['부족한 서류', 'checklist'],
-  ['부산 기관 찾기', 'institution'],
   ['맞춤 후기 추천', 'review'],
 ]
 
@@ -74,7 +73,7 @@ export function AgentChat({ controller: c }: { controller: CaseAgentController }
           </label>
           {quickQuestions.map(([label, block]) => (
             <button onClick={() => c.chooseQuick(label, block)} key={label}>
-              <Icon name={block === 'institution' ? 'building' : 'sparkle'} size={14}/>{label}
+              <Icon name="sparkle" size={14}/>{label}
             </button>
           ))}
         </div>

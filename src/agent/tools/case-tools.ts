@@ -28,7 +28,7 @@ export type TaskReadiness = {
   documents: Array<{
     type: string
     label: string
-    status: 'HELD' | 'NEEDS_REVIEW' | 'MISSING' | 'NOT_APPLICABLE'
+    status: 'HELD' | 'PARTIAL' | 'NEEDS_REVIEW' | 'MISSING' | 'NOT_APPLICABLE'
   }>
 }
 
@@ -51,7 +51,6 @@ export interface CaseTools {
   detectMissingInformation(caseId: string): Promise<CaseState['missingFields']>
   getPrioritizedTasks(caseId: string): Promise<TaskState[]>
   matchRequiredDocuments(caseId: string, taskId: string): Promise<TaskState['requiredDocuments']>
-  findLocalInstitutions(district: string | null, taskType: string): Promise<Array<{ id: string; name: string; district: string; sourceUrl: string | null; verification: 'MOCK_NEEDS_VERIFICATION' }>>
   searchCommunityReviews(query: CommunityReviewQuery): Promise<Array<{ id: string; excerpt: string; reason: string; createdAt: string; helpfulCount: number; url: string | null; label: '사용자 경험' }>>
   updateTaskStatus(caseId: string, taskId: string, status: TaskState['status']): Promise<CaseState>
   generatePersonalProcedure(caseId: string): Promise<TaskState[]>
@@ -140,12 +139,6 @@ export class CaseToolsService implements CaseTools {
     const task = (await this.getCaseState(caseId)).tasks.find((item) => item.id === idSchema.parse(taskId))
     if (!task) throw new Error('TASK_NOT_FOUND')
     return task.requiredDocuments
-  }
-
-  async findLocalInstitutions(district: string | null, taskType: string) {
-    void district
-    z.string().min(1).parse(taskType)
-    return []
   }
 
   async searchCommunityReviews(query: CommunityReviewQuery) {
@@ -287,9 +280,12 @@ export class CaseToolsService implements CaseTools {
     const previousById = new Map(state.tasks.map((task) => [task.id, task]))
     const personalizedTasks = tasks.map((task) => {
       const previous = previousById.get(task.id)
-      return previous?.status === 'COMPLETED'
-        ? { ...task, status: 'COMPLETED' as const, readiness: 100 }
-        : task
+      if (!previous) return task
+      return {
+        ...task,
+        status: previous.status,
+        readiness: previous.status === 'COMPLETED' ? 100 : previous.readiness,
+      }
     })
     await this.updateCaseState(caseId, { tasks: personalizedTasks })
     return personalizedTasks
@@ -311,24 +307,44 @@ export class CaseToolsService implements CaseTools {
     const state = await this.getCaseState(caseId)
     const task = state.tasks.find((item) => item.id === idSchema.parse(taskId))
     if (!task) throw new Error('TASK_NOT_FOUND')
-    const documentByType = new Map(state.documents.map((document) => [document.type, document]))
+    const financialDocumentTypes = new Set<CaseState['documents'][number]['type']>([
+      'FINANCIAL_DOCUMENT',
+      'FINANCIAL_ASSET_DOCUMENT',
+      'FINANCIAL_DEBT_DOCUMENT',
+      'CARD_DEBT_DOCUMENT',
+    ])
+    const isFinancialRequirement = (type: string) => type === 'FINANCIAL_DEBT_DOCUMENT'
+    const matchingDocuments = (type: string) => state.documents.filter((document) => (
+      isFinancialRequirement(type)
+        ? financialDocumentTypes.has(document.type)
+        : document.type === type
+    ))
     const documents = task.requiredDocuments.map((required) => {
-      const document = documentByType.get(required.type as CaseState['documents'][number]['type'])
+      const matched = matchingDocuments(required.type)
+      const hasVerified = matched.some((document) => document.status === 'VERIFIED')
+      const hasUploaded = matched.length > 0
+      const isPartialFinancialSet = isFinancialRequirement(required.type)
+        && hasVerified
+        && state.financialCoverage.status !== 'COMPLETE'
       return {
         type: required.type,
         label: required.label,
         status: !required.required
           ? 'NOT_APPLICABLE' as const
-          : document?.status === 'VERIFIED'
-            ? 'HELD' as const
-            : document
+          : isPartialFinancialSet
+            ? 'PARTIAL' as const
+            : hasVerified
+              ? 'HELD' as const
+              : hasUploaded
               ? 'NEEDS_REVIEW' as const
               : 'MISSING' as const,
       }
     })
     const requiredDocuments = documents.filter((item) => item.status !== 'NOT_APPLICABLE')
     const readiness = requiredDocuments.length
-      ? Math.round(requiredDocuments.filter((item) => item.status === 'HELD').length / requiredDocuments.length * 100)
+      ? Math.round(requiredDocuments.reduce((score, item) => (
+        score + (item.status === 'HELD' ? 1 : item.status === 'PARTIAL' ? 0.5 : 0)
+      ), 0) / requiredDocuments.length * 100)
       : 100
     const tasks = state.tasks.map((item) => item.id === task.id ? { ...item, readiness } : item)
     await this.updateCaseState(caseId, { tasks })
@@ -347,7 +363,9 @@ export class CaseToolsService implements CaseTools {
     ].filter((item): item is string => Boolean(item))
     const unresolvedItems = [
       ...state.missingFields.filter((field) => !field.resolved).map((field) => field.label),
-      ...readiness.documents.filter((item) => item.status !== 'HELD' && item.status !== 'NOT_APPLICABLE').map((item) => item.label),
+      ...readiness.documents.filter((item) => item.status !== 'HELD' && item.status !== 'NOT_APPLICABLE').map((item) => (
+        item.status === 'PARTIAL' ? `${item.label} (일부 문서로 진행 중)` : item.label
+      )),
     ]
     return {
       taskId: task.id,

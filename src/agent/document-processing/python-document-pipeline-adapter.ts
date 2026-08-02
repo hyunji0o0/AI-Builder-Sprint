@@ -14,6 +14,8 @@ import {
 } from '../schemas/document-pipeline'
 import { inspectFile } from './file-inspector'
 import { DocumentPipelineAdapter } from './document-pipeline'
+import { documentFieldLabel, translateDocumentPrimitive } from './document-display-translations'
+import { sanitizeOcrText } from './ocr-text-sanitizer'
 import { DocumentVerifier, MockDocumentVerifier } from './document-verifier'
 import { validateExtractedFields } from './primary-validator'
 
@@ -89,6 +91,7 @@ const labelMap: Record<string, string> = {
   balance: '잔액',
   referenceDate: '기준일',
   institutionName: '금융기관',
+  creditUnionName: '신협명',
   recordType: '금융 내역 종류',
   branchName: '지점',
   repaymentDate: '상환일',
@@ -99,6 +102,8 @@ const labelMap: Record<string, string> = {
   closedDepositCount: '수신해지 건수',
   loanCount: '대출 건수',
   loanAmount: '대출 금액',
+  loanMaturityDate: '대출 만기일',
+  depositAndContributionAmount: '예금 및 출자금',
   paymentCount: '출자금 건수',
   guaranteeCount: '보증 건수',
   guaranteeAmount: '보증 금액',
@@ -139,7 +144,8 @@ const sensitiveKey = /(resident|phone|email|address|domicile|account|customer|ba
 
 const toPrimitive = (value: unknown): string | number | null => {
   if (value === null) return null
-  if (typeof value === 'string' || typeof value === 'number') return value
+  if (typeof value === 'string') return translateDocumentPrimitive(sanitizeOcrText(value))
+  if (typeof value === 'number') return value
   if (typeof value === 'boolean') return value ? '예' : '아니요'
   return JSON.stringify(value) ?? null
 }
@@ -150,15 +156,19 @@ const toFields = (
 ): PipelineExtractedField[] => {
   const topLevelFields = Object.entries(data)
     .filter(([key, value]) => !['documentType', 'records', 'warnings', 'notice', 'isMockSample'].includes(key) && value !== '' && value !== null && !sensitiveKey.test(key))
-    .map(([key, value]): [string, string, unknown] => [key, labelMap[key] ?? koreanFallbackLabel(key), value])
+    .map(([key, value]): [string, string, unknown] => [key, documentFieldLabel(key, labelMap[key] ?? koreanFallbackLabel(key)), value])
   const records = Array.isArray(data.records) ? data.records : []
   const recordFields = records.flatMap((record, index): Array<[string, string, unknown]> => {
     if (!record || typeof record !== 'object' || Array.isArray(record)) return []
     const values = record as Record<string, unknown>
-    const institution = typeof values.institutionName === 'string' ? values.institutionName : `${index + 1}번 내역`
+    const institution = typeof values.institutionName === 'string'
+      ? values.institutionName
+      : typeof values.creditUnionName === 'string'
+        ? values.creditUnionName
+        : `${index + 1}번 내역`
     return Object.entries(values)
       .filter(([key, value]) => !sensitiveKey.test(key) && value !== '' && value !== null)
-      .map(([key, value]) => [`records.${index}.${key}`, `${institution} · ${labelMap[key] ?? koreanFallbackLabel(key)}`, value])
+      .map(([key, value]) => [`records.${index}.${key}`, `${institution} · ${documentFieldLabel(key, labelMap[key] ?? koreanFallbackLabel(key))}`, value])
   })
   return [...topLevelFields, ...recordFields]
     .map(([key, label, value]) => ({

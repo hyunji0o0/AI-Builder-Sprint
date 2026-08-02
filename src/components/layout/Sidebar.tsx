@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { CaseAgentController } from '../../features/case/useCaseAgent'
 import { Icon, IconName } from '../ui/Icon'
 
@@ -12,11 +13,16 @@ export const menuItems: { label: string; icon: IconName }[] = [
 
 type NavProps = Pick<CaseAgentController, 'activeMenu' | 'menuAction'>
 type Props = NavProps & {
+  user: User
+  onSignOut: () => void
   onOpenGuide?: () => void
+  onResetCase?: () => void
 }
 
-export function Sidebar({ activeMenu, menuAction, onOpenGuide }: Props) {
+export function Sidebar({ activeMenu, menuAction, user, onSignOut, onOpenGuide, onResetCase }: Props) {
   const activeIndex = menuItems.findIndex((item) => item.label === activeMenu)
+  const displayName = user.user_metadata.full_name ?? user.email ?? '사용자'
+  const avatarUrl = user.user_metadata.avatar_url ?? user.user_metadata.picture
   return (
     <aside className="da-sidebar">
       <div className="da-brand">
@@ -31,7 +37,15 @@ export function Sidebar({ activeMenu, menuAction, onOpenGuide }: Props) {
           </button>
         ))}
       </nav>
+      <div className="da-user">
+        {avatarUrl ? <img className="da-user-avatar" src={avatarUrl} alt=""/> : <span className="da-user-avatar da-user-avatar-fallback">{displayName[0]}</span>}
+        <div><strong>{displayName}</strong><span>{user.email}</span></div>
+        <button type="button" className="da-user-logout" onClick={onSignOut} aria-label="로그아웃">
+          <Icon name="arrowLeft" size={15}/>
+        </button>
+      </div>
       {onOpenGuide && <button className="da-guide-trigger" onClick={onOpenGuide}><Icon name="sparkle" size={18}/> 사용 설명</button>}
+      {onResetCase && <button className="da-reset-trigger" onClick={onResetCase}><Icon name="refresh" size={18}/> 처음부터 다시 시작</button>}
       <div className="da-help"><Icon name="heart" size={17}/><div><strong>도움이 필요하신가요?</strong><span>고객센터 1522-0000</span></div></div>
       <small className="da-privacy">개인정보는 안전하게 보호돼요</small>
     </aside>
