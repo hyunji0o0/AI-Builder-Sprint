@@ -2,7 +2,7 @@ import { config } from 'dotenv'
 
 // supabase-client.ts와 동일한 이유로 여기서 직접 .env.local을 읽음
 // (vite.config.ts가 이 파일을 import하는 시점이 vite 자체 env 로딩보다 빠름).
-config({ path: '.env.local' })
+config({ path: '.env.local', quiet: true })
 
 const UPSTAGE_API_KEY = process.env.UPSTAGE_API_KEY
 const UPSTAGE_BASE_URL = 'https://api.upstage.ai/v1'

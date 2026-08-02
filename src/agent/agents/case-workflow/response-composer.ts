@@ -122,7 +122,10 @@ export async function composeMessage(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
 ) {
   const fallback = deterministicMessage(input, classification, selection, execution, state, safety)
-  if (!llm || safety.immediateRiskSuspected || ['ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE', 'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK'].includes(selection.action)) return fallback
+  if (!llm || safety.immediateRiskSuspected || [
+    'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE',
+    'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK', 'CHECK_FINANCIAL_RISK',
+  ].includes(selection.action)) return fallback
   const policy = buildResponsePolicy(classification, selection, execution)
   try {
     const compose = (retryInstruction = '') => llm.complete(
