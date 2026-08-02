@@ -5,6 +5,7 @@ import { Icon } from '../../../components/ui/Icon'
 import { CommunityReview } from '../model/community.types'
 import { communityRepository } from '../services/community.service'
 import { CommunityDisclaimer, ReviewCategoryBadges, navigateCommunity } from './CommunityCommon'
+import { toKstDate } from '../services/community.format'
 import { ReviewComments } from './ReviewComments'
 
 export function ReviewDetailPage({ id }: { id: string }) {
@@ -14,7 +15,7 @@ export function ReviewDetailPage({ id }: { id: string }) {
   if (review === null) return <section className="cm-workspace cm-single"><div className="cm-empty da-glass"><h2>후기를 찾지 못했어요.</h2><button onClick={() => navigateCommunity('/community')}>게시판으로 돌아가기</button></div></section>
   return <section className="cm-workspace cm-single"><article className="cm-detail da-glass">
     <button className="cm-back" onClick={() => navigateCommunity('/community')}><Icon name="arrowLeft" size={18}/>목록으로</button>
-    <div className="cm-detail-heading"><ReviewCategoryBadges categories={review.categories}/><span className="cm-experience-label">사용자 경험</span>{review.isSynthetic && <span className="cm-synthetic">해커톤 테스트용 가상 후기</span>}<h1>{review.title}</h1><div><span>{review.authorName}</span><time>{review.createdAt.slice(0, 10)}</time><span><Icon name="heart" size={14}/> 도움 {review.helpfulCount}</span></div></div>
+    <div className="cm-detail-heading"><ReviewCategoryBadges categories={review.categories}/><span className="cm-experience-label">사용자 경험</span>{review.isSynthetic && <span className="cm-synthetic">해커톤 테스트용 가상 후기</span>}<h1>{review.title}</h1><div><span>{review.authorName}</span><time>{toKstDate(review.createdAt)}</time><span><Icon name="heart" size={14}/> 도움 {review.helpfulCount}</span></div></div>
     <ReviewArticleContent review={review}/>
     <HelpfulButton review={review} onUpdate={setReview}/>
     <ReviewComments postId={review.id}/>

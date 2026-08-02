@@ -13,6 +13,7 @@ import {
 import { CommunityReview } from '../model/community.types'
 import { mapPostToReview } from '../services/community.remote-repository'
 import { CommunityPost } from '../../../schemas/community'
+import { toKstDate } from '../services/community.format'
 
 const makeReview = (id: string, createdAt: string): CommunityReview => ({
   id, createdAt, categories: ['기타'], title: id, authorName: '익명', isAnonymous: true,
@@ -55,6 +56,16 @@ describe('community feature', () => {
     ]
     const sorted = filterAndSortReviews(reviews, { ...base, sort: 'LATEST' })
     expect(sorted.map((review) => review.id)).toEqual(['a-uuid', 'b-uuid', 'c-uuid'])
+  })
+
+  it('createdAt을 한국시간(KST) 기준 날짜로 변환한다', () => {
+    // 실제 DB 데이터: 한국시간 8/2 01:21에 올린 글이 UTC로는 8/1 16:21.
+    // UTC 날짜(08-01)가 아니라 KST 날짜(08-02)로 표기돼야 한다.
+    expect(toKstDate('2026-08-01T16:21:59.567263+00:00')).toBe('2026-08-02')
+    // 자정 직전(한국시간 8/1 23:00)은 그대로 8/1.
+    expect(toKstDate('2026-08-01T14:00:00.000Z')).toBe('2026-08-01')
+    // 시간 없는 날짜 문자열(시드 데이터)은 그대로 둔다.
+    expect(toKstDate('2026-07-29')).toBe('2026-07-29')
   })
 
   it('원격 글 매핑 시 createdAt의 시간 정보를 자르지 않는다', () => {
