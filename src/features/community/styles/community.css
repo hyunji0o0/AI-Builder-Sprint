@@ -200,7 +200,7 @@
 .cm-comments>header h2{margin:0;font-size:15px;display:flex;align-items:center;gap:6px}
 .cm-comments>header h2 small{font-size:14px;color:#9a6a5a;font-weight:700}
 .cm-comments-loading,.cm-comments-empty{color:#7d8999;font-size:11px;padding:10px 2px}
-.cm-comment-list{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:12px}
+.cm-comment-list{list-style:none;margin:0 0 14px;padding:0 0 0 24px;display:grid;gap:12px}
 .cm-comment{border-bottom:1px solid rgba(255,255,255,.62);padding-bottom:10px}
 .cm-comment-body{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}
 .cm-comment-body strong{flex:0 0 88px;width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#42546c;font-size:11px}
