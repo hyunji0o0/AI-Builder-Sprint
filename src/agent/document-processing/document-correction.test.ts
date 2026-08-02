@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createInitialCaseState } from '../state/initial-case'
-import { applyDocumentCorrectionInput, beginDocumentCorrection } from './document-correction'
+import {
+  applyDocumentCorrectionInput,
+  beginDocumentCorrection,
+  isDocumentReviewConfirmation,
+} from './document-correction'
 
 const correctionState = () => {
   const initial = createInitialCaseState()
@@ -24,6 +28,11 @@ const correctionState = () => {
 }
 
 describe('문서 추출값 수정', () => {
+  it.each(['다 확인했어', '전부 맞아', '확인 완료', '나머지도 맞아', '이상 없어'])(
+    '자연스러운 문서 확인 완료 표현을 인식한다: %s',
+    (input) => expect(isDocumentReviewConfirmation(input)).toBe(true),
+  )
+
   it('수정 모드에서 “예수금 300만원”을 기존 문서 항목에 반영한다', () => {
     const focused = beginDocumentCorrection(correctionState(), 'document-1')
     const result = applyDocumentCorrectionInput(focused, '예수금 300만원이야')

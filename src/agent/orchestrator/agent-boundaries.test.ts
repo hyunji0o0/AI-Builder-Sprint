@@ -43,7 +43,7 @@ describe('독립 Agent 경계', () => {
     const result = await runAgent({ input: '안녕', caseState: createInitialCaseState() })
 
     expect(result.caseState.memory.lastIntent).toBe('CASUAL_CHAT')
-    expect(result.caseState.memory.recentEvents.at(-1)?.type).toBe('CONVERSATION_TURN')
+    expect(result.caseState.memory.recentEvents[result.caseState.memory.recentEvents.length - 1]?.type).toBe('CONVERSATION_TURN')
   })
 
   it('사후 행정 질문은 case-workflow-agent로 전달된다', async () => {

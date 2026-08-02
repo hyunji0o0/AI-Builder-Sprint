@@ -27,7 +27,7 @@ export class InMemoryCommunityRepository implements CommunityRepository {
     const review: CommunityReview = {
       ...input,
       id: `review-${Date.now()}`,
-      createdAt: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
       helpfulCount: 0,
       commentCount: 0,
       isNotice: false,
@@ -76,6 +76,17 @@ export const paginateCommunityReviews = <T>(items: T[], page: number, pageSize: 
   const safeSize = Math.max(1, pageSize)
   const start = (safePage - 1) * safeSize
   return items.slice(start, start + safeSize)
+}
+
+export const getVisibleCommunityPages = (currentPage: number, totalPages: number, maxVisible: number) => {
+  const safeTotal = Math.max(1, totalPages)
+  const safeMax = Math.max(1, maxVisible)
+  const visibleCount = Math.min(safeMax, safeTotal)
+  const safeCurrent = Math.min(safeTotal, Math.max(1, currentPage))
+  const maxStart = safeTotal - visibleCount + 1
+  const start = Math.min(maxStart, Math.max(1, safeCurrent - Math.floor(visibleCount / 2)))
+
+  return Array.from({ length: visibleCount }, (_, index) => start + index)
 }
 
 export const communityRepository: CommunityRepository = new SupabaseCommunityRepository()

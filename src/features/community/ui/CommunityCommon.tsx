@@ -6,6 +6,7 @@ import { COMMUNITY_CATEGORY_TABS } from '../constants/community.constants'
 import { CommunityController } from '../hooks/useCommunity'
 import { CommunityReview, ReviewCategory } from '../model/community.types'
 import { navigateCommunity } from '../routing/community.routes'
+import { toKstDate } from '../services/community.format'
 
 export function CommunityHeader() {
   return <header className="cm-header"><div><span>COMMUNITY</span><h1>경험 나눔 게시판</h1><p>먼저 겪은 사람들의 경험과 실제 도움이 된 팁을 나눠보세요.</p></div></header>
@@ -57,7 +58,7 @@ export function CommunityBoardRow({ review, number, similarity }: { review: Comm
     <span className="cm-number">{review.isNotice ? '공지' : number}</span>
     <span className="cm-category-cell"><ReviewCategoryBadges categories={review.categories} max={2}/></span>
     <strong title={review.title}>{review.title}{commentCount > 0 && <small>[{commentCount}]</small>}</strong>
-    <span>{review.authorName}</span><time>{review.createdAt.slice(5).replace('-','.')}</time>
+    <span>{review.authorName}</span><time>{toKstDate(review.createdAt).slice(5).replace('-','.')}</time>
     <span className="cm-helpful"><Icon name="heart" size={14}/>{review.helpfulCount}</span>
   </button>
 }

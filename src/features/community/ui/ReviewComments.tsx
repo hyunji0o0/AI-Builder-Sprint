@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { fetchCommunityComments, submitCommunityComment } from '../../../client/community-api'
 import { GlassIcon } from '../../../components/ui/GlassIcon'
 import { CommunityComment } from '../../../schemas/community'
+import { toKstDate } from '../services/community.format'
 
 export function ReviewComments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<CommunityComment[]>([])
@@ -41,7 +42,7 @@ export function ReviewComments({ postId }: { postId: string }) {
 
 function CommentBody({ comment }: { comment: CommunityComment }) {
   return <div className="cm-comment-body">
-    <div className="cm-comment-meta"><strong>{comment.nickname}</strong><time>{comment.createdAt.slice(0, 10)}</time></div>
+    <div className="cm-comment-meta"><strong>{comment.nickname}</strong><time>{toKstDate(comment.createdAt)}</time></div>
     <p>{comment.content}</p>
   </div>
 }

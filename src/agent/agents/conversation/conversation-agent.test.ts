@@ -73,7 +73,7 @@ describe('대화 Agent', () => {
     expect(result.caseState.memory.pendingInteraction?.type).toBe('CASE_WORKFLOW_HANDOFF')
   })
 
-  it('사건 업무 전환에 동의하면 case-workflow Agent의 온보딩을 시작한다', async () => {
+  it('사건 업무 전환에 동의하면 업무 Agent의 온보딩을 시작한다', async () => {
     const offered = await runAgent({ input: '상속 때문에 너무 슬퍼', caseState: createInitialCaseState() })
     const accepted = await runAgent({ input: '응, 그렇게 해줘', caseState: offered.caseState })
 
@@ -110,7 +110,7 @@ describe('대화 Agent', () => {
     )
 
     expect(result.caseState.memory.lastIntent).toBe('ASK_COMMUNITY_TIP')
-    expect(result.caseState.memory.recentEvents.at(-1)?.description).toContain('커뮤니티')
+    expect(result.caseState.memory.recentEvents[result.caseState.memory.recentEvents.length - 1]?.description).toContain('커뮤니티')
   })
 
   it('위기 신호가 있으면 팁을 붙이지 않고 안전 안내를 먼저 한다', async () => {
