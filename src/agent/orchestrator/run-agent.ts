@@ -5,7 +5,6 @@ import {
   RunAgentInput,
   RunAgentResult,
 } from '../shared/agent-run-contract'
-import { TipProvider } from '../shared/tip-provider'
 import { AgentLLM } from '../shared/llm-adapter'
 import { routeAgent } from './agent-router'
 import { refreshAgentMemory } from '../memory/agent-memory'
@@ -61,6 +60,4 @@ export type {
 export type RunAgentDependencies = CaseWorkflowAgentDependencies & {
   /** Lightweight model used only after the request is safely routed to conversation. */
   conversationLlm?: AgentLLM
-  /** 대화 Agent가 도메인 질문에 커뮤니티 경험담을 붙일 때 쓴다. */
-  tips?: TipProvider
 }

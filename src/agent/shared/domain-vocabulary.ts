@@ -31,6 +31,14 @@ export const domainTermPattern =
 export const definitionQuestionPattern =
   /뭐야|뭐예요|뭔가요|무엇인가|무슨뜻|무슨의미|뜻이|의미가|차이가|차이점|어떤건가|어떤거야|어떤제도|설명해|알려줄수/
 
+/** 사건 자료를 보지 않아도 일반적인 순서나 주의점을 설명할 수 있는 질문 형태. */
+export const generalAdviceQuestionPattern =
+  /해도돼|해도됨|해도괜찮|하면돼|하면됨|해야돼|해야됨|해야하나|해야할까|가능해|가능한가/
+
+/** 개인별 사실관계에 따라 결론이 크게 달라져 사건 Agent에서 다뤄야 하는 결정. */
+export const highStakesDecisionPattern =
+  /상속포기|한정승인|단순승인|유산분할|상속재산분할/
+
 /** 인사·감사·짧은 반응. 문장 전체가 이 형태일 때만 매치된다. */
 export const casualPattern =
   /^(안녕|안녕하세요|하이|반가워|반갑|고마워|고맙|감사|굿굿|좋아|알겠어|알겠|응|넵|네|ㅇㅋ|오케이|잘자|잘가)[!?.~ㅋㅎㅠ]*$/i
@@ -63,9 +71,11 @@ export const hasEmotionalSignal = (input: string) => emotionPattern.test(compact
  */
 export const isDomainQuestion = (input: string) => {
   const text = compact(input)
-  return domainTermPattern.test(text)
-    && definitionQuestionPattern.test(text)
-    && !caseOperationPattern.test(text)
+  if (!domainTermPattern.test(text)) return false
+
+  const isDefinition = definitionQuestionPattern.test(text) && !caseOperationPattern.test(text)
+  const isGeneralAdvice = generalAdviceQuestionPattern.test(text) && !highStakesDecisionPattern.test(text)
+  return isDefinition || isGeneralAdvice
 }
 
 /** 상속·사망 맥락의 감정 표현이지만 아직 실제 사건 처리 요청은 아닌가. */

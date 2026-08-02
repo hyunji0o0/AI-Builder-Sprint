@@ -13,10 +13,13 @@ import { selectAction } from './action-selector'
 import { composeMessage } from './response-composer'
 import { calculateProgress, executeSelection } from './tool-executor'
 import { recordAgentMemoryEvent, refreshAgentMemory } from '../../memory/agent-memory'
+import { TipProvider } from '../../shared/tip-provider'
 
 export type CaseWorkflowAgentDependencies = {
   llm?: AgentLLM
   tools?: CaseTools
+  /** 사건 업무 흐름에서 경험담을 요청했을 때 쓰는 실제 커뮤니티 검색기. */
+  tips?: TipProvider
 }
 
 export async function runCaseWorkflowAgent(
@@ -32,7 +35,10 @@ export async function runCaseWorkflowAgent(
     : await classifyIntent(safeInput, initialState, dependencies.llm, request.recentMessages)
   const safety = assessSafety(safeInput, classification.intent)
   const selection = await selectAction(classification, initialState, dependencies.llm)
-  const execution = await executeSelection(selection, initialState, tools)
+  const execution = await executeSelection(selection, initialState, tools, {
+    tips: dependencies.tips,
+    situation: safeInput,
+  })
 
   let nextState = execution.state
   const shouldComfort = classification.emotion.signal === 'DISTRESSED' && initialState.emotionalContext.recentComfortCount === 0
