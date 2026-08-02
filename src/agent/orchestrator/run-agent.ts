@@ -5,8 +5,14 @@ import {
   RunAgentInput,
   RunAgentResult,
 } from '../shared/agent-run-contract'
+import { TipProvider } from '../shared/tip-provider'
+import { AgentLLM } from '../shared/llm-adapter'
 import { routeAgent } from './agent-router'
 import { refreshAgentMemory } from '../memory/agent-memory'
+import {
+  acceptsCaseWorkflowHandoff,
+  hasPendingCaseWorkflowHandoff,
+} from '../shared/domain-vocabulary'
 
 /**
  * 두 Agent Harness 중 하나를 선택하는 유일한 외부 진입점입니다.
@@ -16,14 +22,34 @@ export async function runAgent(
   request: RunAgentInput,
   dependencies: RunAgentDependencies = {},
 ): Promise<RunAgentResult> {
-  const caseStateWithMemory = refreshAgentMemory(request.caseState, request.recentMessages)
-  const enrichedRequest = { ...request, caseState: caseStateWithMemory }
-  const route = request.uiActionIntent
+  const refreshedState = refreshAgentMemory(request.caseState, request.recentMessages)
+  const handoffAccepted = hasPendingCaseWorkflowHandoff(refreshedState.memory)
+    && acceptsCaseWorkflowHandoff(request.input)
+  const consumesHandoff = hasPendingCaseWorkflowHandoff(refreshedState.memory)
+    && (handoffAccepted || Boolean(request.uiActionIntent))
+  const caseStateWithMemory = consumesHandoff
+    ? {
+        ...refreshedState,
+        memory: { ...refreshedState.memory, pendingInteraction: null },
+      }
+    : refreshedState
+  const handoffIntent = handoffAccepted
+    ? caseStateWithMemory.onboardingCompleted ? 'ASK_NEXT_ACTION' as const : 'START_ONBOARDING' as const
+    : undefined
+  const enrichedRequest = {
+    ...request,
+    caseState: caseStateWithMemory,
+    uiActionIntent: request.uiActionIntent ?? handoffIntent,
+  }
+  const route = enrichedRequest.uiActionIntent
     ? 'CASE_WORKFLOW'
-    : await routeAgent(request.input, dependencies.llm, request.recentMessages, caseStateWithMemory.memory)
+    : await routeAgent(request.input, dependencies.llm, request.recentMessages, refreshedState.memory)
 
   if (route === 'CONVERSATION') {
-    return runConversationAgent(enrichedRequest, { llm: dependencies.llm })
+    return runConversationAgent(enrichedRequest, {
+      llm: dependencies.conversationLlm ?? dependencies.llm,
+      tips: dependencies.tips,
+    })
   }
   return runCaseWorkflowAgent(enrichedRequest, dependencies)
 }
@@ -32,4 +58,9 @@ export type {
   RunAgentInput,
   RunAgentResult,
 } from '../shared/agent-run-contract'
-export type RunAgentDependencies = CaseWorkflowAgentDependencies
+export type RunAgentDependencies = CaseWorkflowAgentDependencies & {
+  /** Lightweight model used only after the request is safely routed to conversation. */
+  conversationLlm?: AgentLLM
+  /** 대화 Agent가 도메인 질문에 커뮤니티 경험담을 붙일 때 쓴다. */
+  tips?: TipProvider
+}

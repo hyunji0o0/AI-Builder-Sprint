@@ -190,6 +190,8 @@
 
 /* Multi-category badge overflow */
 .cm-category-list{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.cm-category-cell{display:flex;min-width:0;align-items:center;justify-content:center}
+.cm-category-cell .cm-category-list{width:100%;justify-content:center;align-content:center}
 .cm-category-more{background:rgba(223,235,247,.4);color:#8391a5}
 
 /* Review detail: comment thread */

@@ -413,7 +413,7 @@ describe('Agent Harness', () => {
       },
     }
     const result = await runAgent({
-      input: '빚까지 있다고 하니까 너무 막막해. 나 진짜 너무 힘들어',
+      input: '빚 관련 서류를 확인해줘',
       caseState: createInitialCaseState(),
       recentMessages: [
         { role: 'user', text: '정신이 없어서 뭘 해야 할지 모르겠어' },
