@@ -8,7 +8,18 @@ import {
   markReviewHelpfulOnce,
   InMemoryCommunityRepository,
   paginateCommunityReviews,
+  filterAndSortReviews,
 } from '../services/community.service'
+import { CommunityReview } from '../model/community.types'
+import { mapPostToReview } from '../services/community.remote-repository'
+import { CommunityPost } from '../../../schemas/community'
+
+const makeReview = (id: string, createdAt: string): CommunityReview => ({
+  id, createdAt, categories: ['기타'], title: id, authorName: '익명', isAnonymous: true,
+  region: null, relation: null, taskType: '기타', situationTags: [],
+  body: { situation: '', difficulty: '', actionTaken: '', preparedDocuments: [], usefulTip: '', caution: '' },
+  helpfulCount: 0, commentCount: 0, isNotice: false, isSynthetic: false,
+})
 
 const repository = () => new InMemoryCommunityRepository(communityReviews)
 const base = { text: '', scope: 'ALL' as const, category: null, region: null, sort: 'LATEST' as const, userContext: communityUserContext }
@@ -33,6 +44,26 @@ describe('community feature', () => {
   it('도움순으로 정렬한다', async () => {
     const reviews = await repository().getReviews({ ...base, sort: 'HELPFUL' })
     expect(reviews[0].helpfulCount).toBeGreaterThanOrEqual(reviews[1].helpfulCount)
+  })
+
+  it('같은 날 작성된 글도 시간까지 반영해 최신순으로 정렬한다', () => {
+    // id는 UUID처럼 작성 시간과 무관한 순서. 날짜만 비교하면 id 순서로 뒤섞이던 버그의 회귀 테스트.
+    const reviews = [
+      makeReview('c-uuid', '2026-08-02T09:00:00.000Z'),
+      makeReview('a-uuid', '2026-08-02T15:00:00.000Z'),
+      makeReview('b-uuid', '2026-08-02T12:00:00.000Z'),
+    ]
+    const sorted = filterAndSortReviews(reviews, { ...base, sort: 'LATEST' })
+    expect(sorted.map((review) => review.id)).toEqual(['a-uuid', 'b-uuid', 'c-uuid'])
+  })
+
+  it('원격 글 매핑 시 createdAt의 시간 정보를 자르지 않는다', () => {
+    // slice(0,10)로 날짜만 남기면 같은 날 글이 전부 동시각 취급돼 최신순이 깨졌던 버그의 회귀 테스트.
+    const post: CommunityPost = {
+      id: 'uuid-1', nickname: '익명', categories: ['ETC'],
+      content: '제목\n\n본문', createdAt: '2026-08-02T15:04:05.000Z', helpfulCount: 0,
+    }
+    expect(mapPostToReview(post, 0).createdAt).toBe('2026-08-02T15:04:05.000Z')
   })
 
   it('비슷한 상황순으로 정렬한다', async () => {

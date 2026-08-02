@@ -57,7 +57,7 @@ export function CommunityBoardRow({ review, number, similarity }: { review: Comm
     <span className="cm-number">{review.isNotice ? '공지' : number}</span>
     <span><ReviewCategoryBadges categories={review.categories} max={2}/></span>
     <strong title={review.title}>{review.title}{commentCount > 0 && <small>[{commentCount}]</small>}</strong>
-    <span>{review.authorName}</span><time>{review.createdAt.slice(5).replace('-','.')}</time>
+    <span>{review.authorName}</span><time>{review.createdAt.slice(5, 10).replace('-','.')}</time>
     <span className="cm-helpful"><Icon name="heart" size={14}/>{review.helpfulCount}</span>
   </button>
 }

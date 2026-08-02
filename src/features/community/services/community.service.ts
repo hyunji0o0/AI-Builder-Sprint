@@ -27,7 +27,7 @@ export class InMemoryCommunityRepository implements CommunityRepository {
     const review: CommunityReview = {
       ...input,
       id: `review-${Date.now()}`,
-      createdAt: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
       helpfulCount: 0,
       commentCount: 0,
       isNotice: false,
