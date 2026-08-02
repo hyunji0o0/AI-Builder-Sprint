@@ -145,7 +145,7 @@
 .cm-table-head,.cm-row{grid-template-columns:72px 132px minmax(310px,1fr) 125px 92px 82px}
 .cm-table-head{min-height:48px;padding:13px 18px;font-size:12px}
 .cm-row{min-height:64px;padding:10px 18px}
-.cm-row strong{font-size:16px;gap:10px;line-height:1.4}
+.cm-row strong{font-size:15px;gap:10px;line-height:1.4}
 .cm-row strong>small{font-size:11px}
 .cm-row>span,.cm-row time{font-size:12px}
 .cm-category,.cm-similarity{padding:7px 10px;border-radius:11px;font-size:11px}
@@ -157,7 +157,7 @@
 
 @media(max-width:1200px){
   .cm-table-head,.cm-row{grid-template-columns:58px 108px minmax(250px,1fr) 98px 72px 64px}
-  .cm-row strong{font-size:14px}
+  .cm-row strong{font-size:13px}
   .cm-row>span,.cm-row time{font-size:11px}
   .cm-category,.cm-similarity{font-size:10px}
 }
@@ -168,7 +168,7 @@
   .cm-board-header span{font-size:11px}
   .cm-board-header select{height:38px;min-width:104px;font-size:12px}
   .cm-row{min-height:76px;padding:11px 12px}
-  .cm-row strong{font-size:13px}
+  .cm-row strong{font-size:12px}
   .cm-row>span,.cm-row time{font-size:10px}
   .cm-category,.cm-similarity{font-size:9px;padding:5px 8px}
   .cm-pagination button{height:38px}
