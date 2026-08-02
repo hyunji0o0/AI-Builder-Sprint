@@ -52,9 +52,14 @@ export async function createCommunityPost(input: CreateCommunityPostInput): Prom
 
   // 임베딩은 백그라운드로 채움 — 글 등록 응답을 늦추거나 Upstage 장애로 실패하면 안 됨.
   embedPassage(input.content)
-    .then((embedding) => supabase.from('community_posts').update({ embedding }).eq('id', post.id))
-    .catch((err) => console.error('글 임베딩 생성 실패:', err))
-
+    .then(async (embedding) => {
+      const { error } = await supabase
+        .from('community_posts').update({ embedding }).eq('id', post.id)
+      if (error) {throw error}
+    })
+    .catch((error) => {
+      console.error('글 임베딩 생성 실패:', error)
+    })
   return post
 }
 
@@ -77,8 +82,13 @@ export async function updateCommunityPost(id: string, input: UpdateCommunityPost
   // 내용이 바뀌었으니 임베딩도 다시 채움(안 그러면 수정 전 내용의 벡터로 검색됨).
   // 생성 때와 같은 이유로 백그라운드 처리 — 응답을 늦추거나 실패로 수정을 막지 않음.
   embedPassage(input.content)
-    .then((embedding) => supabase.from('community_posts').update({ embedding }).eq('id', id))
-    .catch((err) => console.error('글 임베딩 갱신 실패:', err))
+    .then(async (embedding) => {
+      const { error } = await supabase
+        .from('community_posts').update({ embedding }).eq('id', id)
+      if (error) {throw error}
+    })
+    .catch((error) => {console.error('글 임베딩 갱신 실패:', error)}
+  )
 
   return fromRow(data as PostRow)
 }

@@ -14,13 +14,38 @@ function readIds(): string[] {
 
 export function rememberLikedPost(id: string): void {
   const ids = readIds()
+
   if (ids.includes(id)) return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([id, ...ids]))
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([id, ...ids]),
+    )
+  } catch (error) {
+    console.error(
+      '좋아요 정보를 저장하지 못했어요:',
+      error,
+    )
+  }
 }
 
 export function forgetLikedPost(id: string): void {
-  const ids = readIds().filter((existing) => existing !== id)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
+  const ids = readIds().filter(
+    (existing) => existing !== id,
+  )
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(ids),
+    )
+  } catch (error) {
+    console.error(
+      '좋아요 정보를 삭제하지 못했어요:',
+      error,
+    )
+  }
 }
 
 export function hasLikedPost(id: string): boolean {
