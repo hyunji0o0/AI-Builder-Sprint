@@ -8,6 +8,7 @@ import {
   markReviewHelpfulOnce,
   InMemoryCommunityRepository,
   paginateCommunityReviews,
+  getVisibleCommunityPages,
   filterAndSortReviews,
 } from '../services/community.service'
 import { CommunityReview } from '../model/community.types'
@@ -90,6 +91,12 @@ describe('community feature', () => {
 
   it('페이지 단위로 자른다', () => {
     expect(paginateCommunityReviews([1, 2, 3, 4, 5], 2, 2)).toEqual([3, 4])
+  })
+
+  it('6페이지로 이동하면 페이지 번호 범위에 6을 표시한다', () => {
+    expect(getVisibleCommunityPages(1, 10, 5)).toEqual([1, 2, 3, 4, 5])
+    expect(getVisibleCommunityPages(6, 10, 5)).toEqual([4, 5, 6, 7, 8])
+    expect(getVisibleCommunityPages(10, 10, 5)).toEqual([6, 7, 8, 9, 10])
   })
 
   it('목록·상세·작성 경로를 구분한다', () => {
