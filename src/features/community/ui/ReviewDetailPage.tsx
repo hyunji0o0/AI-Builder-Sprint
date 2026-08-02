@@ -60,7 +60,7 @@ export function HelpfulButton({ review, onUpdate }: { review: CommunityReview; o
     setHelped(next)
     onUpdate(result)
   }
-  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach"/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
+  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach" size={15}/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
 }
 
 function RelatedReviews({ current }: { current: CommunityReview }) {
