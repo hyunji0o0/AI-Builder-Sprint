@@ -59,7 +59,7 @@ export function CommunityPagination({ controller: c }: { controller: CommunityCo
 }
 
 export function HelpfulReviewRanking({ controller: c }: { controller: CommunityController }) {
-  return <section className="cm-ranking da-glass"><header><GlassIcon icon="heart" tone="peach"/><h2>많이 도움 된 글</h2></header>
+  return <section className="cm-ranking da-glass"><header><GlassIcon icon="heart" tone="peach"/><h2>많이 도움된 글</h2></header>
     <ol>{c.helpfulRanking.map((review,index) => <li key={review.id}><button onClick={() => navigateCommunity(`/community/${review.id}`)}><b>{index+1}</b><span>{review.title}<small>도움 {review.helpfulCount}</small></span></button></li>)}</ol>
   </section>
 }
