@@ -79,7 +79,7 @@
   .da-shell{grid-template-columns:240px minmax(0,1fr) 300px;gap:14px;padding:14px}
   .da-sidebar{padding:16px 13px}.da-brand{gap:12px;padding-bottom:23px}
   .da-brand .da-orb{width:48px;height:48px;flex-basis:48px}.da-brand-logo{width:60px;height:60px;flex-basis:60px}.da-brand strong{font-size:26px}.da-brand span{font-size:12px}
-  .da-sidebar nav{gap:10px}.da-sidebar nav button{padding:10px 11px;font-size:14px}.da-nav-icon{width:40px;height:40px}
+  .da-sidebar nav{gap:var(--nav-gap)}.da-sidebar nav button{padding:10px 11px;font-size:14px}.da-nav-icon{width:40px;height:40px}
   .da-help{padding:13px}.da-help strong{font-size:10px}.da-help span,.da-privacy{font-size:9px}
   .da-progress{padding:16px 20px}.da-progress h1{font-size:20px}.da-progress-title span,.da-summary>span{font-size:9px}.da-progress-title button{padding:8px 11px;font-size:9px}
   .da-steps{gap:10px;margin-top:13px}.da-steps button{gap:10px;padding:9px 11px}.da-stage-orb{width:40px;height:40px;flex-basis:40px}.da-steps strong{font-size:11px}.da-steps small{font-size:8px}
@@ -104,7 +104,7 @@
 @media(min-width:1800px){
   .da-page{padding:18px}.da-shell{height:calc(100dvh - 36px);grid-template-columns:270px minmax(0,1fr) 340px;gap:16px;padding:16px;border-radius:34px}
   .da-brand strong{font-size:29px}.da-brand span{font-size:13px}.da-brand .da-orb{width:54px;height:54px;flex-basis:54px}.da-brand-logo{width:68px;height:68px;flex-basis:68px}
-  .da-sidebar nav{gap:12px}.da-sidebar nav button{padding:12px 13px;font-size:16px;border-radius:19px}.da-nav-icon{width:46px;height:46px;border-radius:14px}
+  .da-sidebar nav{gap:var(--nav-gap)}.da-sidebar nav button{padding:12px 13px;font-size:16px;border-radius:19px}.da-nav-icon{width:46px;height:46px;border-radius:14px}
   .da-progress{padding:18px 23px;border-radius:27px}.da-progress h1{font-size:23px}.da-progress-title button{padding:9px 13px;font-size:10px}
   .da-steps{margin-top:15px}.da-steps button{padding:11px 13px;border-radius:18px}.da-stage-orb{width:45px;height:45px;flex-basis:45px}
   .da-steps strong{font-size:12px}.da-steps small{font-size:9px}.da-readiness{font-size:10px}.da-readiness strong{font-size:15px}.da-readiness button{font-size:10px}
