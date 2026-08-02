@@ -213,15 +213,41 @@ const runPythonPipeline = (
       clearTimeout(timeout)
       reject(error)
     })
-    child.on('close', () => {
+    child.on('close', (code) => {
       if (settled) return
+
       settled = true
       clearTimeout(timeout)
-      try {
-        resolveResult(parseJsonOutput(Buffer.concat(stdout).toString('utf8')))
-      } catch {
+
+      if (code !== 0) {
         const detail = Buffer.concat(stderr).toString('utf8').trim()
-        reject(new Error(detail ? 'INVALID_DOCUMENT_PIPELINE_RESPONSE' : 'DOCUMENT_PIPELINE_FAILED'))
+
+        if (detail) {
+          console.error('Python 문서 분석 프로세스 실패:', detail)
+        }
+
+        reject(new Error('DOCUMENT_PIPELINE_FAILED'))
+        return
+      }
+
+      try {
+        const result = parseJsonOutput(
+          Buffer.concat(stdout).toString('utf8'),
+        )
+
+        resolveResult(result)
+      } catch (error) {
+        const detail = Buffer.concat(stderr).toString('utf8').trim()
+
+        if (detail) {
+          console.error('Python 문서 분석 응답 파싱 실패:', detail)
+        }
+
+        reject(
+          error instanceof Error
+            ? error
+            : new Error('INVALID_DOCUMENT_PIPELINE_RESPONSE'),
+        )
       }
     })
   })
@@ -341,7 +367,17 @@ export class PythonDocumentPipelineAdapter implements DocumentPipelineAdapter {
     } finally {
       const resolvedWorkingDirectory = resolve(workingDirectory)
       if (resolvedWorkingDirectory.startsWith(resolve(tmpdir()))) {
-        await rm(resolvedWorkingDirectory, { recursive: true, force: true })
+        try {
+          await rm(resolvedWorkingDirectory, {
+            recursive: true,
+            force: true,
+          })
+        } catch (error) {
+          console.warn(
+            '임시 문서 폴더를 삭제하지 못했어요:',
+            error,
+          )
+        }
       }
     }
   }

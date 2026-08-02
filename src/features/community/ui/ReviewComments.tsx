@@ -9,7 +9,19 @@ export function ReviewComments({ postId }: { postId: string }) {
   const [loading, setLoading] = useState(true)
   const [replyTo, setReplyTo] = useState<string | null>(null)
 
-  const load = () => { void fetchCommunityComments(postId).then(setComments).finally(() => setLoading(false)) }
+  const load = () => {
+    void fetchCommunityComments(postId)
+      .then(setComments)
+      .catch((error) => {
+        console.error(
+          '댓글을 불러오지 못했어요:',
+          error,
+        )
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
   useEffect(() => { setLoading(true); load() }, [postId])
 
   const topLevel = useMemo(() => comments.filter((comment) => !comment.parentId), [comments])
