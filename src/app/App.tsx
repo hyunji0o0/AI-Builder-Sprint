@@ -63,6 +63,7 @@ export default function App() {
           caseState={controller.caseState}
           addAgent={controller.addAgent}
           completeTask={controller.completeTask}
+          menuAction={menuAction}
         />
         </>}
       </main>
