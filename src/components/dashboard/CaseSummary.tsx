@@ -3,28 +3,32 @@ import { CaseAgentController } from '../../features/case/useCaseAgent'
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 
-type Props = Pick<CaseAgentController, 'caseState' | 'addAgent' | 'completeTask'>
+type Props = Pick<CaseAgentController, 'caseState' | 'addAgent' | 'completeTask' | 'menuAction'>
 
-export function CaseSummary({ caseState, addAgent, completeTask }: Props) {
+export function CaseSummary({ caseState, addAgent, completeTask, menuAction }: Props) {
+  const goToChat = (text: string, block?: Parameters<typeof addAgent>[1]) => {
+    menuAction('AI 홈')
+    addAgent(text, block)
+  }
   return (
     <aside className="da-summary da-glass">
       <span>CASE SUMMARY</span><h2>내 사건 요약</h2>
       <div className="da-summary-counts">
-        <button onClick={() => addAgent(`현재 확인된 서류는 ${caseState.documents}개예요.`, 'checklist')}><GlassIcon icon="file" tone="sage"/><span>확인된 서류<strong>{caseState.documents}개</strong></span></button>
-        <button onClick={() => addAgent(`현재 진행 중인 업무는 ${caseState.activeTasks}개예요.`, 'next')}><GlassIcon icon="clock" tone="amber"/><span>진행 중인 업무<strong>{caseState.activeTasks}개</strong></span></button>
-        <button onClick={() => addAgent(`현재 확인이 필요한 항목은 ${caseState.needsCheck}개야.`, 'finance')}><GlassIcon icon="alert" tone="coral"/><span>확인 필요<strong>{caseState.needsCheck}개</strong></span></button>
+        <button onClick={() => goToChat(`현재 확인된 서류는 ${caseState.documents}개예요.`, 'checklist')}><GlassIcon icon="file" tone="sage"/><span>확인된 서류<strong>{caseState.documents}개</strong></span></button>
+        <button onClick={() => goToChat(`현재 진행 중인 업무는 ${caseState.activeTasks}개예요.`, 'next')}><GlassIcon icon="clock" tone="amber"/><span>진행 중인 업무<strong>{caseState.activeTasks}개</strong></span></button>
+        <button onClick={() => goToChat(`현재 확인이 필요한 항목은 ${caseState.needsCheck}개야.`, 'finance')}><GlassIcon icon="alert" tone="coral"/><span>확인 필요<strong>{caseState.needsCheck}개</strong></span></button>
       </div>
       <div className="da-money-heading">
         <strong>재산·채무 요약</strong>
-        <button onClick={() => addAgent('현재 확인된 재산·채무 내용을 정리해드릴게요.', 'finance')}>자세히 보기 <Icon name="chevronRight" size={16}/></button>
+        <button onClick={() => goToChat('현재 확인된 재산·채무 내용을 정리해드릴게요.', 'finance')}>자세히 보기 <Icon name="chevronRight" size={16}/></button>
       </div>
       <div className="da-money">
-        <button onClick={() => addAgent('현재 확인된 자산·채무 금액을 수정할 수 있어요.', 'finance')}>
+        <button onClick={() => goToChat('현재 확인된 자산·채무 금액을 수정할 수 있어요.', 'finance')}>
           <GlassIcon icon="home" tone="sage"/>
           <span>예상 재산<strong>약 {money(caseState.assets)}</strong></span>
           <Icon name="chevronRight" size={18}/>
         </button>
-        <button onClick={() => addAgent('채무 금액 확인을 이어서 진행할게요.', 'finance')}>
+        <button onClick={() => goToChat('채무 금액 확인을 이어서 진행할게요.', 'finance')}>
           <GlassIcon icon="wallet" tone="coral"/>
           <span>예상 채무<strong>약 {money(caseState.debts)}</strong></span>
           <Icon name="chevronRight" size={18}/>

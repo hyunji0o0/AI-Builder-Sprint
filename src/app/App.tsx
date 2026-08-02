@@ -47,7 +47,7 @@ export default function App() {
   return (
     <div className="da-page">
       <main className="da-shell">
-        <Sidebar activeMenu={activeMenu} menuAction={menuAction} user={auth.user} onSignOut={auth.signOut} onOpenGuide={() => setGuideOpen(true)}/>
+        <Sidebar activeMenu={activeMenu} menuAction={menuAction} onOpenGuide={() => setGuideOpen(true)}/>
         {isCommunity ? <CommunityRouter path={path} controller={community}/> : <>
         <section className="da-main">
           {activeMenu === 'AI 홈' ? <>
@@ -57,12 +57,13 @@ export default function App() {
             addAgent={controller.addAgent}
           />
           <AgentChat controller={controller}/>
-          </> : <CaseSectionView controller={controller}/>}
+          </> : <CaseSectionView controller={controller} user={auth.user} onSignOut={auth.signOut}/>}
         </section>
         <CaseSummary
           caseState={controller.caseState}
           addAgent={controller.addAgent}
           completeTask={controller.completeTask}
+          menuAction={menuAction}
         />
         </>}
       </main>

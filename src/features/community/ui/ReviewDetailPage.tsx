@@ -70,7 +70,7 @@ export function HelpfulButton({ review, onUpdate }: { review: CommunityReview; o
       console.error('도움 표시를 변경하지 못했어요:', error)
     }
   }
-  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach"/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
+  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach" size={15}/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
 }
 
 function RelatedReviews({ current }: { current: CommunityReview }) {
