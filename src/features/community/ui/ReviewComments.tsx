@@ -42,8 +42,9 @@ export function ReviewComments({ postId }: { postId: string }) {
 
 function CommentBody({ comment }: { comment: CommunityComment }) {
   return <div className="cm-comment-body">
-    <div className="cm-comment-meta"><strong>{comment.nickname}</strong><time>{toKstDate(comment.createdAt)}</time></div>
+    <strong>{comment.nickname}</strong>
     <p>{comment.content}</p>
+    <time>{toKstDate(comment.createdAt)}</time>
   </div>
 }
 
