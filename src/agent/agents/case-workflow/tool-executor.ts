@@ -70,10 +70,154 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
         result.ui.push({ type: 'PROGRESS_SUMMARY', progress: calculateProgress(result.state), completedTasks: completed, totalTasks: result.state.tasks.length })
         break
       }
+      case 'START_CONSULTATION': {
+        const consultation = state.tasks.find((task) =>
+          task.category === 'CONSULTATION'
+          && task.status !== 'COMPLETED'
+          && task.status !== 'NOT_APPLICABLE')
+        if (!consultation) {
+          result.facts = ['현재 사건 상태에서는 아직 전문가 상담 준비 업무가 만들어지지 않았어. 먼저 현재 절차를 정리할게.']
+          result.suggestedActions.push({ id: 'start_personal_procedure', label: '현재 절차 정리하기' })
+          break
+        }
+        const unfinishedDependency = (consultation.dependsOnTaskIds ?? [])
+          .map((id) => state.tasks.find((task) => task.id === id))
+          .find((task) => task && task.status !== 'COMPLETED' && task.status !== 'NOT_APPLICABLE')
+        const target = unfinishedDependency ?? consultation
+
+        if (target.type === 'CONFIRM_INHERITANCE_AWARENESS_DATE') {
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            stage: 'PREPARING_CONSULTATION',
+            currentFocus: { type: target.type, id: target.id },
+            workflow: {
+              ...state.workflow,
+              phase: 'COLLECTING_MISSING_DOCUMENTS',
+              priorityTaskId: target.id,
+            },
+          }))
+          result.ui.push({
+            type: 'MISSING_INFORMATION_QUESTION',
+            fieldId: state.missingFields.find((field) => field.field === 'deceased.inheritanceAwarenessDate')?.id ?? 'inheritance-awareness-date',
+            prompt: '고인의 사망 사실과 내가 상속인이 된 사실을 언제 알게 됐어?',
+            inputType: 'DATE',
+            options: [{ id: 'later', label: '날짜는 나중에 확인' }],
+          })
+          result.suggestedActions.push({ id: 'later', label: '날짜는 나중에 확인' })
+          break
+        }
+
+        const readiness = await run('calculateTaskReadiness', () => tools.calculateTaskReadiness(state.caseId, consultation.id))
+        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+          stage: 'PREPARING_CONSULTATION',
+          currentFocus: { type: consultation.type, id: consultation.id },
+          workflow: {
+            ...state.workflow,
+            phase: 'PREPARING_TASK',
+            priorityTaskId: consultation.id,
+            missingDocumentTypes: readiness.documents.filter((item) => item.status === 'MISSING').map((item) => item.type),
+          },
+        }))
+        result.ui.push({
+          type: 'TASK_READINESS',
+          taskId: consultation.id,
+          title: consultation.title,
+          readiness: readiness.readiness,
+          documents: readiness.documents,
+        })
+        result.suggestedActions.push({ id: 'prepare_task', label: '현재 자료로 상담 준비하기' })
+        break
+      }
+      case 'PROCEED_AVAILABLE': {
+        const missingKeys = state.financialCoverage.missingOrganizationKeys
+        const existingMissingIds = new Set(state.missingFields.map((field) => field.id))
+        const coverageFields = missingKeys
+          .filter((key) => !existingMissingIds.has(`missing-financial-${key}`))
+          .map((key) => ({
+            id: `missing-financial-${key}`,
+            field: `financialCoverage.${key}`,
+            label: `미확인 금융기관 조회 결과 (${key})`,
+            resolved: false,
+          }))
+        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+          stage: 'CHECKING_MISSING_INFO',
+          financialCoverage: { ...state.financialCoverage, status: 'PROCEED_WITH_AVAILABLE' },
+          financials: { ...state.financials, hasUnverifiedItems: missingKeys.length > 0 || state.financials.hasUnverifiedItems },
+          missingFields: [...state.missingFields, ...coverageFields],
+          currentFocus: { type: null, id: null },
+        }))
+        const tasks = await run('generatePersonalProcedure', () => tools.generatePersonalProcedure(state.caseId))
+        result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+          workflow: {
+            ...result.state.workflow,
+            phase: 'SELECTING_PRIORITY_TASK',
+            procedureGenerated: true,
+          },
+        }))
+        const titleById = new Map(tasks.map((task) => [task.id, task.title]))
+        result.ui.push({
+          type: 'PROCEDURE_PLAN',
+          steps: tasks.slice(0, 6).map((task) => ({
+            taskId: task.id,
+            title: task.title,
+            priority: task.priority,
+            status: task.status,
+            reason: task.reason ?? '현재 사건 상태를 기준으로 확인이 필요한 업무야.',
+            basisFacts: task.basisFacts ?? [],
+            dependencyTitles: (task.dependsOnTaskIds ?? []).map((id) => titleById.get(id) ?? id),
+            requiredDocuments: task.requiredDocuments.map((document) => ({
+              label: document.label,
+              status: document.verified ? 'HELD' as const : 'MISSING' as const,
+            })),
+            applicability: task.applicability ?? 'REVIEW_REQUIRED',
+          })),
+        })
+        result.facts = [
+          `${missingKeys.length}개 기관 결과는 미확인 상태로 보존했어.`,
+          '현재 확인된 자료만 기준으로 다음 절차를 만들었어.',
+        ]
+        result.suggestedActions.push({ id: 'select_priority', label: '가장 먼저 할 일 확인' })
+        break
+      }
       case 'SHOW_NEXT_TASK': {
         const tasks = await run('getPrioritizedTasks', () => tools.getPrioritizedTasks(state.caseId))
         const task = tasks[0]
-        if (task) result.ui.push({ type: 'TASK_CARD', taskId: task.id, title: task.title, priority: task.priority, readiness: task.readiness, actions: [{ id: 'continue', label: '이어하기' }, { id: 'later', label: '나중에 확인' }] })
+        if (task) {
+          result.facts = [`다음 업무는 '${task.title}'이야.`]
+          result.ui.push({ type: 'TASK_CARD', taskId: task.id, title: task.title, priority: task.priority, readiness: task.readiness, actions: [{ id: 'continue', label: '이어하기' }, { id: 'later', label: '나중에 확인' }] })
+        } else if (state.onboarding.deathReportStatus !== 'COMPLETED') {
+          result.facts = ['사망신고가 아직 완료 상태가 아니어서, 사망신고 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-death-report',
+            title: '사망신고 준비',
+            priority: 'HIGH',
+            readiness: 0,
+            actions: [{ id: 'show_death_report_steps', label: '준비 시작하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else if (state.onboarding.financialInquiryStatus !== 'COMPLETED') {
+          result.facts = ['사망신고는 완료했고 금융재산·채무 조회가 아직이라, 금융조회 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-financial-inquiry',
+            title: '금융재산·채무 조회 준비',
+            priority: 'HIGH',
+            readiness: 0,
+            actions: [{ id: 'onboarding_start_financial', label: '금융조회 준비하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else if (state.onboarding.oneStopServiceStatus !== 'COMPLETED') {
+          result.facts = ['사망신고와 금융조회는 완료했고 원스톱 서비스가 아직이라, 안심상속 원스톱 서비스 신청 준비가 다음 업무야.']
+          result.ui.push({
+            type: 'TASK_CARD',
+            taskId: 'onboarding-one-stop-service',
+            title: '안심상속 원스톱 서비스 신청 준비',
+            priority: 'NORMAL',
+            readiness: 0,
+            actions: [{ id: 'onboarding_start_one_stop', label: '준비하기' }, { id: 'later', label: '나중에 확인' }],
+          })
+        } else {
+          result.facts = ['사망신고, 금융조회, 안심상속 원스톱 서비스는 모두 완료 상태야. 다음 절차를 만들려면 현재 가진 문서를 확인하면 돼.']
+          result.ui.push({ type: 'DOCUMENT_UPLOAD', accept: ['.pdf', '.jpg', '.jpeg', '.png'], taskId: null })
+        }
         break
       }
       case 'SHOW_DOCUMENTS': {
@@ -274,6 +418,10 @@ export async function executeSelection(selection: ActionSelection, state: CaseSt
                 reason: task.reason ?? '현재 사건 상태를 기준으로 확인이 필요한 업무예요.',
                 basisFacts: task.basisFacts ?? [],
                 dependencyTitles: (task.dependsOnTaskIds ?? []).map((id) => taskTitleById.get(id) ?? id),
+                requiredDocuments: task.requiredDocuments.map((document) => ({
+                  label: document.label === '안심상속 조회 결과' ? '금융기관별 조회 결과' : document.label,
+                  status: document.verified ? 'HELD' as const : 'MISSING' as const,
+                })),
                 applicability: task.applicability ?? 'REVIEW_REQUIRED',
               }
             }),

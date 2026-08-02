@@ -17,11 +17,23 @@ export const createInitialCaseState = (): CaseState => caseStateSchema.parse({
     difference: null,
     hasUnverifiedItems: false,
   },
+  financialCoverage: {
+    status: 'NOT_CHECKED',
+    receivedOrganizationKeys: [],
+    missingOrganizationKeys: [],
+  },
   tasks: [],
   missingFields: [],
   warnings: [],
   currentFocus: { type: null, id: null },
   emotionalContext: { currentSignal: 'NEUTRAL', intensity: 'LOW', tonePreference: 'BALANCED', recentComfortCount: 0, userRequestedPause: false },
+  memory: {
+    conversationSummary: '',
+    confirmedFacts: [],
+    pendingInteraction: null,
+    recentEvents: [],
+    lastIntent: null,
+  },
   onboarding: {
     currentStep: 'DEATH_REPORT',
     deathReportStatus: 'UNKNOWN',

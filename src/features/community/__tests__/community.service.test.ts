@@ -15,9 +15,9 @@ const base = { text: '', scope: 'ALL' as const, category: null, region: null, so
 
 describe('community feature', () => {
   it('카테고리 필터가 동작한다', async () => {
-    const reviews = await repository().getReviews({ ...base, category: '서류' })
+    const reviews = await repository().getReviews({ ...base, category: '보험청구' })
     expect(reviews.length).toBeGreaterThan(0)
-    expect(reviews.every((review) => review.category === '서류')).toBe(true)
+    expect(reviews.every((review) => review.categories.includes('보험청구'))).toBe(true)
   })
 
   it('제목 검색이 동작한다', async () => {
@@ -79,7 +79,7 @@ describe('community feature', () => {
 
   it('새 글은 공식 정보가 아닌 사용자 경험으로 생성한다', async () => {
     const review = await repository().createReview({
-      title: '테스트 후기', category: '질문', authorName: '익명의 곁', isAnonymous: true,
+      title: '테스트 후기', categories: ['기타'], authorName: '익명의 곁', isAnonymous: true,
       region: '부산', relation: '부모님', taskType: '기타', situationTags: ['테스트'],
       body: {
         situation: '테스트 상황', difficulty: '어려웠던 점', actionTaken: '직접 확인했어요.',

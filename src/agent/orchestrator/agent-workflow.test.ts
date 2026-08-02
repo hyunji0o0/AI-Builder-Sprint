@@ -76,6 +76,25 @@ describe('F1~F7 Agent 실행 워크플로', () => {
     expect(ids).toContain('confirm-inheritance-awareness-date')
   })
 
+  it('온보딩에서 완료한 사망신고를 문서 확인 뒤 다시 묻지 않는다', async () => {
+    const state = createRepresentativeAgentCaseState()
+    state.onboardingCompleted = true
+    state.onboarding = {
+      ...state.onboarding,
+      currentStep: 'COMPLETE',
+      deathReportStatus: 'COMPLETED',
+    }
+
+    const result = await advance(state)
+    const deathReportTask = result.caseState.tasks.find((task) => task.type === 'CONFIRM_DEATH_REPORT')
+
+    expect(deathReportTask).toBeUndefined()
+    expect(result.output.ui[0]).toMatchObject({ type: 'PROCEDURE_PLAN' })
+    if (result.output.ui[0]?.type === 'PROCEDURE_PLAN') {
+      expect(result.output.ui[0].steps.some((step) => step.title.includes('사망신고'))).toBe(false)
+    }
+  })
+
   it('각 개인 절차에 생성 이유와 상태 근거를 포함한다', async () => {
     const result = await advance(createRepresentativeAgentCaseState())
     const block = result.output.ui[0]

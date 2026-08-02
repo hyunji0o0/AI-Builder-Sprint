@@ -37,6 +37,26 @@ export const emotionalContextSchema = z.object({
   userRequestedPause: z.boolean(),
 })
 
+export const agentMemorySchema = z.object({
+  conversationSummary: z.string().max(4000),
+  confirmedFacts: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+    value: z.string(),
+  })).max(60),
+  pendingInteraction: z.object({
+    type: z.string(),
+    targetId: z.string().nullable(),
+    expectedInput: z.string(),
+  }).nullable(),
+  recentEvents: z.array(z.object({
+    type: z.string(),
+    description: z.string(),
+    occurredAt: z.string(),
+  })).max(30),
+  lastIntent: z.string().nullable(),
+})
+
 export const onboardingStatusSchema = z.enum(['UNKNOWN', 'COMPLETED', 'NOT_COMPLETED'])
 export const onboardingStepSchema = z.enum(['DEATH_REPORT', 'FINANCIAL_INQUIRY', 'ONE_STOP_SERVICE', 'COMPLETE'])
 export const onboardingStateSchema = z.object({
@@ -45,6 +65,17 @@ export const onboardingStateSchema = z.object({
   financialInquiryStatus: onboardingStatusSchema,
   oneStopServiceStatus: onboardingStatusSchema,
 })
+
+export const financialCoverageSchema = z.object({
+  status: z.enum(['NOT_CHECKED', 'PENDING', 'HELP_REQUESTED', 'PROCEED_WITH_AVAILABLE', 'COMPLETE']),
+  receivedOrganizationKeys: z.array(z.string()),
+  missingOrganizationKeys: z.array(z.string()),
+}).transform((coverage) => ({
+  ...coverage,
+  // 이전 세션에 남아 있는 대부금융협회 키도 조회 대상과 누락 안내에서 제거한다.
+  receivedOrganizationKeys: coverage.receivedOrganizationKeys.filter((key) => key !== 'consumer_finance'),
+  missingOrganizationKeys: coverage.missingOrganizationKeys.filter((key) => key !== 'consumer_finance'),
+}))
 
 export const extractedFieldSchema = z.object({
   key: z.string(),
@@ -138,11 +169,23 @@ export const caseStateSchema = z.object({
     difference: z.number().nullable(),
     hasUnverifiedItems: z.boolean(),
   }),
+  financialCoverage: financialCoverageSchema.default({
+    status: 'NOT_CHECKED',
+    receivedOrganizationKeys: [],
+    missingOrganizationKeys: [],
+  }),
   tasks: z.array(taskStateSchema),
   missingFields: z.array(missingFieldSchema),
   warnings: z.array(caseWarningSchema),
   currentFocus: z.object({ type: z.string().nullable(), id: z.string().nullable() }),
   emotionalContext: emotionalContextSchema,
+  memory: agentMemorySchema.default({
+    conversationSummary: '',
+    confirmedFacts: [],
+    pendingInteraction: null,
+    recentEvents: [],
+    lastIntent: null,
+  }),
   onboarding: onboardingStateSchema.default({
     currentStep: 'DEATH_REPORT',
     deathReportStatus: 'UNKNOWN',
@@ -165,6 +208,7 @@ export const caseStateSchema = z.object({
 export type CaseStage = z.infer<typeof caseStageSchema>
 export type AgentWorkflowPhase = z.infer<typeof agentWorkflowPhaseSchema>
 export type EmotionalContext = z.infer<typeof emotionalContextSchema>
+export type AgentMemory = z.infer<typeof agentMemorySchema>
 export type DocumentState = z.infer<typeof documentStateSchema>
 export type FinancialItem = z.infer<typeof financialItemSchema>
 export type TaskState = z.infer<typeof taskStateSchema>

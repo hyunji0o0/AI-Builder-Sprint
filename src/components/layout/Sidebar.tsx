@@ -15,9 +15,10 @@ type NavProps = Pick<CaseAgentController, 'activeMenu' | 'menuAction'>
 type Props = NavProps & {
   user: User
   onSignOut: () => void
+  onOpenGuide?: () => void
 }
 
-export function Sidebar({ activeMenu, menuAction, user, onSignOut }: Props) {
+export function Sidebar({ activeMenu, menuAction, user, onSignOut, onOpenGuide }: Props) {
   const activeIndex = menuItems.findIndex((item) => item.label === activeMenu)
   const displayName = user.user_metadata.full_name ?? user.email ?? '사용자'
   const avatarUrl = user.user_metadata.avatar_url ?? user.user_metadata.picture
@@ -42,6 +43,7 @@ export function Sidebar({ activeMenu, menuAction, user, onSignOut }: Props) {
           <Icon name="arrowLeft" size={15}/>
         </button>
       </div>
+      {onOpenGuide && <button className="da-guide-trigger" onClick={onOpenGuide}><Icon name="sparkle" size={18}/> 사용 설명</button>}
       <div className="da-help"><Icon name="heart" size={17}/><div><strong>도움이 필요하신가요?</strong><span>고객센터 1522-0000</span></div></div>
       <small className="da-privacy">개인정보는 안전하게 보호돼요</small>
     </aside>
