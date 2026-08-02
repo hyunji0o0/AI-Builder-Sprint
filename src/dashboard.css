@@ -9,9 +9,6 @@
 .da-sidebar nav{display:grid;gap:7px;margin-top:8px}.da-sidebar nav button{border:1px solid transparent;background:transparent;padding:8px 9px;display:flex;align-items:center;gap:11px;border-radius:16px;color:#5d6c80;font-size:12px;font-weight:700;cursor:pointer}.da-nav-icon{width:34px;height:34px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.9);border-radius:11px;background:linear-gradient(145deg,#fff,#cad9ee);box-shadow:inset 2px 2px 3px #fff,inset -3px -3px 6px rgba(63,82,123,.14),0 4px 9px rgba(66,79,106,.14)}
 .da-sidebar nav button.active{color:#ad593f;border-color:rgba(255,255,255,.9);background:linear-gradient(120deg,rgba(255,248,241,.95),rgba(255,190,153,.7));box-shadow:inset 0 2px 1px #fff,0 9px 22px rgba(196,101,60,.2)}.da-sidebar nav button.active .da-nav-icon{background:linear-gradient(145deg,#fff,#f2b89c);color:#a95c43}
 .da-help{display:flex;gap:9px;align-items:center;margin-top:auto;padding:11px;border:1px solid rgba(255,255,255,.8);border-radius:15px;background:rgba(255,255,255,.35);color:#7a8799}.da-help strong,.da-help span{display:block}.da-help strong{font-size:9px}.da-help span{margin-top:3px;font-size:8px}.da-privacy{margin:10px 4px 0;color:#8e98a6;font-size:8px}
-.da-user{display:flex;gap:9px;align-items:center;margin-top:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.8);border-radius:15px;background:rgba(255,255,255,.35)}.da-user>div{min-width:0;flex:1}.da-user strong,.da-user span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.da-user strong{font-size:10px;color:#3f4f68}.da-user span{margin-top:2px;font-size:8px;color:#8591a3}
-.da-user-avatar{width:32px;height:32px;flex:0 0 32px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.9)}.da-user-avatar-fallback{display:grid;place-items:center;background:linear-gradient(145deg,#fff,#b9d2ef);color:#6179a8;font-weight:800;font-size:13px}
-.da-user-logout{flex:0 0 auto;border:1px solid rgba(255,255,255,.85);width:26px;height:26px;border-radius:9px;background:rgba(255,255,255,.5);color:#8e6e60;display:grid;place-items:center;cursor:pointer}
 .da-login-page{display:grid;place-items:center}
 .da-login-card{width:min(520px,calc(100vw - 36px));display:flex;flex-direction:column;align-items:center;gap:10px;padding:58px 54px 48px;border-radius:34px;text-align:center}
 .da-login-card .da-brand-logo{width:88px;height:88px;margin-bottom:8px}
@@ -81,7 +78,7 @@
   .da-shell{grid-template-columns:240px minmax(0,1fr) 300px;gap:14px;padding:14px}
   .da-sidebar{padding:16px 13px}.da-brand{gap:12px;padding-bottom:23px}
   .da-brand .da-orb{width:48px;height:48px;flex-basis:48px}.da-brand-logo{width:60px;height:60px;flex-basis:60px}.da-brand strong{font-size:26px}.da-brand span{font-size:12px}
-  .da-sidebar nav{gap:10px}.da-sidebar nav button{padding:10px 11px;font-size:14px}.da-nav-icon{width:40px;height:40px}
+  .da-sidebar nav{gap:var(--nav-gap)}.da-sidebar nav button{padding:10px 11px;font-size:14px}.da-nav-icon{width:40px;height:40px}
   .da-help{padding:13px}.da-help strong{font-size:10px}.da-help span,.da-privacy{font-size:9px}
   .da-progress{padding:16px 20px}.da-progress h1{font-size:20px}.da-progress-title span,.da-summary>span{font-size:9px}.da-progress-title button{padding:8px 11px;font-size:9px}
   .da-steps{gap:10px;margin-top:13px}.da-steps button{gap:10px;padding:9px 11px}.da-stage-orb{width:40px;height:40px;flex-basis:40px}.da-steps strong{font-size:11px}.da-steps small{font-size:8px}
@@ -105,7 +102,7 @@
 @media(min-width:1800px){
   .da-page{padding:18px}.da-shell{height:calc(100dvh - 36px);grid-template-columns:270px minmax(0,1fr) 340px;gap:16px;padding:16px;border-radius:34px}
   .da-brand strong{font-size:29px}.da-brand span{font-size:13px}.da-brand .da-orb{width:54px;height:54px;flex-basis:54px}.da-brand-logo{width:68px;height:68px;flex-basis:68px}
-  .da-sidebar nav{gap:12px}.da-sidebar nav button{padding:12px 13px;font-size:16px;border-radius:19px}.da-nav-icon{width:46px;height:46px;border-radius:14px}
+  .da-sidebar nav{gap:var(--nav-gap)}.da-sidebar nav button{padding:12px 13px;font-size:16px;border-radius:19px}.da-nav-icon{width:46px;height:46px;border-radius:14px}
   .da-progress{padding:18px 23px;border-radius:27px}.da-progress h1{font-size:23px}.da-progress-title button{padding:9px 13px;font-size:10px}
   .da-steps{margin-top:15px}.da-steps button{padding:11px 13px;border-radius:18px}.da-stage-orb{width:45px;height:45px;flex-basis:45px}
   .da-steps strong{font-size:12px}.da-steps small{font-size:9px}
@@ -280,6 +277,18 @@
 .da-section-view>header h1{margin:5px 0 4px;font-family:"Gowun Batang",serif;font-size:30px}
 .da-section-view>header p{margin:0;color:#78879a;font-size:14px}
 .da-section-view>header .da-orb{width:58px;height:58px;flex:0 0 58px}
+.da-profile-menu{position:relative;flex:0 0 58px;margin-right:14px}
+.da-profile-trigger{width:58px;height:58px;padding:0;border:1px solid rgba(255,255,255,.9);border-radius:50%;overflow:hidden;cursor:pointer;background:linear-gradient(145deg,#fff,#cad9ee);box-shadow:inset 2px 2px 3px #fff,inset -3px -3px 6px rgba(63,82,123,.14),0 4px 9px rgba(66,79,106,.14)}
+.da-profile-trigger img{width:100%;height:100%;object-fit:cover}
+.da-profile-fallback{display:grid;place-items:center;width:100%;height:100%;color:#6179a8;font-weight:800;font-size:20px}
+.da-profile-popover{position:absolute;z-index:10;top:calc(100% + 10px);right:0;width:270px;display:grid;gap:12px;padding:14px;border:1px solid rgba(255,255,255,.94);border-radius:18px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px) saturate(115%);box-shadow:0 18px 40px rgba(64,78,110,.22)}
+.da-profile-popover-user{display:flex;align-items:center;gap:10px;min-width:0}
+.da-profile-popover-user img,.da-profile-popover-user .da-profile-fallback{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:1px solid rgba(255,255,255,.9);font-size:15px}
+.da-profile-popover-user>div{min-width:0}
+.da-profile-popover-user strong{display:block;font-size:13px;color:#3f4f68;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.da-profile-popover-user span{display:block;margin-top:2px;font-size:11px;color:#8591a3;white-space:normal;overflow-wrap:break-word;line-height:1.4}
+.da-profile-popover>button{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,255,255,.85);border-radius:12px;padding:10px;background:rgba(255,255,255,.5);color:#8e6e60;font-size:13px;font-weight:700;cursor:pointer}
+.da-profile-popover>button:hover{background:rgba(255,255,255,.75)}
 .da-section-list{display:grid;gap:12px;margin-top:22px}
 .da-section-list article{display:grid;grid-template-columns:90px minmax(0,1fr);gap:16px;align-items:center;padding:20px;border:1px solid rgba(255,255,255,.9);border-radius:20px;background:rgba(255,255,255,.42);box-shadow:inset 0 1px white,0 10px 22px rgba(68,82,108,.08)}
 .da-section-list article strong{font-size:17px}.da-section-list article p{margin:6px 0;color:#65758a;font-size:13px;line-height:1.5}.da-section-list article small{color:#8a96a6;font-size:11px}

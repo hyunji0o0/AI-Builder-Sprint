@@ -15,11 +15,29 @@ function readIds(): string[] {
 export function rememberMyPost(id: string): void {
   const ids = readIds()
   if (ids.includes(id)) return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([id, ...ids]))
+  try {
+    localStorage.setItem( STORAGE_KEY, JSON.stringify([id, ...ids]),)
+  } catch (error) {
+    console.error( '작성 글 정보를 저장하지 못했어요:', error,)
+  }
 }
 
 export function forgetMyPost(id: string): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(readIds().filter((existing) => existing !== id)))
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(
+        readIds().filter(
+          (existing) => existing !== id,
+        ),
+      ),
+    )
+  } catch (error) {
+    console.error(
+      '작성 글 정보를 삭제하지 못했어요:',
+      error,
+    )
+  }
 }
 
 export function isMyPost(id: string): boolean {

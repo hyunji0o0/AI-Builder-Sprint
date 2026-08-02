@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { CaseAgentController } from './useCaseAgent'
 import { GlassIcon } from '../../components/ui/GlassIcon'
 import { Icon } from '../../components/ui/Icon'
@@ -17,7 +19,7 @@ const documentStatusLabel = {
   FAILED: '처리 실패',
 } as const
 
-export function CaseSectionView({ controller: c }: { controller: CaseAgentController }) {
+export function CaseSectionView({ controller: c, user, onSignOut }: { controller: CaseAgentController; user: User; onSignOut: () => void }) {
   if (c.activeMenu === '내 할 일') {
     return (
       <section className="da-section-view da-glass">
@@ -56,7 +58,7 @@ export function CaseSectionView({ controller: c }: { controller: CaseAgentContro
 
   return (
     <section className="da-section-view da-glass">
-      <header><div><span>MY INFORMATION</span><h1>내 정보</h1><p>Agent가 업무를 정리할 때 사용하는 사건 기본정보예요.</p></div><GlassIcon icon="person" tone="blue"/></header>
+      <header><div><span>MY INFORMATION</span><h1>내 정보</h1><p>Agent가 업무를 정리할 때 사용하는 사건 기본정보예요.</p></div><ProfileMenu user={user} onSignOut={onSignOut}/></header>
       <div className="da-info-grid">
         <article><span>고인과의 관계</span><strong>{c.agentCaseState.user.relationToDeceased ?? '확인 필요'}</strong></article>
         <article><span>거주 지역</span><strong>{[c.agentCaseState.user.region.city, c.agentCaseState.user.region.district].filter(Boolean).join(' ') || '확인 필요'}</strong></article>
@@ -66,5 +68,31 @@ export function CaseSectionView({ controller: c }: { controller: CaseAgentContro
         <article><span>확인된 채무</span><strong>{(c.agentCaseState.financials.totalDebts ?? 0).toLocaleString('ko-KR')}원</strong></article>
       </div>
     </section>
+  )
+}
+
+function ProfileMenu({ user, onSignOut }: { user: User; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false)
+  const displayName = user.user_metadata.full_name ?? user.email ?? '사용자'
+  const avatarUrl = user.user_metadata.avatar_url ?? user.user_metadata.picture
+  const avatar = avatarUrl ? <img src={avatarUrl} alt=""/> : <span className="da-profile-fallback">{displayName[0]}</span>
+
+  return (
+    <div className="da-profile-menu" onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false)
+    }}>
+      <button type="button" className="da-profile-trigger" onClick={() => setOpen((value) => !value)} aria-label="계정 정보">
+        {avatar}
+      </button>
+      {open && (
+        <div className="da-profile-popover">
+          <div className="da-profile-popover-user">
+            {avatar}
+            <div><strong>{displayName}</strong><span>{user.email}</span></div>
+          </div>
+          <button type="button" onClick={onSignOut}><Icon name="arrowLeft" size={14}/>로그아웃</button>
+        </div>
+      )}
+    </div>
   )
 }

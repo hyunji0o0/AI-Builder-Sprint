@@ -59,12 +59,13 @@ export default function App() {
             addAgent={controller.addAgent}
           />
           <AgentChat controller={controller}/>
-          </> : <CaseSectionView controller={controller}/>}
+          </> : <CaseSectionView controller={controller} user={auth.user} onSignOut={auth.signOut}/>}
         </section>
         <CaseSummary
           caseState={controller.caseState}
           addAgent={controller.addAgent}
           completeTask={controller.completeTask}
+          menuAction={menuAction}
         />
         </>}
       </main>

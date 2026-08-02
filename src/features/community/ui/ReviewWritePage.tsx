@@ -29,8 +29,12 @@ export function ReviewWritePage() {
       region: null, relation: null, taskType: '', situationTags: [],
       body: { situation: content, difficulty: '', actionTaken: '', preparedDocuments: [], usefulTip: '', caution: '' },
     }
-    const created = await communityRepository.createReview(input)
-    navigateCommunity(`/community/${created.id}`)
+    try {
+      const created = await communityRepository.createReview(input)
+      navigateCommunity(`/community/${created.id}`)
+    } catch (error) {
+      console.error('후기를 등록하지 못했어요:', error)
+    }
   }
   return <section className="cm-workspace cm-single"><main className="cm-write da-glass">
     <button className="cm-back" onClick={() => navigateCommunity('/community')}><Icon name="arrowLeft" size={18}/>게시판으로</button>

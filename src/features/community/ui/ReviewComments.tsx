@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react'
 import { fetchCommunityComments, submitCommunityComment } from '../../../client/community-api'
 import { GlassIcon } from '../../../components/ui/GlassIcon'
 import { CommunityComment } from '../../../schemas/community'
@@ -9,7 +9,19 @@ export function ReviewComments({ postId }: { postId: string }) {
   const [loading, setLoading] = useState(true)
   const [replyTo, setReplyTo] = useState<string | null>(null)
 
-  const load = () => { void fetchCommunityComments(postId).then(setComments).finally(() => setLoading(false)) }
+  const load = () => {
+    void fetchCommunityComments(postId)
+      .then(setComments)
+      .catch((error) => {
+        console.error(
+          '댓글을 불러오지 못했어요:',
+          error,
+        )
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
   useEffect(() => { setLoading(true); load() }, [postId])
 
   const topLevel = useMemo(() => comments.filter((comment) => !comment.parentId), [comments])
@@ -28,8 +40,9 @@ export function ReviewComments({ postId }: { postId: string }) {
       ? <p className="cm-comments-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</p>
       : <ul className="cm-comment-list">
         {topLevel.map((comment) => <li key={comment.id} className="cm-comment">
-          <CommentBody comment={comment}/>
-          <button className="cm-comment-reply-toggle" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>답글쓰기</button>
+          <CommentBody comment={comment}>
+            <button className="cm-comment-reply-toggle" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>답글쓰기</button>
+          </CommentBody>
           {replyTo === comment.id && <CommentForm compact onSubmit={(nickname, content) => submit(nickname, content, comment.id)}/>}
           {repliesOf(comment.id).length > 0 && <ul className="cm-comment-replies">
             {repliesOf(comment.id).map((reply) => <li key={reply.id} className="cm-comment cm-comment-reply"><CommentBody comment={reply}/></li>)}
@@ -40,10 +53,14 @@ export function ReviewComments({ postId }: { postId: string }) {
   </section>
 }
 
-function CommentBody({ comment }: { comment: CommunityComment }) {
+function CommentBody({ comment, children }: { comment: CommunityComment; children?: ReactNode }) {
   return <div className="cm-comment-body">
-    <div className="cm-comment-meta"><strong>{comment.nickname}</strong><time>{toKstDate(comment.createdAt)}</time></div>
+    <div className="cm-comment-identity">
+      <strong>{comment.nickname}</strong>
+      {children}
+    </div>
     <p>{comment.content}</p>
+    <time>{toKstDate(comment.createdAt)}</time>
   </div>
 }
 

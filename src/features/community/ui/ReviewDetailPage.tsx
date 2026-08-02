@@ -10,7 +10,12 @@ import { ReviewComments } from './ReviewComments'
 
 export function ReviewDetailPage({ id }: { id: string }) {
   const [review, setReview] = useState<CommunityReview | null>()
-  useEffect(() => { void communityRepository.getReview(id).then(setReview) }, [id])
+  useEffect(() => {
+    void communityRepository
+      .getReview(id)
+      .then(setReview)
+      .catch((error) => { console.error('후기를 불러오지 못했어요:', error) 
+      setReview(null)})}, [id])
   if (review === undefined) return <section className="cm-workspace cm-single"><div className="cm-empty da-glass">후기를 불러오고 있어요…</div></section>
   if (review === null) return <section className="cm-workspace cm-single"><div className="cm-empty da-glass"><h2>후기를 찾지 못했어요.</h2><button onClick={() => navigateCommunity('/community')}>게시판으로 돌아가기</button></div></section>
   return <section className="cm-workspace cm-single"><article className="cm-detail da-glass">
@@ -53,20 +58,37 @@ export function ReviewArticleContent({ review }: { review: CommunityReview }) {
 export function HelpfulButton({ review, onUpdate }: { review: CommunityReview; onUpdate: (review: CommunityReview) => void }) {
   const [helped,setHelped] = useState(() => hasLikedPost(review.id))
   const click = async () => {
-    const next = !helped
-    const result = await communityRepository.setHelpful(review.id, next)
-    if (!result) return
-    if (next) rememberLikedPost(review.id); else forgetLikedPost(review.id)
-    setHelped(next)
-    onUpdate(result)
+    try {
+      const next = !helped
+      const result = await communityRepository.setHelpful(review.id, next)
+      if (!result) return
+      if (next) { rememberLikedPost(review.id) } 
+      else {forgetLikedPost(review.id)}
+      setHelped(next)
+      onUpdate(result)
+    } catch (error) {
+      console.error('도움 표시를 변경하지 못했어요:', error)
+    }
   }
-  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach"/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
+  return <button className={`cm-helpful-button ${helped ? 'active' : ''}`} onClick={click}><GlassIcon icon="heart" tone="peach" size={15}/><span>{helped ? '도움이 됐다고 표시했어요' : '도움이 됐어요'}<small>{review.helpfulCount}</small></span></button>
 }
 
 function RelatedReviews({ current }: { current: CommunityReview }) {
   const [reviews,setReviews] = useState<CommunityReview[]>([])
   const primaryCategory = current.categories[0]
-  useEffect(() => { void communityRepository.getReviews({ text:'',scope:'ALL',category:primaryCategory,region:null,sort:'HELPFUL' }).then((items) => setReviews(items.filter((item) => item.id !== current.id).slice(0,3))) }, [primaryCategory,current.id])
+  useEffect(() => {
+    void communityRepository
+      .getReviews({
+        text: '', scope: 'ALL', category: primaryCategory, region: null, sort: 'HELPFUL'})
+      .then((items) => { setReviews( items
+            .filter((item) => item.id !== current.id,)
+            .slice(0, 3),
+        )
+      })
+      .catch((error) => {
+        console.error('관련 후기를 불러오지 못했어요:', error)
+      })
+  }, [primaryCategory, current.id])
   const list = useMemo(() => reviews, [reviews])
   return <section className="cm-related"><h2>관련 후기</h2>{list.map((review) => <button key={review.id} onClick={() => navigateCommunity(`/community/${review.id}`)}><span>{review.categories[0]}</span><strong>{review.title}</strong></button>)}</section>
 }
