@@ -116,7 +116,7 @@ export function mapPostToReview(post: CommunityPost, commentCount: number): Comm
       usefulTip: parsed.usefulTip,
       caution: parsed.caution,
     },
-    createdAt: post.createdAt.slice(0, 10),
+    createdAt: post.createdAt,
     helpfulCount: post.helpfulCount,
     commentCount,
     isNotice: false,
