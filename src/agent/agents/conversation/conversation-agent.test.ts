@@ -52,6 +52,45 @@ describe('대화 Agent', () => {
     expect(tips.search).not.toHaveBeenCalled()
   })
 
+  it('대화로 확정된 응답은 경량 모델을 사용한다', async () => {
+    const llm = { complete: vi.fn(async () => '{"route":"CASE_WORKFLOW","confidence":1}') }
+    const conversationLlm = { complete: vi.fn(async () => '반가워. 오늘은 어떤 이야기를 하고 싶어?') }
+    const result = await runAgent(
+      { input: '안녕', caseState: createInitialCaseState() },
+      { llm, conversationLlm },
+    )
+
+    expect(result.output.message).toBe('반가워. 오늘은 어떤 이야기를 하고 싶어?')
+    expect(conversationLlm.complete).toHaveBeenCalledOnce()
+    expect(llm.complete).not.toHaveBeenCalled()
+  })
+
+  it('상속 맥락의 감정 표현에는 사건 업무 전환 동의를 먼저 묻는다', async () => {
+    const result = await runAgent({ input: '상속 때문에 너무 슬퍼', caseState: createInitialCaseState() })
+
+    expect(result.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(result.output.message).toContain('그렇게 해줄까?')
+    expect(result.caseState.memory.pendingInteraction?.type).toBe('CASE_WORKFLOW_HANDOFF')
+  })
+
+  it('사건 업무 전환에 동의하면 case-workflow Agent의 온보딩을 시작한다', async () => {
+    const offered = await runAgent({ input: '상속 때문에 너무 슬퍼', caseState: createInitialCaseState() })
+    const accepted = await runAgent({ input: '응, 그렇게 해줘', caseState: offered.caseState })
+
+    expect(accepted.output.meta.intent).toBe('START_ONBOARDING')
+    expect(accepted.output.ui[0]?.type).toBe('CHOICE')
+    expect(accepted.caseState.memory.pendingInteraction?.type).not.toBe('CASE_WORKFLOW_HANDOFF')
+  })
+
+  it('사건 업무 전환을 거절하면 대화 Agent에 남고 제안을 해제한다', async () => {
+    const offered = await runAgent({ input: '상속 때문에 너무 슬퍼', caseState: createInitialCaseState() })
+    const declined = await runAgent({ input: '아니, 지금은 이야기하고 싶어', caseState: offered.caseState })
+
+    expect(declined.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(declined.output.message).toContain('이야기를 더 해도 돼')
+    expect(declined.caseState.memory.pendingInteraction).toBeNull()
+  })
+
   it('커뮤니티 조회가 실패해도 대화는 이어진다', async () => {
     const tips: TipProvider = { search: vi.fn(async () => { throw new Error('SUPABASE_DOWN') }) }
     const result = await runAgent(

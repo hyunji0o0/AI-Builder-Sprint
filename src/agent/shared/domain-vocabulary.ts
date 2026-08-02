@@ -35,9 +35,12 @@ export const definitionQuestionPattern =
 export const casualPattern =
   /^(안녕|안녕하세요|하이|반가워|반갑|고마워|고맙|감사|굿굿|좋아|알겠어|알겠|응|넵|네|ㅇㅋ|오케이|잘자|잘가)[!?.~ㅋㅎㅠ]*$/i
 
-/** 감정 표현. 주제어도 동작어도 없으면 위로가 먼저다. */
+/** 감정 표현. 실제 사건 처리 동작이 함께 없으면 도메인 맥락이어도 대화가 먼저다. */
 export const emotionPattern =
-  /슬퍼|슬프|힘들|외로|보고싶|그립|눈물|허전|먹먹|무섭|두렵|막막|지치|우울|버티|아무것도/
+  /슬퍼|슬프|힘들|외로|보고싶|그립|눈물|허전|먹먹|무섭|두렵|막막|지치|우울|버티|아무것도|속상|괴로/
+
+/** 감정 대화에서 사건 업무로 넘어갈지 사용자에게 확인 중임을 나타내는 메모리 타입. */
+export const CASE_WORKFLOW_HANDOFF_INTERACTION = 'CASE_WORKFLOW_HANDOFF'
 
 const compact = (input: string) => input.replace(/\s/g, '')
 
@@ -64,3 +67,25 @@ export const isDomainQuestion = (input: string) => {
     && definitionQuestionPattern.test(text)
     && !caseOperationPattern.test(text)
 }
+
+/** 상속·사망 맥락의 감정 표현이지만 아직 실제 사건 처리 요청은 아닌가. */
+export const shouldOfferCaseWorkflowHandoff = (input: string) =>
+  hasEmotionalSignal(input)
+  && mentionsDomain(input)
+  && !needsCaseData(input)
+  && !isDomainQuestion(input)
+
+export const hasPendingCaseWorkflowHandoff = (memory?: {
+  pendingInteraction?: { type: string } | null
+}) => memory?.pendingInteraction?.type === CASE_WORKFLOW_HANDOFF_INTERACTION
+
+/** 핸드오프 질문 직후의 명시적인 동의·실행 요청만 사건 업무 시작 신호로 인정한다. */
+export const acceptsCaseWorkflowHandoff = (input: string) => {
+  const text = compact(input).replace(/[^\p{L}\p{N}]/gu, '')
+  if (/아니|싫|하지마|말고|아직|지금은|나중에|괜찮아|안해/.test(text)) return false
+  if (/^(응|어|그래|좋아|좋지|네|넵|오케이|ㅇㅋ)$/.test(text)) return true
+  return /^(?:응|그래|좋아)?(?:그렇게|같이|그럼)?(?:해줘|해줄래|해보자|정리해줘|시작해줘|진행해줘|도와줘)$/.test(text)
+}
+
+export const declinesCaseWorkflowHandoff = (input: string) =>
+  /아니|싫|하지마|말고|아직|지금은|나중에|괜찮아|안해/.test(compact(input))

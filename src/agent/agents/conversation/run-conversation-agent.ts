@@ -5,13 +5,22 @@ import { CaseState, caseStateSchema } from '../../schemas/case-state'
 import { privacyFilter } from '../../safety/privacy-filter'
 import { assessSafety } from '../../safety/safety-hooks'
 import { RunAgentInput, RunAgentResult } from '../../shared/agent-run-contract'
-import { isCasualGreeting, isDomainQuestion } from '../../shared/domain-vocabulary'
+import {
+  CASE_WORKFLOW_HANDOFF_INTERACTION,
+  declinesCaseWorkflowHandoff,
+  hasPendingCaseWorkflowHandoff,
+  isCasualGreeting,
+  isDomainQuestion,
+  shouldOfferCaseWorkflowHandoff,
+} from '../../shared/domain-vocabulary'
 import { AgentLLM } from '../../shared/llm-adapter'
 import { buildStateSummary } from '../../shared/state-summary'
 import { AgentTipCard, TipProvider } from '../../shared/tip-provider'
 import { composeConversationMessage } from './conversation-responder'
 
 const TIP_LIMIT = 3
+const CASE_WORKFLOW_HANDOFF_MESSAGE = '많이 버겁게 느껴질 수 있어. 지금은 해결하려 하지 않고 이야기를 더 해도 돼. 원하면 나중에 확인된 일부터 하나씩 같이 정리해 줄 수 있어. 그렇게 해줄까?'
+const CASE_WORKFLOW_HANDOFF_DECLINED_MESSAGE = '응, 지금은 정리하지 않고 이야기를 더 해도 돼. 하고 싶은 말이 있으면 편하게 들려줘.'
 
 const conversationSystemPrompt = `너는 "애도할 시간"의 일상대화·일반 질문 전용 Agent다.
 사건 상태를 변경하거나 문서 도구와 행정업무 도구를 호출하지 않는다.
@@ -49,6 +58,7 @@ export async function runConversationAgent(
   const state = caseStateSchema.parse(request.caseState)
   const input = privacyFilter.mask(request.input)
   const safety = assessSafety(input, 'CASUAL_CHAT')
+  const awaitingHandoff = hasPendingCaseWorkflowHandoff(state.memory)
 
   // 위기 신호가 있으면 팁 검색도 LLM 생성도 태우지 않는다. 지연이나 실패로 안전
   // 안내가 늦어지면 안 되고, 이 상황에 경험담 카드를 같이 띄우는 것도 맞지 않다.
@@ -59,18 +69,40 @@ export async function runConversationAgent(
       [],
       'CASUAL_CHAT',
       true,
+      null,
     )
   }
 
-  const tips = await lookupTips(input, dependencies.tips)
-  let message = composeConversationMessage(input, tips.length > 0)
+  const offerHandoff = !awaitingHandoff && shouldOfferCaseWorkflowHandoff(input)
+  const handoffDeclined = awaitingHandoff && declinesCaseWorkflowHandoff(input)
+  const tips = offerHandoff || handoffDeclined ? [] : await lookupTips(input, dependencies.tips)
+  let message = offerHandoff
+    ? CASE_WORKFLOW_HANDOFF_MESSAGE
+    : handoffDeclined
+      ? CASE_WORKFLOW_HANDOFF_DECLINED_MESSAGE
+      : composeConversationMessage(input, tips.length > 0)
 
-  if (dependencies.llm) {
+  if (dependencies.llm && !offerHandoff && !handoffDeclined) {
     const generated = await generateMessage(dependencies.llm, input, state, request.recentMessages, tips)
     if (generated) message = generated
   }
 
-  return buildResult(state, message, tips, tips.length ? 'ASK_COMMUNITY_TIP' : 'CASUAL_CHAT', safety.severeDistress)
+  const pendingInteraction = offerHandoff
+    ? {
+        type: CASE_WORKFLOW_HANDOFF_INTERACTION,
+        targetId: null,
+        expectedInput: '확인된 사건 업무를 함께 정리할지에 대한 동의 또는 거절',
+      }
+    : awaitingHandoff ? null : state.memory.pendingInteraction
+
+  return buildResult(
+    state,
+    message,
+    tips,
+    tips.length ? 'ASK_COMMUNITY_TIP' : 'CASUAL_CHAT',
+    safety.severeDistress,
+    pendingInteraction,
+  )
 }
 
 /** 도메인 질문일 때만 커뮤니티를 찾는다. 조회가 실패해도 대화는 그대로 이어간다. */
@@ -121,11 +153,16 @@ function buildResult(
   tips: AgentTipCard[],
   intent: 'CASUAL_CHAT' | 'ASK_COMMUNITY_TIP',
   distressed: boolean,
+  pendingInteraction: CaseState['memory']['pendingInteraction'] = state.memory.pendingInteraction,
 ): RunAgentResult {
   const description = tips.length
     ? `일상 대화에서 커뮤니티 경험담 ${tips.length}건을 함께 안내함`
     : '일상 대화로 응답함'
-  const nextState = recordAgentMemoryEvent(state, 'CONVERSATION_TURN', description, intent)
+  const stateWithPendingInteraction = caseStateSchema.parse({
+    ...state,
+    memory: { ...state.memory, pendingInteraction },
+  })
+  const nextState = recordAgentMemoryEvent(stateWithPendingInteraction, 'CONVERSATION_TURN', description, intent)
 
   return {
     caseState: nextState,

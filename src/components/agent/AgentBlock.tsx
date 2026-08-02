@@ -261,13 +261,24 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   )
 
   if (structured?.type === 'COMMUNITY_REVIEW') {
-    const review = structured.reviews[0]
-    return review ? (
-      <div className="da-review">
-        <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><small>{review.label}</small><strong>비슷한 경험자의 팁</strong></div></div>
-        <blockquote>“{review.excerpt}”</blockquote>
-        <footer><span><Icon name="heart" size={15}/> 도움이 됐어요 {review.helpfulCount}</span><span>{review.createdAt}</span>{review.url && <button onClick={() => navigateCommunity(review.url!)}>원본 글 보기</button>}</footer>
-        <p>추천 이유: {review.reason}<br/>{structured.disclaimer}</p>
+    const reviews = structured.reviews.slice(0, 3)
+    return reviews.length ? (
+      <div className="da-review-group">
+        <div className="da-review-list">
+          {reviews.map((review) => (
+            <article className="da-review" key={review.id}>
+              <div className="da-review-head"><GlassIcon icon="users" tone="sage"/><div><small>{review.label}</small><strong>비슷한 경험자의 팁</strong></div></div>
+              <blockquote>“{review.excerpt}”</blockquote>
+              <p>추천 이유: {review.reason}</p>
+              <footer>
+                <span><Icon name="heart" size={15}/> 도움이 됐어요 {review.helpfulCount}</span>
+                <span>{review.createdAt}</span>
+                {review.url && <button type="button" onClick={() => navigateCommunity(review.url!)}>더 궁금하면 원글 보기</button>}
+              </footer>
+            </article>
+          ))}
+        </div>
+        <p className="da-review-disclaimer">{structured.disclaimer}</p>
       </div>
     ) : null
   }

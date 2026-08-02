@@ -71,8 +71,7 @@ export const createCommunityCommentSchema = communityCommentSchema.pick({
 export type CreateCommunityCommentInput = z.infer<typeof createCommunityCommentSchema>
 
 // agent_and_ui의 agent-output.ts COMMUNITY_REVIEW 블록과 합칠 때 쓸 어댑터.
-// 지금 AgentBlock.tsx는 review 배열의 첫 번째 항목만 렌더링하니,
-// 백엔드에서 이 함수로 변환한 배열을 그대로 흘려보내면 됨.
+// 백엔드에서 이 함수로 변환한 배열을 넘기면 AgentBlock이 관련도 순으로 최대 3개를 렌더링함.
 export type CommunityReviewBlockItem = {
   id: string
   excerpt: string
@@ -104,7 +103,7 @@ export const communityTipSchema = z.object({
 export type CommunityTip = z.infer<typeof communityTipSchema>
 
 // agent_and_ui의 COMMUNITY_REVIEW 블록으로 변환하는 어댑터.
-// 블록은 지금 reviews[0]만 렌더링하므로 가장 관련도 높은 팁이 앞에 오도록 그대로 넘김.
+// 추천 결과의 관련도 순서를 유지해 메인 챗 카드 목록으로 넘김.
 // 블록 스키마가 바뀌면 이 함수만 고치면 됨.
 // 원본 게시물로 이동하는 경로. ReviewRouter가 /community/:id를 상세 페이지로 처리함
 // (src/features/community/routing/community.routes.ts).

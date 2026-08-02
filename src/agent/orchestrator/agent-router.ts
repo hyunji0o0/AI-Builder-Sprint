@@ -3,6 +3,8 @@ import { AgentLLM, extractJson } from '../shared/llm-adapter'
 import { AgentMemory } from '../schemas/case-state'
 import {
   hasEmotionalSignal,
+  hasPendingCaseWorkflowHandoff,
+  acceptsCaseWorkflowHandoff,
   isCasualGreeting,
   isDomainQuestion,
   mentionsDomain,
@@ -31,9 +33,9 @@ JSON만 반환한다: {"route":"CONVERSATION|CASE_WORKFLOW","confidence":0~1}`
  *
  * 순서가 곧 우선순위다.
  *  1) 인사 한 마디 → 대화
- *  2) 감정 표현뿐이고 주제도 처리 요청도 없음 → 대화 (위로가 먼저다)
+ *  2) 감정 표현이 있고 처리 요청은 없음 → 대화 (상속 맥락이어도 위로가 먼저다)
  *  3) 사건 데이터 없이 답할 수 있는 순수 지식 질문 → 대화 (팁 카드가 붙는 경로)
- *  4) 처리 요청이거나 도메인 주제 → 사건 업무
+ *  4) 감정 표현이 아닌 도메인 주제이거나 처리 요청 → 사건 업무
  *  5) 그래도 애매하면 LLM 판단, 확신이 낮으면 규칙 폴백
  *
  * 3번을 4번보다 앞에 둔 게 핵심이다. "상속포기가 뭐야?"는 주제어가 있어도 사용자
@@ -49,8 +51,11 @@ export async function routeAgent(
   recentMessages: Array<{ role: 'agent' | 'user'; text: string }> = [],
   memory?: AgentMemory,
 ): Promise<AgentRoute> {
+  if (hasPendingCaseWorkflowHandoff(memory)) {
+    return acceptsCaseWorkflowHandoff(input) ? 'CASE_WORKFLOW' : 'CONVERSATION'
+  }
   if (isCasualGreeting(input)) return 'CONVERSATION'
-  if (hasEmotionalSignal(input) && !needsCaseData(input) && !mentionsDomain(input)) return 'CONVERSATION'
+  if (hasEmotionalSignal(input) && !needsCaseData(input)) return 'CONVERSATION'
   if (isDomainQuestion(input)) return 'CONVERSATION'
   if (needsCaseData(input) || mentionsDomain(input)) return 'CASE_WORKFLOW'
 

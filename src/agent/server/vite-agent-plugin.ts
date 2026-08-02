@@ -18,6 +18,7 @@ type UpstageChatResponse = {
 export type AgentServerConfig = {
   apiKey: string
   model: string
+  simpleModel: string
   documentPipeline: {
     mode: 'python'
     environment: string
@@ -72,6 +73,7 @@ const createTipProvider = (): TipProvider => ({
 export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
   const installApi = (middlewares: Connect.Server) => {
     const solar = createSolarAdapter(config.apiKey, config.model)
+    const simpleSolar = createSolarAdapter(config.apiKey, config.simpleModel)
     const tips = createTipProvider()
 
     middlewares.use('/api/documents', async (req, res) => {
@@ -120,7 +122,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
           caseState: caseStateSchema.parse(body.caseState),
           uiActionIntent: body.uiActionIntent,
           recentMessages: body.recentMessages,
-        }, { llm: solar, tips })
+        }, { llm: solar, conversationLlm: simpleSolar, tips })
         res.end(JSON.stringify(result))
       } catch {
         res.statusCode = 502
@@ -144,7 +146,7 @@ export function createAgentServerPlugin(config: AgentServerConfig): Plugin {
       try {
         const body = await readBody(req) as { messages?: Array<{ role: string; content: string }> }
         const conversation = Array.isArray(body.messages) ? body.messages.slice(-12) : []
-        const message = await solar.complete(
+        const message = await simpleSolar.complete(
           '다정하고 차분한 한국어 반말로 답변해. 해요체나 합니다체는 사용하지 말고, 친한 척하거나 가볍게 말하지 마. 법률적 결정을 대신하지 마.',
           JSON.stringify(conversation),
         )
