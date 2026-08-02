@@ -2,6 +2,7 @@ import { GlassIcon } from '../../../components/ui/GlassIcon'
 import { Icon } from '../../../components/ui/Icon'
 import { COMMUNITY_MAX_VISIBLE_PAGES, COMMUNITY_PAGE_SIZE } from '../constants/community.constants'
 import { CommunityController } from '../hooks/useCommunity'
+import { getVisibleCommunityPages } from '../services/community.service'
 import {
   CategoryTabs, CommunityBoardRow, CommunityDisclaimer, CommunityHeader,
   CommunitySearchBar, CommunityWriteButton, navigateCommunity,
@@ -45,7 +46,7 @@ export function CommunityBoardHeader({ controller: c }: { controller: CommunityC
 }
 
 export function CommunityPagination({ controller: c }: { controller: CommunityController }) {
-  const pages = Array.from({ length: Math.min(COMMUNITY_MAX_VISIBLE_PAGES, c.totalPages) }, (_, index) => index + 1)
+  const pages = getVisibleCommunityPages(c.page, c.totalPages, COMMUNITY_MAX_VISIBLE_PAGES)
   return <nav className="cm-pagination" aria-label="후기 페이지">
     <button className="cm-page-move" disabled={c.page === 1} onClick={() => c.setPage(Math.max(1,c.page-1))}>
       <Icon name="chevronLeft" size={15}/> 이전 페이지
