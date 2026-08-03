@@ -1,6 +1,7 @@
 import { GlassIcon } from '../../../components/ui/GlassIcon'
 import { Icon } from '../../../components/ui/Icon'
 import { COMMUNITY_MAX_VISIBLE_PAGES, COMMUNITY_PAGE_SIZE } from '../constants/community.constants'
+import { COMMUNITY_REGIONS } from '../constants/community.constants'
 import { CommunityController } from '../hooks/useCommunity'
 import { getVisibleCommunityPages } from '../services/community.service'
 import {
@@ -14,6 +15,7 @@ export function CommunityPage({ controller: c }: { controller: CommunityControll
       <CommunityHeader/>
       <CommunitySearchBar controller={c}/>
       <CategoryTabs controller={c}/>
+      <CommunityRegionPanel controller={c}/>
       <CommunityBoard controller={c}/>
       <CommunityDisclaimer/>
     </main>
@@ -23,12 +25,38 @@ export function CommunityPage({ controller: c }: { controller: CommunityControll
   </section>
 }
 
+function CommunityRegionPanel({ controller: c }: { controller: CommunityController }) {
+  const isStory = c.category === '그냥 이야기'
+  const isCompanion = c.category === '동행글'
+  const regionQuery = c.region ? `&region=${encodeURIComponent(c.region)}` : ''
+  const categoryQuery = c.category !== '전체' && !isCompanion ? `&category=${encodeURIComponent(c.category)}` : ''
+  const writeUrl = isCompanion
+    ? `/community/write?mode=companion${regionQuery}`
+    : isStory
+      ? `/community/write?mode=local${regionQuery}`
+      : `/community/write?from=region${regionQuery}${categoryQuery}`
+  return <section className="cm-local-panel da-glass">
+    <div className="cm-local-intro"><GlassIcon icon="users" tone={isCompanion ? 'peach' : 'blue'}/><span><strong>{isCompanion ? '같이 가는 동행 모임' : '우리 지역 이야기'}</strong><small>{isCompanion ? '같은 지역에서 공공기관 방문을 함께할 사람을 찾아보세요.' : '카테고리에 관계없이 지역별 글을 찾아보고 나눠보세요.'}</small></span></div>
+    <div className={`cm-local-controls ${isStory ? '' : 'cm-universal-region-controls'}`}>
+      {isStory && <div className="cm-local-kind-tabs" role="tablist" aria-label="지역 글 유형">
+        <button role="tab" aria-selected={c.localPostKind === 'ALL'} className={c.localPostKind === 'ALL' ? 'active' : ''} onClick={() => c.setLocalPostKind('ALL')}>전체 이야기</button>
+        <button role="tab" aria-selected={c.localPostKind === 'LOCAL'} className={c.localPostKind === 'LOCAL' ? 'active' : ''} onClick={() => c.setLocalPostKind('LOCAL')}>지역 이야기</button>
+      </div>}
+      <select aria-label={isCompanion ? '동행 모임 지역 필터' : '커뮤니티 지역 필터'} value={c.region} onChange={(event) => c.setRegion(event.target.value)}>
+        <option value="">{isCompanion ? '전국 동행 모임' : '전국 지역 글'}</option>
+        {COMMUNITY_REGIONS.map((region) => <option value={region} key={region}>{region}</option>)}
+      </select>
+      <button className="cm-local-create" onClick={() => navigateCommunity(writeUrl)}>{isCompanion ? '동행 모임 만들기' : '지역 글 쓰기'}</button>
+    </div>
+  </section>
+}
+
 export function CommunityBoard({ controller: c }: { controller: CommunityController }) {
   if (c.error) return <div className="cm-empty da-glass"><GlassIcon icon="alert" tone="coral"/><h3>후기를 불러오는 중 문제가 생겼어요.</h3><p>잠시 후 다시 시도하거나 전체 게시판을 확인해주세요.</p><button onClick={() => void c.retry()}>다시 시도</button></div>
   if (!c.loading && c.pagedReviews.length === 0) return <CommunityEmptyState controller={c}/>
   return <section className="cm-board da-glass" aria-busy={c.loading}>
     <CommunityBoardHeader controller={c}/>
-    <div className="cm-table-head"><span>번호</span><span>분류</span><span>제목</span><span>작성자</span><span>작성일</span><span>도움</span></div>
+    <div className="cm-table-head with-region"><span>번호</span><span>분류</span><span>제목</span><span>지역</span><span>작성자</span><span>작성일</span><span>도움</span></div>
     <div className="cm-rows">
       {c.loading ? <div className="cm-loading">후기를 불러오고 있어요…</div> : c.pagedReviews.map((review, index) =>
         <CommunityBoardRow key={review.id} review={review} number={(c.page - 1) * COMMUNITY_PAGE_SIZE + index + 1} similarity={c.similarity(review)}/>)}
@@ -38,7 +66,8 @@ export function CommunityBoard({ controller: c }: { controller: CommunityControl
 }
 
 export function CommunityBoardHeader({ controller: c }: { controller: CommunityController }) {
-  return <div className="cm-board-header"><div><strong>전체 후기</strong><span>{c.reviews.length}개</span></div>
+  const title = c.category === '동행글' ? '동행 모임' : c.localPostKind === 'LOCAL' ? '지역 이야기' : '전체 후기'
+  return <div className="cm-board-header"><div><strong>{title}</strong><span>{c.reviews.length}개</span></div>
     <select aria-label="후기 정렬" value={c.sort} onChange={(event) => c.setSort(event.target.value as CommunityController['sort'])}>
       <option value="LATEST">최신순</option><option value="HELPFUL">도움순</option>
     </select>

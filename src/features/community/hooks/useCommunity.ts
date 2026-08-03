@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { COMMUNITY_PAGE_SIZE } from '../constants/community.constants'
-import { CommunityReview, CommunitySort, CommunityUserContext, SearchScope } from '../model/community.types'
+import { CommunityReview, CommunitySort, CommunityUserContext, LocalPostKind, SearchScope } from '../model/community.types'
 import { calculateReviewSimilarity, communityRepository } from '../services/community.service'
 
 export function useCommunity() {
@@ -14,7 +14,9 @@ export function useCommunity() {
   const [reviews, setReviews] = useState<CommunityReview[]>([])
   const [searchText, setSearchText] = useState('')
   const [searchScope, setSearchScope] = useState<SearchScope>('ALL')
-  const [category, setCategory] = useState('전체')
+  const [category, setCategoryState] = useState('전체')
+  const [region, setRegion] = useState('')
+  const [localPostKind, setLocalPostKind] = useState<LocalPostKind>('ALL')
   const [sort, setSort] = useState<CommunitySort>('LATEST')
   const [similarOnly, setSimilarOnly] = useState(false)
   const [page, setPage] = useState(1)
@@ -29,7 +31,8 @@ export function useCommunity() {
         text: searchText,
         scope: searchScope,
         category,
-        region: null,
+        region: region || null,
+        localPostKind,
         sort,
         similarOnly,
         userContext: communityUserContext,
@@ -40,10 +43,10 @@ export function useCommunity() {
     } finally {
       setLoading(false)
     }
-  }, [category, searchScope, searchText, similarOnly, sort])
+  }, [category, localPostKind, region, searchScope, searchText, similarOnly, sort])
 
   useEffect(() => { void load() }, [load])
-  useEffect(() => { setPage(1) }, [category, searchText, similarOnly, sort])
+  useEffect(() => { setPage(1) }, [category, localPostKind, region, searchText, similarOnly, sort])
 
   const totalPages = Math.max(1, Math.ceil(reviews.length / COMMUNITY_PAGE_SIZE))
   const pagedReviews = useMemo(
@@ -58,18 +61,27 @@ export function useCommunity() {
   const reset = () => {
     setSearchText('')
     setSearchScope('ALL')
-    setCategory('전체')
+    setCategoryState('전체')
+    setRegion('')
+    setLocalPostKind('ALL')
     setSort('LATEST')
     setSimilarOnly(false)
     setPage(1)
   }
 
+  const setCategory = (nextCategory: typeof category) => {
+    setCategoryState(nextCategory)
+    if (nextCategory !== '그냥 이야기') {
+      setLocalPostKind('ALL')
+    }
+  }
+
   return {
-    reviews, pagedReviews, searchText, searchScope, category, sort, similarOnly,
+    reviews, pagedReviews, searchText, searchScope, category, region, localPostKind, sort, similarOnly,
     page, totalPages, helpfulRanking, loading, error,
     userContext: communityUserContext,
     similarity: (review: CommunityReview) => calculateReviewSimilarity(review, communityUserContext),
-    setSearchText, setSearchScope, setCategory, setSort, setSimilarOnly, setPage,
+    setSearchText, setSearchScope, setCategory, setRegion, setLocalPostKind, setSort, setSimilarOnly, setPage,
     reset, retry: load,
   }
 }

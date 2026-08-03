@@ -2,6 +2,7 @@ import type { ServerResponse } from 'node:http'
 import type { Connect, Plugin } from 'vite'
 import { createCommunityCommentSchema, createCommunityPostSchema, toCommunityReviewBlock, updateCommunityPostSchema } from '../schemas/community'
 import { createCommunityComment, listCommunityComments } from './community-comment-store'
+import { hasUnsafeLocalMeetingInformation } from './pii-guard'
 import {
   createCommunityPost,
   deleteCommunityPost,
@@ -60,6 +61,9 @@ export function createCommunityServerPlugin(): Plugin {
         if (req.method === 'POST') {
           try {
             const body = createCommunityPostSchema.parse(await readBody(req))
+            if (body.content.includes('[관련 업무] 지역모임') && hasUnsafeLocalMeetingInformation(body.content)) {
+              throw new Error('UNSAFE_LOCAL_GATHERING_INFORMATION')
+            }
             const post = await createCommunityPost(body)
             res.statusCode = 201
             res.end(JSON.stringify(post))
@@ -157,6 +161,10 @@ export function createCommunityServerPlugin(): Plugin {
         if (req.method === 'POST') {
           try {
             const body = createCommunityCommentSchema.parse(await readBody(req))
+            const sourcePost = await getCommunityPost(postId)
+            if (sourcePost?.content.includes('[관련 업무] 지역모임') && hasUnsafeLocalMeetingInformation(body.content)) {
+              throw new Error('UNSAFE_LOCAL_GATHERING_INFORMATION')
+            }
             const comment = await createCommunityComment(postId, body)
             res.statusCode = 201
             res.end(JSON.stringify(comment))

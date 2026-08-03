@@ -8,6 +8,7 @@ export const communityCategorySchema = z.enum([
   'INSURANCE',
   'SUBSCRIPTION',
   'VENT',
+  'COMPANION',
   'ETC',
 ])
 export type CommunityCategory = z.infer<typeof communityCategorySchema>
@@ -22,6 +23,7 @@ export const CATEGORY_LABEL: Record<CommunityCategory, string> = {
   INSURANCE: '보험청구',
   SUBSCRIPTION: '통신·구독해지',
   VENT: '그냥 이야기',
+  COMPANION: '동행글',
   ETC: '기타',
 }
 

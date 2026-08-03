@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "guardrails:evaluate": "vitest run --configLoader runner src/agent/safety/guardrail-evaluation.test.ts",
     "routing:evaluate": "vitest run --configLoader runner src/agent/orchestrator/agent-router.evaluation.test.ts",
+    "tips:evaluate": "vitest run --configLoader runner src/server/community-search-ranking.test.ts",
     "fixtures:generate": "node scripts/generate-document-fixtures.mjs"
   },
   "dependencies": {

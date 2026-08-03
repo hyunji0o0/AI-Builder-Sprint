@@ -3,8 +3,9 @@ import { fetchCommunityComments, submitCommunityComment } from '../../../client/
 import { GlassIcon } from '../../../components/ui/GlassIcon'
 import { CommunityComment } from '../../../schemas/community'
 import { toKstDate } from '../services/community.format'
+import { hasPossiblePrivateInformation, hasUnsafeLocalMeetingInformation } from '../services/community.service'
 
-export function ReviewComments({ postId }: { postId: string }) {
+export function ReviewComments({ postId, isLocalGathering = false }: { postId: string; isLocalGathering?: boolean }) {
   const [comments, setComments] = useState<CommunityComment[]>([])
   const [loading, setLoading] = useState(true)
   const [replyTo, setReplyTo] = useState<string | null>(null)
@@ -43,13 +44,13 @@ export function ReviewComments({ postId }: { postId: string }) {
           <CommentBody comment={comment}>
             <button className="cm-comment-reply-toggle" onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}>답글쓰기</button>
           </CommentBody>
-          {replyTo === comment.id && <CommentForm compact onSubmit={(nickname, content) => submit(nickname, content, comment.id)}/>}
+          {replyTo === comment.id && <CommentForm compact isLocalGathering={isLocalGathering} onSubmit={(nickname, content) => submit(nickname, content, comment.id)}/>}
           {repliesOf(comment.id).length > 0 && <ul className="cm-comment-replies">
             {repliesOf(comment.id).map((reply) => <li key={reply.id} className="cm-comment cm-comment-reply"><CommentBody comment={reply}/></li>)}
           </ul>}
         </li>)}
       </ul>}
-    <CommentForm onSubmit={(nickname, content) => submit(nickname, content, null)}/>
+    <CommentForm isLocalGathering={isLocalGathering} onSubmit={(nickname, content) => submit(nickname, content, null)}/>
   </section>
 }
 
@@ -64,11 +65,15 @@ function CommentBody({ comment, children }: { comment: CommunityComment; childre
   </div>
 }
 
-function CommentForm({ onSubmit, compact = false }: { onSubmit: (nickname: string, content: string) => void; compact?: boolean }) {
+function CommentForm({ onSubmit, compact = false, isLocalGathering = false }: { onSubmit: (nickname: string, content: string) => void; compact?: boolean; isLocalGathering?: boolean }) {
   const [nickname, setNickname] = useState('')
   const [content, setContent] = useState('')
+  const privacyWarning = isLocalGathering
+    ? hasUnsafeLocalMeetingInformation(content)
+    : hasPossiblePrivateInformation(content)
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (privacyWarning) return
     onSubmit(nickname, content)
     setNickname('')
     setContent('')
@@ -76,6 +81,7 @@ function CommentForm({ onSubmit, compact = false }: { onSubmit: (nickname: strin
   return <form className={`cm-comment-form ${compact ? 'compact' : ''}`} onSubmit={submit}>
     <input aria-label="닉네임" placeholder="닉네임" value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={20}/>
     <textarea aria-label="댓글 내용" placeholder={compact ? '답글을 남겨보세요' : '댓글을 남겨보세요'} value={content} onChange={(event) => setContent(event.target.value)}/>
-    <button type="submit" disabled={!nickname.trim() || !content.trim()}>등록</button>
+    <button type="submit" disabled={!nickname.trim() || !content.trim() || privacyWarning}>등록</button>
+    {privacyWarning && <small className="cm-comment-privacy">연락처나 상세 주소는 댓글에 남길 수 없어요.</small>}
   </form>
 }

@@ -54,10 +54,11 @@ export { navigateCommunity }
 export function CommunityBoardRow({ review, number, similarity }: { review: CommunityReview; number: number | string; similarity: number }) {
   const [commentCount, setCommentCount] = useState(review.commentCount)
   useEffect(() => { void fetchCommunityComments(review.id).then((comments) => setCommentCount(comments.length)).catch(() => {}) }, [review.id])
-  return <button className={`cm-row ${review.isNotice ? 'notice' : ''}`} onClick={() => navigateCommunity(`/community/${review.id}`)}>
+  return <button className={`cm-row with-region ${review.isNotice ? 'notice' : ''}`} onClick={() => navigateCommunity(`/community/${review.id}`)}>
     <span className="cm-number">{review.isNotice ? '공지' : number}</span>
-    <span className="cm-category-cell"><ReviewCategoryBadges categories={review.categories} max={2}/></span>
+    <span className="cm-category-cell"><ReviewCategoryBadges categories={review.categories} max={1}/></span>
     <strong title={review.title}>{review.title}{commentCount > 0 && <small>[{commentCount}]</small>}</strong>
+    <span className="cm-region-cell" title={review.region ?? '지역 무관'}>{review.region ?? '지역 무관'}</span>
     <span>{review.authorName}</span><time>{toKstDate(review.createdAt).slice(5).replace('-','.')}</time>
     <span className="cm-helpful"><Icon name="heart" size={14}/>{review.helpfulCount}</span>
   </button>

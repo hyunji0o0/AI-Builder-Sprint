@@ -1,7 +1,7 @@
 /** Public domain models for the community feature. */
 export type ReviewCategory =
   | '상속포기·한정승인' | '상속세' | '명의이전'
-  | '보험청구' | '통신·구독해지' | '그냥 이야기' | '기타'
+  | '보험청구' | '통신·구독해지' | '그냥 이야기' | '동행글' | '기타'
 
 export type CommunityReview = {
   id: string
@@ -38,12 +38,14 @@ export type CommunityUserContext = {
 
 export type CommunitySort = 'LATEST' | 'HELPFUL' | 'SIMILAR'
 export type SearchScope = 'ALL' | 'TITLE' | 'CONTENT' | 'AUTHOR'
+export type LocalPostKind = 'ALL' | 'LOCAL'
 
 export type CommunitySearchQuery = {
   text: string
   scope: SearchScope
   category: string | null
   region: string | null
+  localPostKind?: LocalPostKind
   sort: CommunitySort
   userContext?: CommunityUserContext
   similarOnly?: boolean

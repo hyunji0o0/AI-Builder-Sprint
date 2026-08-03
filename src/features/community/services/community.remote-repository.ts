@@ -98,6 +98,7 @@ export function parseContentToReview(content: string): ParsedReviewContent {
 
 export function mapPostToReview(post: CommunityPost, commentCount: number): CommunityReview {
   const parsed = parseContentToReview(post.content)
+  const isOperationalExample = post.nickname === '곁 운영팀' && post.content.includes('[운영 예시 ID]')
   return {
     id: post.id,
     categories: post.categories.map(categoryCodeToLabel),
@@ -120,7 +121,7 @@ export function mapPostToReview(post: CommunityPost, commentCount: number): Comm
     helpfulCount: post.helpfulCount,
     commentCount,
     isNotice: false,
-    isSynthetic: false,
+    isSynthetic: isOperationalExample,
   }
 }
 

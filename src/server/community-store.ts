@@ -111,6 +111,34 @@ export async function searchCommunityPosts(
   return (data as (PostRow & { similarity: number })[]).map((row) => ({ ...fromRow(row), similarity: row.similarity }))
 }
 
+/**
+ * 임베딩이 없거나 표현이 달라도 키워드 재정렬 후보에 들어갈 수 있도록 글을 가져온다.
+ * 확장된 핵심 키워드 중 하나라도 본문에 있는 글만 후보로 가져오고, 실제 키워드 점수와
+ * 관련성 컷은 community-search-ranking.ts의 순수 함수가 담당한다.
+ */
+export async function searchCommunityPostsByKeywords(
+  keywords: string[],
+  category?: string,
+  limit = 50,
+): Promise<CommunityPost[]> {
+  const safeKeywords = keywords
+    .map((keyword) => keyword.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter((keyword) => keyword.length >= 2)
+    .slice(0, 16)
+  if (safeKeywords.length === 0) return []
+
+  let query = supabase
+    .from('community_posts')
+    .select('*')
+    .or(safeKeywords.map((keyword) => `content.ilike.%${keyword}%`).join(','))
+    .order('helpful_count', { ascending: false })
+    .limit(limit)
+  if (category && category !== 'ALL') query = query.contains('categories', [category])
+  const { data, error } = await query
+  if (error) throw error
+  return (data as PostRow[]).map(fromRow)
+}
+
 export async function deleteCommunityPost(id: string): Promise<boolean> {
   // community_comments.post_id가 on delete cascade라 댓글도 같이 지워짐(schema.sql).
   const { error, count } = await supabase.from('community_posts').delete({ count: 'exact' }).eq('id', id)
