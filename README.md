@@ -82,11 +82,11 @@ LLM이 사건 상태를 직접 임의 변경하지 않도록 Agent가 선택한 
 | 프롬프트 인젝션 방어 | 시스템 지침 변경, 내부 프롬프트 공개, 역할 이탈 요청을 코드 수준에서 탐지 | [`adversarial-input-guard.ts`](src/agent/safety/adversarial-input-guard.ts) |
 | 서비스 범위 제한 | 실제로 없는 일정 예약·자동 제출 등 기능을 Agent가 약속하지 못하도록 허용 기능 목록 검증 | [`service-capabilities.ts`](src/agent/safety/service-capabilities.ts) |
 | 위기 신호 우선 처리 | 즉각적인 위험이 의심되면 일반 행정·커뮤니티 추천보다 안전 경로를 우선 | [`safety-hooks.ts`](src/agent/safety/safety-hooks.ts) |
-| 라우팅 평가 | 일상 대화와 사건 처리 요청이 올바른 Agent로 전달되는지 평가 | `pnpm routing:evaluate` |
-| 가드레일 평가 | 공격성 입력·법률 단정·서비스 범위 이탈 시나리오 평가 | `pnpm guardrails:evaluate` |
-| 커뮤니티 검색 평가 | 키워드와 의미 검색의 관련성 및 무관한 추천 차단 평가 | `pnpm tips:evaluate` |
+| 라우팅 평가 | 일상 대화와 사건 처리 요청이 올바른 Agent로 전달되는지 평가 | `npm run routing:evaluate` |
+| 가드레일 평가 | 공격성 입력·법률 단정·서비스 범위 이탈 시나리오 평가 | `npm run guardrails:evaluate` |
+| 커뮤니티 검색 평가 | 키워드와 의미 검색의 관련성 및 무관한 추천 차단 평가 | `npm run tips:evaluate` |
 
-전체 단위·통합 테스트는 `pnpm test`, 타입 및 프로덕션 빌드 검증은 `pnpm build`, 정적 코드 검사는 `pnpm lint`로 재현할 수 있습니다.
+전체 단위·통합 테스트는 `npm run test`, 타입 및 프로덕션 빌드 검증은 `npm run build`, 정적 코드 검사는 `npm run lint`로 재현할 수 있습니다.
 
 ## 기술 스택
 
@@ -121,7 +121,7 @@ docs/                       기획·대회·AI 활용 문서
 ### 1. 사전 준비
 
 - **Node.js 20 LTS 이상**
-- **pnpm 10 이상**
+- **npm 10 이상** (Node.js 설치 시 함께 설치됨)
 - **Python 3.10 이상**
 - Upstage API Key
 - Supabase 프로젝트
@@ -133,7 +133,7 @@ docs/                       기획·대회·AI 활용 문서
 ```bash
 git clone https://github.com/hyunji0o0/AI-Builder-Sprint.git
 cd AI-Builder-Sprint
-pnpm install
+npm install
 ```
 
 Python 문서 파이프라인 의존성을 설치합니다.
@@ -176,7 +176,7 @@ cp .env.local.example .env.local
 ### 5. 개발 서버 실행
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 브라우저에서 [http://localhost:5173](http://localhost:5173)을 엽니다. 개발 서버에는 프론트엔드와 다음 API middleware가 함께 실행됩니다.
@@ -237,40 +237,40 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 - Python subprocess: Upstage 문서 분석 파이프라인
 - 외부 관리형 서비스: Upstage API, Supabase DB/Auth
 
-따라서 **전체 기능 테스트와 데모는 반드시 `pnpm dev`로 실행**해야 합니다. `pnpm build`로 생성한 `dist/`는 프론트엔드 정적 파일만 포함하므로, 이를 별도로 호스팅해도 `/api/agent`, `/api/documents`, `/api/community/*`는 동작하지 않습니다.
+따라서 **전체 기능 테스트와 데모는 반드시 `npm run dev`로 실행**해야 합니다. `npm run build`로 생성한 `dist/`는 프론트엔드 정적 파일만 포함하므로, 이를 별도로 호스팅해도 `/api/agent`, `/api/documents`, `/api/community/*`는 동작하지 않습니다.
 
 외부 운영 배포는 현재 제출 범위에 포함하지 않습니다. 향후 배포할 때는 Vite middleware를 Node 서버 또는 Serverless Function으로 이전해야 하며, `UPSTAGE_API_KEY`와 `SUPABASE_SERVICE_ROLE_KEY`는 서버 런타임에만 주입해야 합니다.
 
 ### 빌드 및 정적 미리보기
 
 ```bash
-pnpm build
-pnpm preview
+npm run build
+npm run preview
 ```
 
-`pnpm preview`는 정적 화면 확인용입니다. Agent·문서 분석·커뮤니티 API까지 검증하려면 `pnpm dev`를 사용하세요.
+`npm run preview`는 정적 화면 확인용입니다. Agent·문서 분석·커뮤니티 API까지 검증하려면 `npm run dev`를 사용하세요.
 
 ## 검증 명령어
 
 ```bash
-pnpm lint
-pnpm test
-pnpm build
+npm run lint
+npm run test
+npm run build
 ```
 
 세부 평가 명령은 다음과 같습니다.
 
 ```bash
-pnpm guardrails:evaluate
-pnpm routing:evaluate
-pnpm tips:evaluate
+npm run guardrails:evaluate
+npm run routing:evaluate
+npm run tips:evaluate
 ```
 
 ## 자주 발생하는 문제
 
 ### `Port 5173 is already in use`
 
-기존 개발 서버가 실행 중입니다. 이전 터미널의 Vite 프로세스를 종료한 뒤 `pnpm dev`를 다시 실행하세요. 이 프로젝트는 잘못된 서버에 접속하는 일을 막기 위해 `strictPort`를 사용합니다.
+기존 개발 서버가 실행 중입니다. 이전 터미널의 Vite 프로세스를 종료한 뒤 `npm run dev`를 다시 실행하세요. 이 프로젝트는 잘못된 서버에 접속하는 일을 막기 위해 `strictPort`를 사용합니다.
 
 ### `UPSTAGE_API_KEY` 또는 Supabase 환경변수 오류
 
