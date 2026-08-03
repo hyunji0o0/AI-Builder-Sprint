@@ -146,6 +146,23 @@ describe('대화 Agent', () => {
     expect(result.output.meta.usedTools).toEqual(['retrieveLegalSources'])
   })
 
+  it.each([
+    '상속 관련 절차 더 보내봐',
+    '상속 절차를 더 알려줘',
+    '상속은 어떤 순서로 진행해?',
+    '상속 진행 과정을 설명해줘',
+  ])('상속 절차 설명 요청 %s을 공식 법령 근거 경로로 처리한다', async (input) => {
+    const result = await runAgent({ input, caseState: createInitialCaseState() })
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_INFORMATION')
+    expect(result.output.message).toContain('상속 관련 절차')
+    expect(result.output.message).toContain('재산과 채무 확인')
+    expect(result.output.message).toContain('민법 제1019조')
+    expect(result.output.ui[0]?.type).toBe('LEGAL_REFERENCE')
+    expect(result.output.meta.usedTools).toEqual(['retrieveLegalSources'])
+    expect(result.output.message).not.toContain('요청을 정확히 이해하지 못했어')
+  })
+
   it('상담 준비를 모두 마친 뒤에도 상속 기한 질문은 법령 근거로 답한다', async () => {
     const completedCase = createInitialCaseState()
     completedCase.stage = 'COMPLETED'
