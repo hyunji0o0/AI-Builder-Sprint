@@ -32,6 +32,62 @@
 
 핵심 원칙은 **“판단과 계산은 코드가, 읽기와 설명은 AI가”**입니다. Agent는 한 요청에서 필요한 행동과 도구를 선택하지만, 금액 합계·상태 전이·기한 검증은 일반 코드가 수행합니다.
 
+## AI 활용 증빙
+
+이 절과 연결된 코드·프롬프트·테스트 결과를 AI 활용 증빙 자료로 제출합니다. 별도의 `CLAUDE.md` 없이도 아래 링크를 통해 모델 사용 위치, Agent 지침, 안전장치와 검증 결과를 저장소에서 바로 확인할 수 있습니다.
+
+### 사용 모델 및 API
+
+| AI/API | 서비스에서 하는 일 | 구현 근거 |
+| --- | --- | --- |
+| **Upstage Solar LLM** | 사용자 의도·정서 분류, 다음 행동 선택, 도구 결과를 한국어 답변과 UI Block으로 구성 | [`vite-agent-plugin.ts`](src/agent/server/vite-agent-plugin.ts), [`run-agent.ts`](src/agent/orchestrator/run-agent.ts) |
+| **Upstage Document Parse** | 업로드한 이미지·PDF의 글자, 표와 문서 구조를 OCR로 추출 | [`document_parser.py`](src/agent/document-processing/python/document_parser.py) |
+| **Upstage Information Extract** | 문서 종류에 맞는 스키마로 사망 정보, 기관명, 자산·채무 등 핵심 필드를 구조화 | [`information_extractor.py`](src/agent/document-processing/python/information_extractor.py), [`document_analysis_pipeline.py`](src/agent/document-processing/python/document_analysis_pipeline.py) |
+| **Upstage Embeddings** | 커뮤니티 글과 사용자 상황의 의미 유사도를 검색해 현재 절차에 맞는 경험담 후보를 선정 | [`upstage-client.ts`](src/server/upstage-client.ts), [`community-recommend.ts`](src/server/community-recommend.ts) |
+| **Solar 기반 재정렬·요약** | 검색 후보 안에서만 추천 이유와 요약을 생성하고, 글 ID·날짜·도움 수는 코드가 원본 데이터에서 채움 | [`community-recommend.ts`](src/server/community-recommend.ts), [`community-recommend.json`](prompts/community-recommend.json) |
+
+### Agent Harness와 프롬프트 관리
+
+- 단일 실행 진입점: [`src/agent/orchestrator/run-agent.ts`](src/agent/orchestrator/run-agent.ts)
+- 대화 Agent/사건 Agent 라우팅: [`src/agent/orchestrator/agent-router.ts`](src/agent/orchestrator/agent-router.ts)
+- 의도 분류 → 행동 선택 → Tool Call → 응답 구성: [`src/agent/agents/case-workflow/`](src/agent/agents/case-workflow/)
+- 일상 대화·정서 응답: [`src/agent/agents/conversation/`](src/agent/agents/conversation/)
+- 역할별 수정 가능한 프롬프트 초안: [`src/agent/prompts/`](src/agent/prompts/)
+- 커뮤니티 추천 프롬프트와 평가 질의: [`prompts/community-recommend.json`](prompts/community-recommend.json), [`prompts/eval-queries.json`](prompts/eval-queries.json)
+
+LLM이 사건 상태를 직접 임의 변경하지 않도록 Agent가 선택한 행동은 도구 계층을 거칩니다. 금액 합계, 누락 정보, 업무 상태와 기한은 코드가 다시 계산하고 Zod 런타임 스키마로 입력·출력을 검증합니다. 한 요청의 도구 실행 횟수도 제한해 반복 호출과 무한 루프를 방지합니다.
+
+### 문서 분석 검증
+
+문서 파이프라인은 다음 순서로 검증합니다.
+
+```text
+원본 파일
+  -> Document Parse
+  -> 본문 기반 문서·기관 분류
+  -> Information Extract
+  -> 스키마/날짜/금액 검증
+  -> 사용자 확인 또는 수정
+  -> 확인된 값만 CaseState에 반영
+```
+
+저장된 파이프라인 평가 결과는 [`tests/results/pipeline/pipeline_test_summary.json`](tests/results/pipeline/pipeline_test_summary.json)에서 확인할 수 있습니다. 기록된 평가에서는 실제 실행된 샘플 14건이 모두 파이프라인 처리, 문서 분류, 기관 분류와 스키마 검증을 통과했습니다. 샘플이 없어 건너뛴 항목은 결과 파일에 `SKIP`과 사유를 함께 남겨 성공률에 포함하지 않았습니다.
+
+### 안전성과 품질 검증
+
+| 검증 항목 | 적용 방식 | 증빙 코드/명령 |
+| --- | --- | --- |
+| 개인정보 보호 | LLM 입력 전과 출력 후 주민번호·전화번호·이메일·계좌/카드번호 마스킹 | [`privacy-filter.ts`](src/agent/safety/privacy-filter.ts), [`pii-guard.ts`](src/server/pii-guard.ts) |
+| 법률 판단 경계 | “상속포기하세요”와 같은 단정적 결론을 차단하고 정보 제공·전문가 확인 안내로 교정 | [`output-guard.ts`](src/agent/safety/output-guard.ts) |
+| 프롬프트 인젝션 방어 | 시스템 지침 변경, 내부 프롬프트 공개, 역할 이탈 요청을 코드 수준에서 탐지 | [`adversarial-input-guard.ts`](src/agent/safety/adversarial-input-guard.ts) |
+| 서비스 범위 제한 | 실제로 없는 일정 예약·자동 제출 등 기능을 Agent가 약속하지 못하도록 허용 기능 목록 검증 | [`service-capabilities.ts`](src/agent/safety/service-capabilities.ts) |
+| 위기 신호 우선 처리 | 즉각적인 위험이 의심되면 일반 행정·커뮤니티 추천보다 안전 경로를 우선 | [`safety-hooks.ts`](src/agent/safety/safety-hooks.ts) |
+| 라우팅 평가 | 일상 대화와 사건 처리 요청이 올바른 Agent로 전달되는지 평가 | `pnpm routing:evaluate` |
+| 가드레일 평가 | 공격성 입력·법률 단정·서비스 범위 이탈 시나리오 평가 | `pnpm guardrails:evaluate` |
+| 커뮤니티 검색 평가 | 키워드와 의미 검색의 관련성 및 무관한 추천 차단 평가 | `pnpm tips:evaluate` |
+
+전체 단위·통합 테스트는 `pnpm test`, 타입 및 프로덕션 빌드 검증은 `pnpm build`, 정적 코드 검사는 `pnpm lint`로 재현할 수 있습니다.
+
 ## 기술 스택
 
 | 영역 | 사용 기술 |
