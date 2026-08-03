@@ -1,7 +1,7 @@
 .da-page{height:100dvh;padding:14px;overflow:hidden;color:#263a55;background-color:#dce6f4;background-image:linear-gradient(135deg,rgba(204,224,248,.16),rgba(255,245,236,.1)),url("/aedohal-sigan-cloud-background.svg");background-size:cover;background-position:center;background-repeat:no-repeat;position:relative}
 .da-shell{position:relative;width:100%;height:calc(100dvh - 28px);display:grid;grid-template-columns:220px minmax(0,1fr) 270px;gap:12px;padding:12px;border:2px solid rgba(255,255,255,.94);border-radius:30px;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,245,238,.13));box-shadow:0 30px 90px rgba(64,78,110,.22),inset 0 2px 3px rgba(255,255,255,.98),inset 0 -2px 3px rgba(236,172,141,.18);backdrop-filter:blur(14px) saturate(115%)}
 .da-glass{border:2px solid rgba(255,255,255,.9);background:linear-gradient(135deg,rgba(255,255,255,.5),rgba(255,244,237,.27));box-shadow:0 18px 44px rgba(74,84,115,.16),inset 0 2px 3px rgba(255,255,255,.98),inset 0 -2px 3px rgba(230,157,122,.28);backdrop-filter:blur(20px) saturate(118%)}
-.da-sidebar{min-height:0;display:flex;flex-direction:column;padding:13px 11px;border-right:1px solid rgba(255,255,255,.65)}
+.da-sidebar{min-height:0;display:flex;flex-direction:column;padding:13px 11px;border-right:1px solid rgba(255,255,255,.65);overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:rgba(112,129,153,.32) transparent}
 .da-brand{display:flex;align-items:center;gap:14px;padding:5px 4px 22px}.da-brand strong{display:block;font-family:"Gowun Batang",serif;font-size:23px;line-height:1.15}.da-brand span{display:block;margin-top:6px;color:#8591a3;font-size:11px}
 .da-brand-logo{width:54px;height:54px;flex:0 0 54px;display:block;object-fit:contain;filter:drop-shadow(0 9px 12px rgba(131,82,61,.2))}
 .da-orb{width:40px;height:40px;flex:0 0 40px;display:inline-flex;align-items:center;justify-content:center;position:relative;border:1px solid rgba(255,255,255,.96);border-radius:50%;box-shadow:inset 3px 3px 5px rgba(255,255,255,.95),inset -4px -5px 8px rgba(63,79,111,.15),0 6px 13px rgba(58,73,104,.19)}.da-orb>svg{position:absolute;left:50%;top:50%;z-index:1;margin:0;transform:translate(-50%,-50%)}.da-orb:after{content:"";position:absolute;width:28%;height:15%;left:20%;top:13%;border-radius:50%;background:rgba(255,255,255,.9)}
@@ -346,7 +346,6 @@
 .da-sidebar nav button.active{color:#a9543c;border-color:transparent;background:transparent;box-shadow:none}
 
 @media(min-width:1400px){
-  .da-sidebar nav{--nav-item-h:60px;--nav-gap:10px}
   .da-progress{padding:12px 18px}
   .da-progress h1{font-size:24px;letter-spacing:2.8px}
   .da-progress-title button{padding:6px 10px}
@@ -355,7 +354,6 @@
   .da-stage-orb{width:35px;height:35px;flex-basis:35px}
 }
 @media(min-width:1800px){
-  .da-sidebar nav{--nav-item-h:70px;--nav-gap:12px}
   .da-progress{padding:13px 20px}
   .da-progress h1{font-size:28px;letter-spacing:3.4px}
   .da-progress-title button{padding:7px 11px}
@@ -365,14 +363,14 @@
 }
 
 /* Larger sidebar navigation for easier scanning and selection. */
-@media(min-width:1400px){
+@media(min-width:1400px) and (min-height:900px){
   .da-sidebar nav{--nav-item-h:74px;--nav-gap:13px}
   .da-sidebar nav button{gap:15px;padding:10px 14px;font-size:18px}
   .da-nav-icon{width:54px;height:54px;border-radius:16px}
   .da-nav-icon svg{width:25px;height:25px}
   .da-nav-slider{border-radius:22px}
 }
-@media(min-width:1800px){
+@media(min-width:1800px) and (min-height:1050px){
   .da-sidebar nav{--nav-item-h:84px;--nav-gap:15px}
   .da-sidebar nav button{gap:17px;padding:11px 15px;font-size:20px}
   .da-nav-icon{width:60px;height:60px;border-radius:18px}

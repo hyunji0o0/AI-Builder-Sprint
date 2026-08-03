@@ -26,3 +26,9 @@ function redactAccountLike(text: string): string {
 export function redactPii(text: string): string {
   return redactAccountLike(redactStructuredPii(text))
 }
+
+export function hasUnsafeLocalMeetingInformation(text: string): boolean {
+  return redactPii(text) !== text
+    || /(?:로|길)\s*\d+(?:-\d+)?(?:번지)?|\d+동\s*\d+호/.test(text)
+    || /https?:\/\/|open\.kakao|오픈채팅|카카오톡|텔레그램|인스타(?:그램)?\s*(?:아이디|계정)/i.test(text)
+}

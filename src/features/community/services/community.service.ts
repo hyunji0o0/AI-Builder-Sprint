@@ -50,7 +50,20 @@ export const hasPossiblePrivateInformation = (text: string) => [
   /\b01[016789]-?\d{3,4}-?\d{4}\b/,
   /\b\d{2,6}-\d{2,6}-\d{2,8}\b/,
   /\b\d{4,}-?\d{2,}-?\d{2,}\b/,
+  /(?:로|길)\s*\d+(?:-\d+)?(?:번지)?/,
+  /\d+동\s*\d+호/,
+  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
 ].some((pattern) => pattern.test(text))
+
+export const hasUnsafeLocalMeetingInformation = (text: string) =>
+  hasPossiblePrivateInformation(text)
+  || /https?:\/\/|open\.kakao|오픈채팅|카카오톡|텔레그램|인스타(?:그램)?\s*(?:아이디|계정)/i.test(text)
+
+export const formatCommunityRegion = (region: string, district = '') => {
+  const province = region.trim()
+  if (!province) return null
+  return [province, district.trim()].filter(Boolean).join(' · ')
+}
 
 export interface CommunityStorage {
   getItem(key: string): string | null

@@ -111,6 +111,51 @@ export async function searchCommunityPosts(
   return (data as (PostRow & { similarity: number })[]).map((row) => ({ ...fromRow(row), similarity: row.similarity }))
 }
 
+/**
+ * 임베딩이 없거나 표현이 달라도 키워드 재정렬 후보에 들어갈 수 있도록 글을 가져온다.
+ * 확장된 핵심 키워드 중 하나라도 본문에 있는 글만 후보로 가져오고, 실제 키워드 점수와
+ * 관련성 컷은 community-search-ranking.ts의 순수 함수가 담당한다.
+ */
+export async function searchCommunityPostsByKeywords(
+  keywords: string[],
+  category?: string,
+  limit = 50,
+): Promise<CommunityPost[]> {
+  const safeKeywords = keywords
+    .map((keyword) => keyword.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter((keyword) => keyword.length >= 2)
+    .slice(0, 16)
+  if (safeKeywords.length === 0) return []
+
+  let query = supabase
+    .from('community_posts')
+    .select('*')
+    .or(safeKeywords.map((keyword) => `content.ilike.%${keyword}%`).join(','))
+    .order('helpful_count', { ascending: false })
+    .limit(limit)
+  if (category && category !== 'ALL') query = query.contains('categories', [category])
+  const { data, error } = await query
+  if (!error && data?.length) return (data as PostRow[]).map(fromRow)
+
+  // PostgREST의 다중 OR 검색이 비어 있거나 일시적으로 실패해도, 각 핵심어를
+  // 개별 조회해 후보를 복구한다. 임베딩 검색이 막힌 환경에서도 키워드만으로
+  // 관련 경험담을 보여주기 위한 마지막 안전망이다.
+  const fallbackRows = await Promise.all(safeKeywords.map(async (keyword) => {
+    let fallback = supabase
+      .from('community_posts')
+      .select('*')
+      .ilike('content', `%${keyword}%`)
+      .order('helpful_count', { ascending: false })
+      .limit(limit)
+    if (category && category !== 'ALL') fallback = fallback.contains('categories', [category])
+    const result = await fallback
+    return result.data as PostRow[] | null
+  }))
+  const byId = new Map<string, CommunityPost>()
+  fallbackRows.flatMap((rows) => rows ?? []).forEach((row) => byId.set(row.id, fromRow(row)))
+  return [...byId.values()].slice(0, limit)
+}
+
 export async function deleteCommunityPost(id: string): Promise<boolean> {
   // community_comments.post_id가 on delete cascade라 댓글도 같이 지워짐(schema.sql).
   const { error, count } = await supabase.from('community_posts').delete({ count: 'exact' }).eq('id', id)
