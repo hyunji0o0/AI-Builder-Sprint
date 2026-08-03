@@ -32,15 +32,28 @@ describe('대화 Agent', () => {
     expect(tips.search).toHaveBeenCalledOnce()
   })
 
-  it('본인 사건에 대한 판단 요청은 대화 Agent로 새지 않는다', async () => {
+  it('고위험 판단 질문은 대화 Agent가 일반 기준을 설명하고 전환 동의를 묻는다', async () => {
     const tips = stubTips()
     const result = await runAgent(
       { input: '상속포기해야 해?', caseState: createInitialCaseState() },
       { tips },
     )
 
-    expect(result.output.meta.intent).not.toBe('CASUAL_CHAT')
+    expect(result.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(result.output.message).toContain('상속포기 과정을 같이 도와줄 수 있어')
+    expect(result.output.message).toContain('그렇게 해줄까?')
+    expect(result.output.meta.requiresDisclaimer).toBe(true)
+    expect(result.caseState.memory.pendingInteraction?.type).toBe('CASE_WORKFLOW_HANDOFF')
     expect(tips.search).not.toHaveBeenCalled()
+  })
+
+  it('고위험 판단 설명 뒤 사용자가 동의하면 사건업무 Agent로 전환한다', async () => {
+    const offered = await runAgent({ input: '상속포기해도 됨?', caseState: createInitialCaseState() })
+    const accepted = await runAgent({ input: '응, 그렇게 해줘', caseState: offered.caseState })
+
+    expect(accepted.output.meta.intent).toBe('START_ONBOARDING')
+    expect(accepted.output.ui[0]?.type).toBe('CHOICE')
+    expect(accepted.caseState.memory.pendingInteraction?.type).not.toBe('CASE_WORKFLOW_HANDOFF')
   })
 
   it('인사에는 커뮤니티를 조회하지 않는다', async () => {

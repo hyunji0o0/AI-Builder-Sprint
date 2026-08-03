@@ -23,4 +23,15 @@ describe('Agent memory', () => {
     expect(state.memory.lastIntent).toBe('UPDATE_TASK_STATUS')
     expect(state.memory.recentEvents[0].description).toContain('사망신고 완료')
   })
+
+  it('대화 요약에 개인정보 원문을 남기지 않는다', () => {
+    const state = refreshAgentMemory(createInitialCaseState(), [
+      { role: 'user', text: '연락처는 010-1234-5678이고 이메일은 user@example.com이야.' },
+    ])
+
+    expect(state.memory.conversationSummary).not.toContain('010-1234-5678')
+    expect(state.memory.conversationSummary).not.toContain('user@example.com')
+    expect(state.memory.conversationSummary).toContain('[전화번호 마스킹]')
+    expect(state.memory.conversationSummary).toContain('[이메일 마스킹]')
+  })
 })

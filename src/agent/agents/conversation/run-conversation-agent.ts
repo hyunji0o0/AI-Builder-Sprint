@@ -9,6 +9,7 @@ import {
   CASE_WORKFLOW_HANDOFF_INTERACTION,
   declinesCaseWorkflowHandoff,
   hasPendingCaseWorkflowHandoff,
+  isHighStakesDecisionQuestion,
   isCasualGreeting,
   isDomainQuestion,
   shouldOfferCaseWorkflowHandoff,
@@ -22,6 +23,20 @@ import { composeGroundedLegalAnswer, isLegalInformationQuestion, retrieveLegalSo
 const TIP_LIMIT = 3
 const CASE_WORKFLOW_HANDOFF_MESSAGE = '많이 버겁게 느껴질 수 있어. 지금은 해결하려 하지 않고 이야기를 더 해도 돼. 원하면 나중에 확인된 일부터 하나씩 같이 정리해 줄 수 있어. 그렇게 해줄까?'
 const CASE_WORKFLOW_HANDOFF_DECLINED_MESSAGE = '응, 지금은 정리하지 않고 이야기를 더 해도 돼. 하고 싶은 말이 있으면 편하게 들려줘.'
+
+const decisionHandoffMessage = (input: string) => {
+  const text = input.replace(/\s/g, '')
+  if (/상속포기/.test(text)) {
+    return '상속포기는 고인의 재산과 빚을 모두 승계하지 않는 절차라서 빚만 따로 포기하는 건 아니야. 기한과 이미 처분한 재산이 있는지도 중요해서 지금 정보만으로 해도 된다고 단정하기는 어려워. 원한다면 확인된 재산·빚과 기한부터 정리하면서 상속포기 과정을 같이 도와줄 수 있어. 그렇게 해줄까?'
+  }
+  if (/한정승인/.test(text)) {
+    return '한정승인은 물려받은 재산 범위 안에서 빚을 갚는 절차지만, 재산 목록과 기한을 정확히 확인해야 해. 지금 정보만으로 적합하다고 단정하기는 어려워. 원한다면 확인된 재산·빚과 기한부터 정리하면서 한정승인 과정을 같이 도와줄 수 있어. 그렇게 해줄까?'
+  }
+  if (/단순승인/.test(text)) {
+    return '단순승인은 재산뿐 아니라 빚도 함께 승계할 수 있어서 확인 없이 결정하면 위험할 수 있어. 지금 정보만으로 괜찮다고 단정하기는 어려워. 원한다면 확인된 재산·빚과 기한부터 정리하면서 결정 과정을 같이 도와줄 수 있어. 그렇게 해줄까?'
+  }
+  return '재산 분할은 재산·빚의 범위와 다른 상속인의 관계에 따라 달라져서 지금 정보만으로 괜찮다고 단정하기는 어려워. 원한다면 확인된 내용부터 정리하면서 분할 과정을 같이 도와줄 수 있어. 그렇게 해줄까?'
+}
 
 const conversationSystemPrompt = `너는 "애도할 시간"의 일상대화·일반 질문 전용 Agent다.
 사건 상태를 변경하거나 문서 도구와 행정업무 도구를 호출하지 않는다.
@@ -60,7 +75,6 @@ export async function runConversationAgent(
   const input = privacyFilter.mask(request.input)
   const safety = assessSafety(input, 'CASUAL_CHAT')
   const awaitingHandoff = hasPendingCaseWorkflowHandoff(state.memory)
-
   // 위기 신호가 있으면 팁 검색도 LLM 생성도 태우지 않는다. 지연이나 실패로 안전
   // 안내가 늦어지면 안 되고, 이 상황에 경험담 카드를 같이 띄우는 것도 맞지 않다.
   if (safety.immediateRiskSuspected) {
@@ -101,11 +115,12 @@ export async function runConversationAgent(
     }
   }
 
+  const decisionHandoff = !awaitingHandoff && isHighStakesDecisionQuestion(input)
   const offerHandoff = !awaitingHandoff && shouldOfferCaseWorkflowHandoff(input)
   const handoffDeclined = awaitingHandoff && declinesCaseWorkflowHandoff(input)
   const tips = offerHandoff || handoffDeclined ? [] : await lookupTips(input, dependencies.tips)
   let message = offerHandoff
-    ? CASE_WORKFLOW_HANDOFF_MESSAGE
+    ? decisionHandoff ? decisionHandoffMessage(input) : CASE_WORKFLOW_HANDOFF_MESSAGE
     : handoffDeclined
       ? CASE_WORKFLOW_HANDOFF_DECLINED_MESSAGE
       : composeConversationMessage(input, tips.length > 0)
@@ -130,6 +145,7 @@ export async function runConversationAgent(
     tips.length ? 'ASK_COMMUNITY_TIP' : 'CASUAL_CHAT',
     safety.severeDistress,
     pendingInteraction,
+    decisionHandoff || tips.length > 0,
   )
 }
 
@@ -182,6 +198,7 @@ function buildResult(
   intent: 'CASUAL_CHAT' | 'ASK_COMMUNITY_TIP',
   distressed: boolean,
   pendingInteraction: CaseState['memory']['pendingInteraction'] = state.memory.pendingInteraction,
+  requiresDisclaimer = tips.length > 0,
 ): RunAgentResult {
   const description = tips.length
     ? `일상 대화에서 커뮤니티 경험담 ${tips.length}건을 함께 안내함`
@@ -205,7 +222,7 @@ function buildResult(
         intent,
         emotionalSignal: distressed ? 'DISTRESSED' : 'NEUTRAL',
         usedTools: tips.length ? ['searchCommunityTips'] : [],
-        requiresDisclaimer: tips.length > 0,
+        requiresDisclaimer,
       },
     }),
   }

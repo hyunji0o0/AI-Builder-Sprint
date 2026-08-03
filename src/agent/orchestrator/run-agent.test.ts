@@ -134,10 +134,11 @@ describe('Agent Harness', () => {
     expect(result.output.meta.requiresDisclaimer).toBe(true)
   })
 
-  it('상속포기 결정 요청을 ASK_LEGAL_DECISION으로 분류하고 경계를 안내한다', async () => {
+  it('상속포기 결정 요청은 대화로 설명하고 사건업무 전환 동의를 묻는다', async () => {
     const result = await runAgent({ input: '상속포기해야 해?', caseState: createInitialCaseState() })
-    expect(result.output.meta.intent).toBe('ASK_LEGAL_DECISION')
-    expect(result.output.message).toContain('결정')
+    expect(result.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(result.output.message).toContain('상속포기 과정을 같이 도와줄 수 있어')
+    expect(result.caseState.memory.pendingInteraction?.type).toBe('CASE_WORKFLOW_HANDOFF')
     expect(result.output.meta.requiresDisclaimer).toBe(true)
   })
 
@@ -206,13 +207,15 @@ describe('Agent Harness', () => {
     expect(searchedSituation).toBe('고인 휴대폰 바로 해지해도 됨?')
   })
 
-  it('상속 방법 결정 질문은 일반 조언으로 보내지 않는다', async () => {
+  it('상속 방법 결정 질문은 일반 설명 후 동의가 있어야 사건업무로 넘긴다', async () => {
     const result = await runAgent(
       { input: '상속포기해도 됨?', caseState: createInitialCaseState() },
       { tips: { search: async () => { throw new Error('결정 질문에서 팁 검색을 호출하면 안 됨') } } },
     )
 
-    expect(result.output.meta.intent).toBe('ASK_LEGAL_DECISION')
+    expect(result.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(result.output.message).toContain('그렇게 해줄까?')
+    expect(result.caseState.memory.pendingInteraction?.type).toBe('CASE_WORKFLOW_HANDOFF')
   })
 
   it('사망신고 질문에는 금융 조회가 아닌 실행 가능한 준비 패키지를 반환한다', async () => {

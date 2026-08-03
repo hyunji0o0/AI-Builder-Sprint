@@ -5,6 +5,7 @@ export interface PrivacyFilter {
 export const privacyFilter: PrivacyFilter = {
   mask(text) {
     return text
+      .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[이메일 마스킹]')
       .replace(/\b\d{6}-?[1-4]\d{6}\b/g, '[주민등록번호 마스킹]')
       .replace(/\b01[016789]-?\d{3,4}-?\d{4}\b/g, '[전화번호 마스킹]')
       .replace(/\b\d{2,6}-\d{2,6}-\d{2,8}\b/g, '[계좌·고객번호 마스킹]')
