@@ -36,7 +36,16 @@
 
 이 절과 연결된 코드·프롬프트·테스트 결과를 AI 활용 증빙 자료로 제출합니다. 별도의 `CLAUDE.md` 없이도 아래 링크를 통해 모델 사용 위치, Agent 지침, 안전장치와 검증 결과를 저장소에서 바로 확인할 수 있습니다.
 
-### 사용 모델 및 API
+### 제출 기준 대응표
+
+| 제출 요구 항목 | README 내 증빙 위치 | 저장소 근거 |
+| --- | --- | --- |
+| **모델** | 아래 `모델 및 API 사용 위치` | Solar LLM, Document Parse, Information Extract, Embeddings의 역할과 적용 코드 |
+| **API 사용 위치** | 아래 `모델 및 API 사용 위치` | Vite 서버 미들웨어, Python 문서 파이프라인, 커뮤니티 추천 서버 코드 |
+| **프롬프트/설정** | 아래 `프롬프트 및 실행 설정` | 역할별 프롬프트 파일, 모델 선택 환경변수, 문서 처리 임계값 |
+| **테스트·검증 산출물** | 아래 `문서 분석 검증`, `안전성과 품질 검증` | 저장된 파이프라인 JSON 결과와 Vitest 평가 코드·재현 명령 |
+
+### 모델 및 API 사용 위치
 
 | AI/API | 서비스에서 하는 일 | 구현 근거 |
 | --- | --- | --- |
@@ -46,7 +55,23 @@
 | **Upstage Embeddings** | 커뮤니티 글과 사용자 상황의 의미 유사도를 검색해 현재 절차에 맞는 경험담 후보를 선정 | [`upstage-client.ts`](src/server/upstage-client.ts), [`community-recommend.ts`](src/server/community-recommend.ts) |
 | **Solar 기반 재정렬·요약** | 검색 후보 안에서만 추천 이유와 요약을 생성하고, 글 ID·날짜·도움 수는 코드가 원본 데이터에서 채움 | [`community-recommend.ts`](src/server/community-recommend.ts), [`community-recommend.json`](prompts/community-recommend.json) |
 
-### Agent Harness와 프롬프트 관리
+Upstage API Key와 모델 설정은 브라우저 코드가 아니라 [`vite.config.ts`](vite.config.ts)에서 서버 플러그인에 주입합니다. 실제 키는 Git에 포함하지 않고 `.env.local`에서만 읽습니다.
+
+### 프롬프트 및 실행 설정
+
+| 구분 | 설정 또는 프롬프트 | 근거 파일 |
+| --- | --- | --- |
+| 모델 선택 | 기본 응답 모델 `solar-pro3`, 단순 분류 모델 `solar-mini`; `UPSTAGE_MODEL`, `UPSTAGE_SIMPLE_MODEL`로 변경 가능 | [`vite.config.ts`](vite.config.ts), [`.env.local.example`](.env.local.example) |
+| Agent 정체성·공통 원칙 | 따뜻한 반말, 한국어 응답, 법률적 결정 금지, 내부 추론 비노출 | [`system.ts`](src/agent/prompts/system.ts) |
+| 의도·정서 분류 | 사용자 의도와 정서 신호의 구조화 출력 규칙 | [`classify-intent.ts`](src/agent/prompts/classify-intent.ts) |
+| 다음 행동 선택 | 사건 상태와 우선순위를 바탕으로 한 번에 핵심 행동 하나 선택 | [`select-action.ts`](src/agent/prompts/select-action.ts) |
+| 응답 구성 | 도구 결과를 사용자 메시지와 UI Block으로 구성 | [`compose-response.ts`](src/agent/prompts/compose-response.ts) |
+| 경험담 추천 | 후보 원문 밖의 사실 생성 금지, 추천 이유·요약 생성, PII·인젝션 가드레일 | [`recommend-review.ts`](src/agent/prompts/recommend-review.ts), [`community-recommend.json`](prompts/community-recommend.json) |
+| 문서 처리 한계값 | 최대 10개/파일당 10MB, 분류 신뢰도 `0.72`, 필드 신뢰도 `0.8` | [`config.ts`](src/agent/document-processing/config.ts) |
+
+프롬프트는 코드 흐름과 분리되어 있어 역할별로 수정할 수 있고, API Key는 프롬프트나 프론트엔드 번들에 포함하지 않습니다. 제출용 환경변수 이름과 용도는 [`.env.local.example`](.env.local.example)에 값 없이 정리했습니다.
+
+### Agent Harness 실행 구조
 
 - 단일 실행 진입점: [`src/agent/orchestrator/run-agent.ts`](src/agent/orchestrator/run-agent.ts)
 - 대화 Agent/사건 Agent 라우팅: [`src/agent/orchestrator/agent-router.ts`](src/agent/orchestrator/agent-router.ts)
@@ -71,7 +96,7 @@ LLM이 사건 상태를 직접 임의 변경하지 않도록 Agent가 선택한 
   -> 확인된 값만 CaseState에 반영
 ```
 
-저장된 파이프라인 평가 결과는 [`tests/results/pipeline/pipeline_test_summary.json`](tests/results/pipeline/pipeline_test_summary.json)에서 확인할 수 있습니다. 기록된 평가에서는 실제 실행된 샘플 14건이 모두 파이프라인 처리, 문서 분류, 기관 분류와 스키마 검증을 통과했습니다. 샘플이 없어 건너뛴 항목은 결과 파일에 `SKIP`과 사유를 함께 남겨 성공률에 포함하지 않았습니다.
+저장된 파이프라인 평가 요약은 [`pipeline_test_summary.json`](tests/results/pipeline/pipeline_test_summary.json), 문서별 세부 추출·검증 결과는 [`tests/results/pipeline/details/`](tests/results/pipeline/details/)에서 확인할 수 있습니다. 기록된 평가에서는 실제 실행된 샘플 14건이 모두 파이프라인 처리, 문서 분류, 기관 분류와 스키마 검증을 통과했습니다. 샘플이 없어 건너뛴 항목은 결과 파일에 `SKIP`과 사유를 함께 남겨 성공률에 포함하지 않았습니다.
 
 ### 안전성과 품질 검증
 
@@ -86,7 +111,18 @@ LLM이 사건 상태를 직접 임의 변경하지 않도록 Agent가 선택한 
 | 가드레일 평가 | 공격성 입력·법률 단정·서비스 범위 이탈 시나리오 평가 | `npm run guardrails:evaluate` |
 | 커뮤니티 검색 평가 | 키워드와 의미 검색의 관련성 및 무관한 추천 차단 평가 | `npm run tips:evaluate` |
 
-전체 단위·통합 테스트는 `npm run test`, 타입 및 프로덕션 빌드 검증은 `npm run build`, 정적 코드 검사는 `npm run lint`로 재현할 수 있습니다.
+평가 코드는 각각 [`guardrail-evaluation.test.ts`](src/agent/safety/guardrail-evaluation.test.ts), [`agent-router.evaluation.test.ts`](src/agent/orchestrator/agent-router.evaluation.test.ts), [`community-search-ranking.test.ts`](src/server/community-search-ranking.test.ts)에서 확인할 수 있습니다.
+
+2026-08-03 기준 로컬 재검증 결과는 다음과 같습니다.
+
+| 검증 명령 | 결과 |
+| --- | --- |
+| `npm run test` | 테스트 파일 **28개**, 테스트 **196개** 통과 |
+| `npm run guardrails:evaluate` | 테스트 **1개** 통과 |
+| `npm run routing:evaluate` | 테스트 **1개** 통과 |
+| `npm run tips:evaluate` | 테스트 **3개** 통과 |
+
+전체 단위·통합 테스트는 `npm run test`, 타입 및 프로덕션 빌드 검증은 `npm run build`, 정적 코드 검사는 `npm run lint`로 재현할 수 있습니다. 위 수치는 저장소의 현재 테스트 코드를 로컬에서 다시 실행해 확인한 결과이며, 외부 API를 사용하는 문서 평가의 상세 산출물은 별도 JSON 파일로 보존합니다.
 
 ## 기술 스택
 
