@@ -44,7 +44,7 @@ const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
 
 // React SPA 라우팅 처리: 명시된 API 이외의 모든 경로는 index.html로 폴백
-app.get('*', (req, res) => {
+app.get('/{*splat}', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
