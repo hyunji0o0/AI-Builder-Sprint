@@ -19,7 +19,10 @@ const reviewText = (review: CommunityReview) => [
 export const filterAndSortReviews = (allReviews: CommunityReview[], query: CommunitySearchQuery): CommunityReview[] => {
   let reviews = allReviews
   if (query.category && query.category !== '전체') reviews = reviews.filter((review) => review.categories.includes(query.category as ReviewCategory))
-  if (query.region) reviews = reviews.filter((review) => review.region === query.region)
+  if (query.region) reviews = reviews.filter((review) => review.region?.includes(query.region!))
+  if (query.localPostKind === 'LOCAL') {
+    reviews = reviews.filter((review) => review.taskType.startsWith('지역모임') && !review.taskType.includes('공공기관 동행'))
+  }
   if (query.ids) reviews = reviews.filter((review) => query.ids?.includes(review.id))
   if (query.text.trim()) {
     const keyword = query.text.trim().toLowerCase()

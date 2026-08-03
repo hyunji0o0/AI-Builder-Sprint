@@ -41,7 +41,7 @@ export const definitionQuestionPattern =
 
 /** 사건 자료를 보지 않아도 일반적인 순서나 주의점을 설명할 수 있는 질문 형태. */
 export const generalAdviceQuestionPattern =
-  /해도돼|해도됨|해도괜찮|하면돼|하면됨|해야돼|해야됨|해야하나|해야할까|가능해|가능한가/
+  /해도돼|해도됨|해도괜찮|해도될까|해도될까요|하면돼|하면됨|하면될까|하면될까요|해야돼|해야됨|해야하나|해야할까|가능해|가능한가/
 
 /** 사건 자료 없이 답할 수 있는 일반 절차·준비물·기관·경험담 질문. */
 export const generalKnowledgeQuestionPattern =
@@ -100,7 +100,7 @@ export const hasEmotionalSignal = (input: string) => emotionPattern.test(compact
  */
 export const isDomainQuestion = (input: string) => {
   const text = compact(input)
-  if (!domainTermPattern.test(text)) return false
+  if (!domainTermPattern.test(text) && !isGeneralLifeQuestion(input)) return false
 
   const explicitlyPersonal = personalCasePattern.test(text)
   const changesCaseState = caseMutationPattern.test(text)
@@ -112,7 +112,9 @@ export const isDomainQuestion = (input: string) => {
   const isGeneralKnowledge = generalKnowledgeQuestionPattern.test(text)
     && !explicitlyPersonal
     && !changesCaseState
-  return isDefinition || isGeneralAdvice || isGeneralKnowledge || isHighStakesDecisionQuestion(input)
+  // 핸드폰 해지·요금제·명의변경 같은 생활 정리 질문도 도메인 질문으로 본다.
+  const isLifeQuestion = isGeneralLifeQuestion(input) && !explicitlyPersonal && !changesCaseState
+  return isDefinition || isGeneralAdvice || isGeneralKnowledge || isLifeQuestion || isHighStakesDecisionQuestion(input)
 }
 
 /** 상속·사망 맥락의 감정 표현이지만 아직 실제 사건 처리 요청은 아닌가. */

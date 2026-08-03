@@ -13,6 +13,7 @@ const CATEGORY_TONE: Record<CommunityCategory, string> = {
   INSURANCE: 'blue',
   SUBSCRIPTION: 'peach',
   VENT: 'lavender',
+  COMPANION: 'peach',
   ETC: 'blue',
 }
 

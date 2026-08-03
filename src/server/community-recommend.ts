@@ -3,7 +3,8 @@ import { CATEGORY_LABEL, CommunityTip, communityTipSchema, COMMUNITY_TIP_DISCLAI
 import { PROCEDURE_STEPS, ProcedureStepId } from '../schemas/procedure-steps'
 import { buildSystemPrompt } from './community-prompt'
 import { redactPii } from './pii-guard'
-import { CommunityPostMatch, searchCommunityPosts } from './community-store'
+import { rankCommunityPosts, extractSearchKeywords } from './community-search-ranking'
+import { CommunityPostMatch, searchCommunityPosts, searchCommunityPostsByKeywords } from './community-store'
 import { embedQuery, generateSolarChat } from './upstage-client'
 
 /** 팁을 개인화하는 데 쓰는 신호. 전부 선택 — 없으면 단계만으로 추천함. */
@@ -38,10 +39,6 @@ export type CommunityRecommendation = {
   /** 임계값을 넘어 후보로 올라온 글 수. 0이면 관련 경험담 자체가 없다는 뜻. */
   candidateCount: number
 }
-
-// 유사도 컷. 실측 기준 관련 질문은 0.4~0.55, 무관한 질문은 0.15 언저리로 나와서
-// 0.3에서 자름. 이게 없으면 "점심 메뉴" 같은 질문에도 억지로 팁 카드가 만들어짐.
-const SIMILARITY_THRESHOLD = 0.3
 
 // LLM에는 문장만 쓰게 하고, id·날짜·좋아요 수 같은 사실은 코드가 채움.
 // sourceIndex로 근거 글을 지목하게 해서 메타데이터를 지어낼 수 없게 만든 구조.
@@ -147,12 +144,23 @@ export async function recommendCommunityTips(input: RecommendInput): Promise<Com
     return { step, tips: [], disclaimer: COMMUNITY_TIP_DISCLAIMER, candidateCount: 0 }
   }
 
-  const queryEmbedding = await embedQuery(searchText)
-  // 카테고리 하드 필터는 기본으로 쓰지 않음. ETC에 24개가 몰려 있어서 필터가 오히려
-  // 관련 없는 글을 끌어오고, 반대로 RENOUNCE는 2개뿐이라 필터를 걸면 후보가 말라버림.
-  // 유사도로 거르는 편이 실측상 더 정확해서 category는 호출부가 명시할 때만 씀.
-  const matches = await searchCommunityPosts(queryEmbedding, input.category, limit * 2)
-  const candidates = matches.filter((match) => match.similarity >= SIMILARITY_THRESHOLD).slice(0, limit)
+  const candidatePoolSize = Math.max(18, limit * 8)
+  const queryKeywords = extractSearchKeywords(searchText)
+  const keywordPromise = searchCommunityPostsByKeywords(queryKeywords, input.category, 50).catch(() => [])
+  const embeddingPromise = embedQuery(searchText)
+    .then((queryEmbedding) => searchCommunityPosts(queryEmbedding, input.category, candidatePoolSize))
+    .catch(() => [])
+  const [keywordMatches, embeddingMatches] = await Promise.all([keywordPromise, embeddingPromise])
+  const candidates = rankCommunityPosts(searchText, embeddingMatches, keywordMatches, {
+    limit,
+    category: input.category,
+  })
+
+  // 검색어가 전부 불용어라면 키워드 후보를 억지로 살리지 않는다. 임베딩 검색도 실패한
+  // 경우에는 빈 결과가 맞다.
+  if (queryKeywords.length === 0 && embeddingMatches.length === 0) {
+    return { step, tips: [], disclaimer: COMMUNITY_TIP_DISCLAIMER, candidateCount: 0 }
+  }
 
   if (candidates.length === 0) {
     return { step, tips: [], disclaimer: COMMUNITY_TIP_DISCLAIMER, candidateCount: 0 }
@@ -183,14 +191,14 @@ export async function recommendCommunityTips(input: RecommendInput): Promise<Com
     ])
     const drafts = tipDraftsSchema.parse(extractJson(raw))
 
-    const tips = drafts.tips
-      .map((draft) => {
+    const generatedTips = new Map<string, CommunityTip>()
+    drafts.tips.forEach((draft) => {
         // sourceIndex는 1-based. 범위를 벗어나면 지어낸 것이므로 버림.
         const match = candidates[draft.sourceIndex - 1]
-        if (!match) return null
+        if (!match || generatedTips.has(match.id)) return
         // 소스는 이미 마스킹했지만, LLM이 실명·구체적 주소처럼 정규식으로 못 잡는 걸
         // 다른 경로로 끌어올 가능성에 대비해 출력에도 한 번 더 적용(이중 방어).
-        return communityTipSchema.parse({
+        generatedTips.set(match.id, communityTipSchema.parse({
           id: match.id,
           title: redactPii(draft.title),
           summary: redactPii(draft.summary),
@@ -202,9 +210,12 @@ export async function recommendCommunityTips(input: RecommendInput): Promise<Com
           createdAt: match.createdAt,
           relativeDate: relativeDate(match.createdAt),
           similarity: Number(match.similarity.toFixed(3)),
-        })
+        }))
       })
-      .filter((tip): tip is CommunityTip => tip !== null)
+
+    // Solar가 일부 후보만 반환하거나 순서를 바꿔도 검색기의 관련도 순서를 유지한다.
+    // 빠진 후보는 이미 관련성 컷을 통과한 글이므로 안전한 원문 카드로만 보충한다.
+    const tips = candidates.map((match) => generatedTips.get(match.id) ?? toFallbackTip(match))
 
     return { step, tips, disclaimer: COMMUNITY_TIP_DISCLAIMER, candidateCount: candidates.length }
   } catch (error) {
