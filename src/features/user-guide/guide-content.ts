@@ -16,7 +16,7 @@ export const guideSteps: GuideStep[] = [
     description: '애도할 시간은 사후 행정 절차를 현재 상황에 맞춰 정리하고, 다음에 할 한 가지를 함께 진행하는 서비스야.',
     icon: 'sparkle', tone: 'peach',
     points: [
-      { title: '처음에는 상태부터 확인', description: '사망신고·금융조회·원스톱 서비스 진행 여부를 차례로 물어봐.' },
+      { title: '처음에는 상태부터 확인', description: '사망신고와 원스톱 서비스 진행 여부를 차례로 물어봐.' },
       { title: '답변은 계속 기억', description: '확인한 상태를 기준으로 이미 끝낸 업무는 다시 묻지 않아.' },
     ],
   },

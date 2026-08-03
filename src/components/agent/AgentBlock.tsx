@@ -5,6 +5,8 @@ import { navigateCommunity } from '../../features/community/routing/community.ro
 import { GlassIcon } from '../ui/GlassIcon'
 import { Icon } from '../ui/Icon'
 import { AgentUIBlock } from '../../agent/schemas/agent-output'
+import { documentFieldLabel, translateDocumentDisplayValue } from '../../agent/document-processing/document-display-translations'
+import { sanitizeOcrText } from '../../agent/document-processing/ocr-text-sanitizer'
 
 type Props = { block?: AgentBlockKind; ui?: AgentUIBlock[]; controller: CaseAgentController }
 
@@ -31,6 +33,44 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
         {structured.actions[0]?.label ?? '이어하기'}
       </button>
     </div>
+  )
+
+  if (structured?.type === 'ONE_STOP_SERVICE_GUIDE') return (
+    <section className={`da-one-stop-guide ${structured.stage.toLowerCase()}`}>
+      <header>
+        <GlassIcon icon={structured.stage === 'APPLICATION' ? 'building' : 'file'} tone={structured.stage === 'APPLICATION' ? 'peach' : 'sage'}/>
+        <div>
+          <small>{structured.eyebrow}</small>
+          <strong>{structured.title}</strong>
+          <p>{structured.description}</p>
+        </div>
+        <em>{structured.stage === 'APPLICATION' ? '신청 안내' : '결과 안내'}</em>
+      </header>
+      <div className="da-one-stop-info">
+        {structured.infoItems.map((item, index) => (
+          <article key={item.id}><span>{index + 1}</span><div><strong>{item.title}</strong><p>{item.description}</p></div></article>
+        ))}
+      </div>
+      <div className="da-one-stop-checklist">
+        <h4><Icon name="check" size={21}/>{structured.stage === 'APPLICATION' ? '신청 전에 준비해' : '결과를 이렇게 올려줘'}</h4>
+        <div>
+          {structured.checklist.map((item) => (
+            <article key={item.id}><span><Icon name="check" size={18}/></span><div><strong>{item.label}</strong>{item.note && <p>{item.note}</p>}</div></article>
+          ))}
+        </div>
+      </div>
+      <div className="da-one-stop-resources">
+        {structured.resources.map((resource) => (
+          <a href={resource.url} target="_blank" rel="noreferrer" key={resource.id}>
+            <Icon name={resource.kind === 'APPLICATION' ? 'building' : 'info'} size={20}/><span>{resource.label}</span><Icon name="chevronRight" size={18}/>
+          </a>
+        ))}
+      </div>
+      <aside><span><Icon name="info" size={21}/></span><p>{structured.notice}</p></aside>
+      <footer>
+        {structured.actions.map((action) => <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>)}
+      </footer>
+    </section>
   )
 
   if (structured?.type === 'DEATH_REPORT_PREPARATION') return (
@@ -107,8 +147,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
                   </section>
                 </details>
                 {step.taskId === 'prepare-inheritance-consultation' && (
-                  <button className="da-procedure-task-start" onClick={() => c.handleUiAction('start_consultation', '이 단계 함께 준비하기')}>
-                    이 단계 함께 준비하기 <Icon name="chevronRight" size={16}/>
+                  <button className="da-procedure-task-start" onClick={() => c.handleUiAction('start_consultation', '상담 준비 시작하기')}>
+                    상담 준비 시작하기 <Icon name="chevronRight" size={16}/>
                   </button>
                 )}
               </div>
@@ -116,7 +156,9 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
           )
         })}
       </div>
-      <button className="da-procedure-next" onClick={c.advanceWorkflow}>가장 먼저 할 일 확인 <Icon name="chevronRight" size={16}/></button>
+      {structured.steps.length > 1 && (
+        <button className="da-procedure-next" onClick={c.advanceWorkflow}>추천 순서로 시작하기 <Icon name="chevronRight" size={16}/></button>
+      )}
     </div>
   )
 
@@ -141,12 +183,14 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
         {structured.documents.map((document) => {
           const financialResult = document.type === 'FINANCIAL_DEBT_DOCUMENT' || document.label.includes('안심상속')
           const label = financialResult ? '금융기관별 조회 결과' : document.label
-          const status = document.status === 'HELD' ? '확인됨' : document.status === 'NEEDS_REVIEW' ? '내용 확인 필요' : document.status === 'MISSING' ? '아직 준비되지 않음' : '현재는 필요 없음'
-          const description = financialResult && document.status !== 'HELD'
-            ? '아직 확인하지 못한 금융기관의 조회 결과가 있어.'
+          const status = document.status === 'HELD' ? '확인됨' : document.status === 'PARTIAL' ? '일부 문서로 진행 중' : document.status === 'NEEDS_REVIEW' ? '내용 확인 필요' : document.status === 'MISSING' ? '아직 준비되지 않음' : '현재는 필요 없음'
+          const description = financialResult && document.status === 'PARTIAL'
+            ? '올린 금융기관 결과는 반영했고, 받지 않은 기관은 미확인으로 표시해 진행해.'
+            : financialResult && document.status !== 'HELD'
+              ? '아직 확인하지 못한 금융기관의 조회 결과가 있어.'
             : document.status === 'MISSING' ? '이 업무를 진행하려면 추가로 확인해야 해.' : '현재 사건 자료에 반영되어 있어.'
           return <article className={document.status.toLowerCase()} key={document.type}>
-            <span><Icon name={document.status === 'HELD' ? 'check' : 'file'} size={20}/></span>
+            <span><Icon name={document.status === 'HELD' || document.status === 'PARTIAL' ? 'check' : 'file'} size={20}/></span>
             <div><strong>{label}</strong><p>{description}</p></div>
             <b>{status}</b>
           </article>
@@ -207,7 +251,6 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
   }
 
   if (structured?.type === 'OFFICIAL_PROCESS') {
-    const institution = structured.institutions[0]
     return (
       <section className="da-official-process-card">
         <header>
@@ -215,8 +258,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
             <GlassIcon icon="building" tone="blue"/>
             <div>
               <small>공식 처리 단계</small>
-              <strong>{structured.title || '공식 기관 처리 준비'}</strong>
-              <p>{institution?.name ?? '연결할 기관을 확인해야 해'}</p>
+              <strong>{structured.title || '공식 처리 준비'}</strong>
+              <p>준비한 내용을 실제 처리로 이어가기 전에 확인할 항목이야.</p>
             </div>
           </div>
           <span className="da-official-process-badge">공식 정보 재확인 필요</span>
@@ -229,12 +272,6 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
             ))}
           </div>
         </div>
-        {institution && (
-          <div className="da-official-process-institution">
-            <div><small>확인할 기관</small><strong>{institution.name}</strong>{institution.district && <span>{institution.district}</span>}</div>
-            {institution.sourceUrl && <a href={institution.sourceUrl} target="_blank" rel="noreferrer">공식 안내 보기 <Icon name="chevronRight" size={18}/></a>}
-          </div>
-        )}
         <footer>
           <p><Icon name="alert" size={19}/> 기관마다 접수 방법과 준비 서류가 다를 수 있으니 실제 방문 전에 다시 확인해줘.</p>
           <button onClick={c.advanceWorkflow}>처리 완료로 기록 <Icon name="check" size={19}/></button>
@@ -247,16 +284,9 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     <div className="da-complete da-completion-banner">
       <GlassIcon icon="check" tone="sage"/>
       <div><small>완료한 업무</small><strong>{structured.title}</strong><span>사건 상태와 진행률에 반영했어.</span></div>
-      {structured.actions.map((action) => (
+      {(structured.taskId === 'prepare-inheritance-consultation' ? [] : structured.actions).map((action) => (
         <button key={action.id} onClick={() => c.handleUiAction(action.id, action.label)}>{action.label}</button>
       ))}
-    </div>
-  )
-
-  if (structured?.type === 'INSTITUTION') return (
-    <div className="da-institution">
-      <GlassIcon icon="building" tone="blue"/>
-      <div><small>공식 정보 확인 필요</small><strong>{structured.results[0]?.name || '기관 정보 없음'}</strong><span>{structured.results[0]?.district}</span></div>
     </div>
   )
 
@@ -283,12 +313,29 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     ) : null
   }
 
+  if (structured?.type === 'LEGAL_REFERENCE') return (
+    <section className="da-legal-reference">
+      <header><GlassIcon icon="file" tone="blue"/><div><small>공식 법령 근거</small><strong>{structured.title}</strong></div></header>
+      <div>
+        {structured.provisions.map((provision) => (
+          <article key={provision.id}>
+            <div><strong>{provision.lawName} {provision.article}</strong><span>시행 {provision.effectiveDate} · 확인 {provision.checkedAt}</span></div>
+            <p>{provision.rule}</p>
+            <small>{provision.caution}</small>
+            <a href={provision.sourceUrl} target="_blank" rel="noreferrer">국가법령정보센터 원문 보기 <Icon name="chevronRight" size={17}/></a>
+          </article>
+        ))}
+      </div>
+      <aside><Icon name="alert" size={18}/>{structured.disclaimer}</aside>
+    </section>
+  )
+
   if (structured?.type === 'DOCUMENT_BATCH_SUMMARY') return (
     <div className="da-document-summary">
       {structured.files.map((file) => (
         <div key={file.documentId}>
           <span><Icon name="file" size={18}/></span>
-          <div><strong>{file.fileName}</strong><small>문서 분석 완료 · 분류 신뢰도 {Math.round(file.confidence * 100)}%</small></div>
+          <div><strong>{file.fileName}</strong><small>문서 분석 완료</small></div>
         </div>
       ))}
       {structured.issues.map((issue) => <p key={`${issue.code}-${issue.documentId}`}>{issue.message}</p>)}
@@ -305,8 +352,8 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
       <div className="da-document-review-items">
         {structured.items.map((item) => (
           <div key={item.fieldKey}>
-            <span>{item.label}</span>
-            <strong>{item.formattedValue}</strong>
+            <span>{documentFieldLabel(item.fieldKey, item.label)}</span>
+            <strong>{translateDocumentDisplayValue(sanitizeOcrText(item.formattedValue))}</strong>
           </div>
         ))}
       </div>
@@ -317,18 +364,13 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     </section>
   )
 
-  if (structured?.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION') return (
-    <div className="da-extract">
-      <div><span>파일</span><strong>{structured.fileName}</strong></div>
-      <div><span>예상 문서 종류</span><strong>{structured.suggestedType}</strong></div>
-      <div><span>분류 신뢰도</span><strong>{Math.round(structured.confidence * 100)}%</strong></div>
-      <button onClick={() => c.addAgent('문서 종류를 확인했어.', 'extract')}>문서 종류 확인</button>
-    </div>
-  )
+  // 문서 분류 결과는 후속 추출·검증에만 사용하고 사용자에게 내부 값을 노출하지 않는다.
+  // 이전에 저장된 대화에 이 블록이 남아 있어도 화면에는 표시하지 않는다.
+  if (structured?.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION') return null
 
   if (structured?.type === 'FIELD_VERIFICATION') return (
     <div className="da-extract">
-      <div><span>{structured.label}</span><strong>{structured.formattedValue}</strong></div>
+      <div><span>{documentFieldLabel(structured.fieldKey, structured.label)}</span><strong>{translateDocumentDisplayValue(sanitizeOcrText(structured.formattedValue))}</strong></div>
       <div><span>원문 근거</span><strong>{structured.sourceText || '원문에서 직접 확인 필요'}</strong></div>
       <button onClick={() => c.confirmPipelineField(structured.documentId, structured.fieldKey, structured.value)}>맞아요</button>
       <button onClick={() => c.addAgent(`${structured.label} 값을 직접 입력해줘.`, structured.fieldKey === 'amount' ? 'finance' : 'extract')}>수정할게</button>
@@ -401,14 +443,6 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
     </div>
   )
 
-  if (block === 'finance') return (
-    <div className="da-finance">
-      <label>현재 확인된 자산<input inputMode="numeric" value={c.assetDraft} onChange={(e) => c.setAssetDraft(e.target.value)}/><span>원</span></label>
-      <label>현재 확인된 채무<input inputMode="numeric" value={c.debtDraft} onChange={(e) => c.setDebtDraft(e.target.value)}/><span>원</span></label>
-      <button onClick={c.saveFinance}>금액 저장</button>
-    </div>
-  )
-
   if (block === 'urgent') return (
     <div className="da-action-card da-coral">
       <GlassIcon icon="alert" tone="coral"/>
@@ -435,13 +469,6 @@ export function AgentBlock({ block, ui, controller: c }: Props) {
         </button>
       ))}
       <label className="da-mini-upload"><Icon name="upload" size={16}/>부족한 서류 업로드<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={c.upload}/></label>
-    </div>
-  )
-
-  if (block === 'institution') return (
-    <div className="da-institution">
-      <GlassIcon icon="building" tone="blue"/>
-      <div><strong>연결된 공식 기관 정보가 없어요</strong><p>검증된 기관 데이터가 연결되면 현재 지역과 업무에 맞춰 보여줄게.</p></div>
     </div>
   )
 

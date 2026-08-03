@@ -102,7 +102,23 @@ export async function runAgent(
     }
   }
 
-  const refreshedState = refreshAgentMemory(safeRequest.caseState, safeRecentMessages)
+  const stateWithMemory = refreshAgentMemory(safeRequest.caseState, safeRecentMessages)
+  const terminalConsultationCompleted = stateWithMemory.tasks.some((task) => (
+    task.category === 'CONSULTATION' && task.status === 'COMPLETED'
+  ))
+  const refreshedState = terminalConsultationCompleted
+    ? {
+        ...stateWithMemory,
+        stage: 'COMPLETED' as const,
+        currentFocus: { type: null, id: null },
+        workflow: {
+          ...stateWithMemory.workflow,
+          phase: 'ALL_TASKS_COMPLETED' as const,
+          priorityTaskId: null,
+          completionPending: false,
+        },
+      }
+    : stateWithMemory
   const handoffAccepted = hasPendingCaseWorkflowHandoff(refreshedState.memory)
     && acceptsCaseWorkflowHandoff(request.input)
   const consumesHandoff = hasPendingCaseWorkflowHandoff(refreshedState.memory)

@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { AgentLLM, extractJson } from '../shared/llm-adapter'
 import { AgentMemory } from '../schemas/case-state'
+import { isLegalInformationQuestion } from '../legal/legal-retriever'
 import {
   hasEmotionalSignal,
   hasPendingCaseWorkflowHandoff,
   acceptsCaseWorkflowHandoff,
   isCasualGreeting,
   isDomainQuestion,
+  isGeneralLifeQuestion,
+  isHighStakesDecisionQuestion,
   mentionsDomain,
   mentionsPersonalCase,
   needsCaseData,
@@ -63,8 +66,12 @@ export async function routeAgent(
   }
   if (isCasualGreeting(input)) return 'CONVERSATION'
   if (hasEmotionalSignal(input) && !needsCaseData(input)) return 'CONVERSATION'
+  if (isHighStakesDecisionQuestion(input)) return 'CONVERSATION'
+  if (mentionsPersonalCase(input)) return 'CASE_WORKFLOW'
+  if (isLegalInformationQuestion(input)) return 'CONVERSATION'
+  if (requestsCaseMutation(input)) return 'CASE_WORKFLOW'
+  if (isGeneralLifeQuestion(input)) return 'CONVERSATION'
   if (isDomainQuestion(input)) return 'CONVERSATION'
-  if (mentionsPersonalCase(input) || requestsCaseMutation(input)) return 'CASE_WORKFLOW'
 
   const ruleFallback: AgentRoute = needsCaseData(input) || mentionsDomain(input) ? 'CASE_WORKFLOW' : 'CONVERSATION'
   if (!llm) return ruleFallback

@@ -137,4 +137,62 @@ describe('대화 Agent', () => {
     expect(result.output.message).toContain('안전')
     expect(tips.search).not.toHaveBeenCalled()
   })
+
+  it('휴대폰 약정 질문은 사건 절차를 만들지 않고 대화 Agent가 답한다', async () => {
+    const conversationLlm = { complete: vi.fn(async () => '통신사에 사망 사실과 명의 변경·해지 가능 여부를 먼저 확인해보는 게 좋아.') }
+    const result = await runAgent(
+      { input: '할머니의 핸드폰 약정을 어떻게 하면 좋을지 고민이야', caseState: createInitialCaseState() },
+      { conversationLlm },
+    )
+
+    expect(result.output.meta.intent).toBe('CASUAL_CHAT')
+    expect(result.output.ui.some((block) => block.type === 'PROCEDURE_PLAN')).toBe(false)
+    expect(result.caseState.workflow.procedureGenerated).toBe(false)
+  })
+
+  it('상속 기한 질문은 로컬 공식 법령 근거와 원문 링크로 답한다', async () => {
+    const result = await runAgent({ input: '상속 기한이 언제까지임?', caseState: createInitialCaseState() })
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_INFORMATION')
+    expect(result.output.message).toContain('민법 제1019조')
+    expect(result.output.ui[0]?.type).toBe('LEGAL_REFERENCE')
+    expect(result.output.meta.usedTools).toEqual(['retrieveLegalSources'])
+  })
+
+  it.each([
+    '상속 관련 절차 더 보내봐',
+    '상속 절차를 더 알려줘',
+    '상속은 어떤 순서로 진행해?',
+    '상속 진행 과정을 설명해줘',
+  ])('상속 절차 설명 요청 %s을 공식 법령 근거 경로로 처리한다', async (input) => {
+    const result = await runAgent({ input, caseState: createInitialCaseState() })
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_INFORMATION')
+    expect(result.output.message).toContain('상속 관련 절차')
+    expect(result.output.message).toContain('재산과 채무 확인')
+    expect(result.output.message).toContain('민법 제1019조')
+    expect(result.output.ui[0]?.type).toBe('LEGAL_REFERENCE')
+    expect(result.output.meta.usedTools).toEqual(['retrieveLegalSources'])
+    expect(result.output.message).not.toContain('요청을 정확히 이해하지 못했어')
+  })
+
+  it('상담 준비를 모두 마친 뒤에도 상속 기한 질문은 법령 근거로 답한다', async () => {
+    const completedCase = createInitialCaseState()
+    completedCase.stage = 'COMPLETED'
+    completedCase.workflow.phase = 'ALL_TASKS_COMPLETED'
+
+    const result = await runAgent({ input: '상속 포기는 언제까지 해야 해?', caseState: completedCase })
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_INFORMATION')
+    expect(result.output.message).toContain('민법 제1019조')
+    expect(result.output.ui[0]?.type).toBe('LEGAL_REFERENCE')
+    expect(result.output.message).not.toContain('전문가 상담 준비까지 모두 마쳤어')
+  })
+
+  it('사망신고 법 질문은 가족관계등록법 근거로 답한다', async () => {
+    const result = await runAgent({ input: '사망 신고 관련 법이 어떻게 돼?', caseState: createInitialCaseState() })
+
+    expect(result.output.meta.intent).toBe('ASK_LEGAL_INFORMATION')
+    expect(result.output.message).toContain('가족관계의 등록 등에 관한 법률 제84조')
+  })
 })

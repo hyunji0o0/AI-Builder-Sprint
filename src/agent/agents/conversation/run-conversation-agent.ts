@@ -18,6 +18,7 @@ import { AgentLLM } from '../../shared/llm-adapter'
 import { buildStateSummary } from '../../shared/state-summary'
 import { AgentTipCard, TipProvider } from '../../shared/tip-provider'
 import { composeConversationMessage } from './conversation-responder'
+import { composeGroundedLegalAnswer, isLegalInformationQuestion, retrieveLegalSources } from '../../legal/legal-retriever'
 
 const TIP_LIMIT = 3
 const CASE_WORKFLOW_HANDOFF_MESSAGE = '많이 버겁게 느껴질 수 있어. 지금은 해결하려 하지 않고 이야기를 더 해도 돼. 원하면 나중에 확인된 일부터 하나씩 같이 정리해 줄 수 있어. 그렇게 해줄까?'
@@ -74,7 +75,6 @@ export async function runConversationAgent(
   const input = privacyFilter.mask(request.input)
   const safety = assessSafety(input, 'CASUAL_CHAT')
   const awaitingHandoff = hasPendingCaseWorkflowHandoff(state.memory)
-
   // 위기 신호가 있으면 팁 검색도 LLM 생성도 태우지 않는다. 지연이나 실패로 안전
   // 안내가 늦어지면 안 되고, 이 상황에 경험담 카드를 같이 띄우는 것도 맞지 않다.
   if (safety.immediateRiskSuspected) {
@@ -86,6 +86,33 @@ export async function runConversationAgent(
       true,
       null,
     )
+  }
+
+  // 법률정보 질문도 안전 경로를 먼저 통과한 뒤, 검증된 로컬 법령 자료만 조회한다.
+  if (isLegalInformationQuestion(input)) {
+    const sources = retrieveLegalSources(input)
+    const message = composeGroundedLegalAnswer(input, sources)
+    const nextState = recordAgentMemoryEvent(state, 'CONVERSATION_TURN', `공식 법령 근거 ${sources.length}건을 안내함`, 'ASK_LEGAL_INFORMATION')
+    return {
+      caseState: nextState,
+      output: agentOutputSchema.parse({
+        message,
+        ui: sources.length ? [{
+          type: 'LEGAL_REFERENCE',
+          title: '확인한 공식 법령 근거',
+          provisions: sources,
+          disclaimer: '국가법령정보센터 원문을 기준으로 정리한 법률정보이며, 개별 사건에 대한 법률 자문은 아니야.',
+        }] : [],
+        suggestedActions: [],
+        stateSummary: buildStateSummary(nextState),
+        meta: {
+          intent: 'ASK_LEGAL_INFORMATION',
+          emotionalSignal: 'NEUTRAL',
+          usedTools: ['retrieveLegalSources'],
+          requiresDisclaimer: true,
+        },
+      }),
+    }
   }
 
   const decisionHandoff = !awaitingHandoff && isHighStakesDecisionQuestion(input)

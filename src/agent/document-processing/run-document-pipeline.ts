@@ -3,6 +3,8 @@ import { CaseState, caseStateSchema } from '../schemas/case-state'
 import { DocumentPipelineInput, DocumentPipelineResult } from '../schemas/document-pipeline'
 import { calculateProgress } from '../shared/state-summary'
 import { DocumentPipelineAdapter } from './document-pipeline'
+import { translateDocumentPrimitive } from './document-display-translations'
+import { sanitizeOcrPrimitive } from './ocr-text-sanitizer'
 import {
   analyzeFinancialDocumentCoverage,
   isFinancialDecisionField,
@@ -76,10 +78,11 @@ const formatExtractedValue = (key: string, value: string | number | null) => {
   if (value === null || value === '') return '확인 필요'
   if (typeof value === 'number' && /amount|balance|total/i.test(key)) return `${value.toLocaleString('ko-KR')}원`
   if (typeof value === 'number' && /count/i.test(key)) return `${value.toLocaleString('ko-KR')}건`
-  return valueLabels[String(value)] ?? String(value)
+  const displayValue = translateDocumentPrimitive(sanitizeOcrPrimitive(value))
+  return valueLabels[String(displayValue)] ?? String(displayValue)
 }
 
-const buildReviewItems = (fields: Array<{
+export const buildReviewItems = (fields: Array<{
   key: string
   label: string
   value?: string | number | null
@@ -122,12 +125,33 @@ const buildReviewItems = (fields: Array<{
       value: field.normalizedValue ?? field.value ?? null,
       formattedValue: formatExtractedValue(field.key, field.normalizedValue ?? field.value ?? null),
     }))
-  const recordItems = [...records.entries()].map(([prefix, record]) => {
+  const recordItems = [...records.entries()].flatMap(([prefix, record]) => {
+    const field = (name: string) => record.find((item) => item.key === `${prefix}.${name}`)
     const find = (name: string) => {
       const field = record.find((item) => item.key === `${prefix}.${name}`)
       return field?.normalizedValue ?? field?.value ?? null
     }
-    const institution = find('institutionName')
+    const institution = find('institutionName') ?? find('creditUnionName')
+    const creditUnionDeposit = field('depositAndContributionAmount')
+    const creditUnionLoan = field('loanAmount')
+    const loanMaturityDate = find('loanMaturityDate')
+    if (institution && (creditUnionDeposit || creditUnionLoan)) {
+      const institutionLabel = String(institution)
+      return [
+        creditUnionDeposit ? {
+          fieldKey: creditUnionDeposit.key,
+          label: `${institutionLabel} · 예금 및 출자금`,
+          value: creditUnionDeposit.normalizedValue ?? creditUnionDeposit.value ?? null,
+          formattedValue: formatExtractedValue(creditUnionDeposit.key, creditUnionDeposit.normalizedValue ?? creditUnionDeposit.value ?? null),
+        } : null,
+        creditUnionLoan ? {
+          fieldKey: creditUnionLoan.key,
+          label: `${institutionLabel} · 대출금`,
+          value: creditUnionLoan.normalizedValue ?? creditUnionLoan.value ?? null,
+          formattedValue: `${formatExtractedValue(creditUnionLoan.key, creditUnionLoan.normalizedValue ?? creditUnionLoan.value ?? null)}${loanMaturityDate ? ` · 만기 ${loanMaturityDate}` : ''}`,
+        } : null,
+      ].filter((item): item is NonNullable<typeof item> => item !== null)
+    }
     const details = [find('recordType'), find('productName'), find('quantityOrBalance')]
       .filter((value) => value !== null && value !== undefined && value !== '')
       .map(String)
@@ -135,12 +159,12 @@ const buildReviewItems = (fields: Array<{
     if (typeof amount === 'number') details.push(`${amount.toLocaleString('ko-KR')}원`)
     const status = find('statusMessage')
     if (status && !details.includes(String(status))) details.push(String(status))
-    return {
+    return [{
       fieldKey: `${prefix}.amount`,
       label: typeof institution === 'string' ? institution : '금융 내역',
       value: typeof amount === 'number' ? amount : null,
       formattedValue: details.join(' · ') || '상세 내용 확인 필요',
-    }
+    }]
   })
   return [...grouped, ...generalItems, ...recordItems]
 }
@@ -178,6 +202,10 @@ export async function runDocumentPipeline(
   ]
   const coverage = analyzeFinancialDocumentCoverage(documents)
   const receivedCoverageIds = new Set(coverage.received.map((institution) => `missing-financial-${institution.key}`))
+  const activeTask = state.tasks.find((task) => task.id === state.workflow.priorityTaskId)
+  const isSupplementalConsultationUpload = activeTask?.category === 'CONSULTATION'
+    && state.workflow.phase !== 'ALL_TASKS_COMPLETED'
+    && state.workflow.phase !== 'GENERATING_NEXT_TASK'
   const nextState = caseStateSchema.parse({
     ...state,
     stage: pipelineResult.crossDocumentIssues.some((issue) => issue.severity === 'BLOCKING') ? 'CONFIRMING_EXTRACTION' : 'CONFIRMING_EXTRACTION',
@@ -190,18 +218,27 @@ export async function runDocumentPipeline(
       receivedOrganizationKeys: coverage.received.map((institution) => institution.key),
       missingOrganizationKeys: coverage.missing.map((institution) => institution.key),
     } : state.financialCoverage,
-    // 새 문서를 확인한 뒤에는 이전 업무 단계에서 계속하지 않고, 갱신된 문서와
-    // 온보딩 상태를 기준으로 개인별 절차를 다시 계산한다.
-    workflow: {
-      ...state.workflow,
-      phase: 'DOCUMENT_REVIEW',
-      procedureGenerated: false,
-      priorityTaskId: null,
-      missingDocumentTypes: [],
-      preparationPackageReady: false,
-      officialConnectionReady: false,
-      completionPending: false,
-    },
+    // 상담 준비 중 보충 자료를 올린 경우에는 선택한 상담 업무를 잃지 않는다.
+    // 문서 확인이 끝나면 갱신된 자료로 준비도를 다시 계산해 같은 업무를 이어간다.
+    workflow: isSupplementalConsultationUpload
+      ? {
+        ...state.workflow,
+        phase: 'PREPARING_TASK',
+        missingDocumentTypes: [],
+        preparationPackageReady: false,
+        officialConnectionReady: false,
+        completionPending: false,
+      }
+      : {
+        ...state.workflow,
+        phase: 'DOCUMENT_REVIEW',
+        procedureGenerated: false,
+        priorityTaskId: null,
+        missingDocumentTypes: [],
+        preparationPackageReady: false,
+        officialConnectionReady: false,
+        completionPending: false,
+      },
     currentFocus: { type: 'DOCUMENT_BATCH', id: pipelineResult.batchId },
     lastUpdatedAt: new Date().toISOString(),
   })
@@ -232,17 +269,6 @@ function buildDocumentUI(result: DocumentPipelineResult): AgentUIBlock[] {
     issues: [...result.batchIssues, ...result.crossDocumentIssues],
   }]
   for (const document of result.documents) {
-    if (document.classificationConfidence < 0.72 || document.documentType === 'UNKNOWN') {
-      ui.push({
-        type: 'DOCUMENT_CLASSIFICATION_CONFIRMATION',
-        documentId: document.documentId,
-        fileName: document.fileName,
-        suggestedType: document.documentType,
-        confidence: document.classificationConfidence,
-        alternatives: document.alternativeTypes,
-        actions: [{ id: 'confirm_type', label: '맞아요' }, { id: 'select_type', label: '종류 선택' }, { id: 'later', label: '나중에 확인' }],
-      })
-    }
     const isFinancialDocument = isFinancialDocumentType(document.documentType)
     const reviewFields = document.extractedFields.filter((item) => {
       if (isFinancialDocument) {
@@ -287,6 +313,7 @@ export function confirmDocumentField(
       : null
     const institution = recordPrefix
       ? document.extractedFields.find((field) => field.key === `${recordPrefix}.institutionName`)?.value
+        ?? document.extractedFields.find((field) => field.key === `${recordPrefix}.creditUnionName`)?.value
       : null
     const debtSignal = `${fieldKey} ${recordType ?? ''}`.match(/loan|debt|대출|채무|보증/i)
     const category = document.type === 'FINANCIAL_ASSET_DOCUMENT' || (!debtSignal && document.type === 'FINANCIAL_DOCUMENT') ? 'ASSET' as const : 'DEBT' as const

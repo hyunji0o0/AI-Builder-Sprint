@@ -13,7 +13,8 @@ import {
   beginDocumentCorrection,
   isDocumentReviewConfirmation,
 } from '../../agent/document-processing/document-correction'
-import { persistCaseSession, restoreCaseSession } from './case-session-storage'
+import { clearCaseSession, persistCaseSession, restoreCaseSession } from './case-session-storage'
+import { createOneStopApplicationGuide, createOneStopResultsGuide } from './one-stop-service-flow'
 
 const institutionNames = (keys: string[]) => keys.flatMap((key) => {
   const institution = financialInstitutionRegistry.find((item) => item.key === key)
@@ -38,13 +39,12 @@ const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
     DATE_INPUT: 'date',
     DOCUMENT_UPLOAD: 'upload',
     EXTRACTION_CONFIRMATION: 'extract',
-    FINANCIAL_INPUT: 'finance',
     RISK_ALERT: 'urgent',
     TASK_CARD: 'next',
     DOCUMENT_CHECKLIST: 'checklist',
-    INSTITUTION: 'institution',
     COMMUNITY_REVIEW: 'review',
     PROGRESS_SUMMARY: 'text',
+    ONE_STOP_SERVICE_GUIDE: 'text',
   }
   return ui[0] ? map[ui[0].type] : undefined
 }
@@ -62,8 +62,6 @@ export function useCaseAgent() {
   const [messages, setMessages] = useState<AgentMessage[]>(restoredSession.messages)
   const [input, setInput] = useState('')
   const [activeMenu, setActiveMenu] = useState('AI 홈')
-  const [assetDraft, setAssetDraft] = useState(restoredSession.caseState.financials.totalAssets === null ? '' : String(restoredSession.caseState.financials.totalAssets))
-  const [debtDraft, setDebtDraft] = useState(restoredSession.caseState.financials.totalDebts === null ? '' : String(restoredSession.caseState.financials.totalDebts))
   const [isResponding, setIsResponding] = useState(false)
   const [responseStatus, setResponseStatus] = useState('답변을 준비하고 있어요…')
   const [documentProgress, setDocumentProgress] = useState<DocumentProgress[]>([])
@@ -290,6 +288,12 @@ export function useCaseAgent() {
       const missingKeys = agentCaseState.financialCoverage.missingOrganizationKeys
       const missingNames = institutionNames(missingKeys)
       const existingMissingIds = new Set(agentCaseState.missingFields.map((field) => field.id))
+      const consultationTask = agentCaseState.tasks.find((task) => (
+        task.id === agentCaseState.workflow.priorityTaskId && task.category === 'CONSULTATION'
+      )) ?? agentCaseState.tasks.find((task) => task.id === 'prepare-inheritance-consultation')
+      const isContinuingConsultation = Boolean(consultationTask)
+        && (agentCaseState.stage === 'PREPARING_CONSULTATION'
+          || agentCaseState.workflow.priorityTaskId === consultationTask?.id)
       const nextState = {
         ...agentCaseState,
         financialCoverage: { ...agentCaseState.financialCoverage, status: 'PROCEED_WITH_AVAILABLE' as const },
@@ -303,11 +307,25 @@ export function useCaseAgent() {
             resolved: false,
           })),
         ],
-        stage: 'CHECKING_MISSING_INFO' as const,
+        stage: isContinuingConsultation ? 'PREPARING_CONSULTATION' as const : 'CHECKING_MISSING_INFO' as const,
+        currentFocus: isContinuingConsultation && consultationTask
+          ? { type: consultationTask.type, id: consultationTask.id }
+          : agentCaseState.currentFocus,
+        workflow: isContinuingConsultation && consultationTask
+          ? {
+            ...agentCaseState.workflow,
+            phase: 'PREPARING_TASK' as const,
+            procedureGenerated: true,
+            priorityTaskId: consultationTask.id,
+            preparationPackageReady: false,
+            officialConnectionReady: false,
+            completionPending: false,
+          }
+          : agentCaseState.workflow,
         lastUpdatedAt: new Date().toISOString(),
       }
       setAgentCaseState(nextState)
-      addAgent(`알겠어. ${missingNames.length}개 기관 결과는 미확인으로 남기고, 지금 확인된 자료만으로 진행할게. 이후 분석에서는 이 누락을 함께 표시할게.`)
+      addAgent(`알겠어. ${missingNames.length}개 기관 결과는 미확인으로 남기고, 지금 확인된 자료만으로 진행할게. 올린 금융 문서는 ‘일부 문서로 진행 중’으로 반영하고, 같은 상담 준비 업무를 이어갈게.`)
       void continueAfterDocumentVerification(nextState, true)
       return
     }
@@ -345,7 +363,7 @@ export function useCaseAgent() {
         onboarding: {
           ...state.onboarding,
           deathReportStatus: completed ? 'COMPLETED' : 'NOT_COMPLETED',
-          currentStep: 'FINANCIAL_INQUIRY',
+          currentStep: 'ONE_STOP_SERVICE',
         },
         tasks: completed
           ? state.tasks.map((task) => task.type === 'CONFIRM_DEATH_REPORT'
@@ -356,27 +374,27 @@ export function useCaseAgent() {
       }))
       const ui: AgentUIBlock[] = [{
         type: 'CHOICE',
-        prompt: '고인의 금융재산과 채무를 확인하는 금융조회는 진행했어?',
+        prompt: '안심상속 원스톱 서비스는 신청했어?',
         options: [
-          { id: 'onboarding_financial_completed', label: '조회했어' },
-          { id: 'onboarding_financial_not_completed', label: '아직 안 했어' },
+          { id: 'onboarding_one_stop_completed', label: '신청했어' },
+          { id: 'onboarding_one_stop_not_completed', label: '아직 안 했어' },
           { id: 'onboarding_pause', label: '나중에 확인할게' },
         ],
       }]
       addAgent(
-        `${completed ? '사망신고를 마친 것으로 저장했어.' : '아직 하지 않은 것으로 저장했어. 준비 방법은 상태 확인을 마친 뒤 가장 먼저 연결해줄게.'}\n\n고인의 금융재산과 채무를 확인하는 금융조회는 진행했어?`,
+        `${completed ? '사망신고를 마친 것으로 저장했어.' : '아직 하지 않은 것으로 저장했어. 준비 방법은 상태 확인을 마친 뒤 가장 먼저 연결해줄게.'}\n\n이제 안심상속 원스톱 서비스 신청 여부만 확인할게. 원스톱 서비스는 신청했어?`,
         'choice',
         ui,
       )
       return
     }
+    // 이전 세션에 남아 있는 금융조회 버튼은 별도 질문을 반복하지 않고
+    // 현재 온보딩의 다음 단계인 원스톱 서비스 확인으로 바로 연결한다.
     if (actionId === 'onboarding_financial_completed' || actionId === 'onboarding_financial_not_completed') {
-      const completed = actionId === 'onboarding_financial_completed'
       setAgentCaseState((state) => ({
         ...state,
         onboarding: {
           ...state.onboarding,
-          financialInquiryStatus: completed ? 'COMPLETED' : 'NOT_COMPLETED',
           currentStep: 'ONE_STOP_SERVICE',
         },
         lastUpdatedAt: new Date().toISOString(),
@@ -391,7 +409,7 @@ export function useCaseAgent() {
         ],
       }]
       addAgent(
-        `${completed ? '금융조회를 진행한 것으로 저장했어.' : '금융조회가 아직인 것으로 저장했어.'}\n\n마지막으로 한 가지만 더 확인할게. 안심상속 원스톱 서비스는 신청했어?`,
+        '금융조회 여부는 원스톱 서비스 신청 여부와 함께 확인할게.\n\n안심상속 원스톱 서비스는 신청했어?',
         'choice',
         ui,
       )
@@ -399,12 +417,13 @@ export function useCaseAgent() {
     }
     if (actionId === 'onboarding_one_stop_completed' || actionId === 'onboarding_one_stop_not_completed') {
       const oneStopCompleted = actionId === 'onboarding_one_stop_completed'
-      const deathPending = agentCaseState.onboarding.deathReportStatus === 'NOT_COMPLETED'
-      const financialPending = agentCaseState.onboarding.financialInquiryStatus === 'NOT_COMPLETED'
       setAgentCaseState((state) => ({
         ...state,
         onboarding: {
           ...state.onboarding,
+          // 기존 상태 필드는 문서·대시보드 호환을 위해 유지하되,
+          // 이제 원스톱 서비스 신청 상태에서 함께 파생한다.
+          financialInquiryStatus: oneStopCompleted ? 'COMPLETED' : 'NOT_COMPLETED',
           oneStopServiceStatus: oneStopCompleted ? 'COMPLETED' : 'NOT_COMPLETED',
           currentStep: 'COMPLETE',
         },
@@ -413,27 +432,20 @@ export function useCaseAgent() {
         lastUpdatedAt: new Date().toISOString(),
       }))
 
-      let message = '기본 상태 확인을 마쳤어.'
-      let prompt = '가지고 있는 문서를 올려서 다음 절차를 정리해볼까?'
-      let options = [
-        { id: 'onboarding_upload_documents', label: '문서 올리기' },
-        { id: 'later', label: '나중에 이어가기' },
-      ]
-      if (deathPending) {
-        message += ' 지금은 사망신고 준비가 가장 먼저야.'
-        prompt = '사망신고 준비부터 같이 해볼까?'
-        options = [{ id: 'show_death_report_steps', label: '준비 시작하기' }, { id: 'later', label: '나중에 이어가기' }]
-      } else if (financialPending) {
-        message += ' 다음으로 금융재산·채무 조회를 준비하는 게 좋아.'
-        prompt = '금융조회에 필요한 문서부터 확인해볼까?'
-        options = [{ id: 'onboarding_start_financial', label: '금융조회 준비하기' }, { id: 'later', label: '나중에 이어가기' }]
-      } else if (!oneStopCompleted) {
-        message += ' 다음으로 안심상속 원스톱 서비스 신청 여부를 정리하면 돼.'
-        prompt = '원스톱 서비스 준비를 이어갈까?'
-        options = [{ id: 'onboarding_start_one_stop', label: '준비하기' }, { id: 'later', label: '나중에 이어가기' }]
+      if (oneStopCompleted) {
+        addAgent(
+          '신청을 마친 것으로 저장했어. 이제 결과가 어떤 방식으로 도착하는지와, 우리 서비스에 무엇을 올리면 되는지 먼저 알려줄게.',
+          undefined,
+          [createOneStopResultsGuide()],
+        )
+        return
       }
-      const ui: AgentUIBlock[] = [{ type: 'CHOICE', prompt, options }]
-      addAgent(`${message}\n\n${prompt}`, 'choice', ui)
+
+      addAgent(
+        '아직 신청하지 않은 것으로 저장했어. 바로 문서를 요구하지 않고, 먼저 신청 방법과 준비물을 차례대로 안내할게.',
+        undefined,
+        [createOneStopApplicationGuide()],
+      )
       return
     }
     if (actionId === 'onboarding_upload_documents' || actionId === 'onboarding_start_financial') {
@@ -446,7 +458,54 @@ export function useCaseAgent() {
       return
     }
     if (actionId === 'onboarding_start_one_stop') {
-      addAgent('안심상속 원스톱 서비스 신청에 필요한 현재 정보를 먼저 확인할게. 공식 신청 경로와 준비 서류는 검증된 자료를 기준으로 연결해야 해.', 'upload')
+      addAgent(
+        '안심상속 원스톱 서비스가 무엇인지부터 신청 장소와 준비물까지 한 번에 정리했어.',
+        undefined,
+        [createOneStopApplicationGuide()],
+      )
+      return
+    }
+    if (actionId === 'onboarding_one_stop_application_completed') {
+      setAgentCaseState((state) => ({
+        ...state,
+        onboarding: {
+          ...state.onboarding,
+          financialInquiryStatus: 'COMPLETED',
+          oneStopServiceStatus: 'COMPLETED',
+          currentStep: 'COMPLETE',
+        },
+        onboardingCompleted: true,
+        stage: 'WAITING_FOR_DOCUMENT',
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+      addAgent(
+        '신청을 마친 것으로 반영했어. 다음은 기관별 조회 결과를 받는 과정이야. 어떤 결과가 오고, 무엇을 올리면 되는지 설명해줄게.',
+        undefined,
+        [createOneStopResultsGuide()],
+      )
+      return
+    }
+    if (actionId === 'onboarding_one_stop_upload_results') {
+      addAgent(
+        '받은 결과 파일을 올려줘. 파일 이름이 알아보기 어려워도 괜찮아. 문서 내용을 읽어 기관과 결과 종류를 구분하고, 자산·채무에 필요한 값만 보여줄게.',
+        'upload',
+      )
+      return
+    }
+    if (actionId === 'onboarding_one_stop_results_pending') {
+      const ui: AgentUIBlock[] = [{
+        type: 'CHOICE',
+        prompt: '결과가 도착하면 여기서 바로 이어갈 수 있어.',
+        options: [
+          { id: 'onboarding_one_stop_upload_results', label: '도착한 결과 올리기' },
+          { id: 'later', label: '나중에 이어가기' },
+        ],
+      }]
+      addAgent(
+        '아직 결과를 기다리는 중으로 기억해둘게. 기관마다 도착 시점이 다르니, 먼저 받은 결과만 올려도 괜찮아.',
+        'choice',
+        ui,
+      )
       return
     }
     if ([
@@ -598,10 +657,15 @@ export function useCaseAgent() {
       (state, documentId) => confirmAllDocumentFields(state, documentId),
       agentCaseState,
     )
+    const consultationTask = nextState.tasks.find((task) => (
+      task.id === nextState.workflow.priorityTaskId && task.category === 'CONSULTATION'
+    ))
     nextState = {
       ...nextState,
-      stage: 'CHECKING_MISSING_INFO',
-      currentFocus: { type: null, id: null },
+      stage: consultationTask ? 'PREPARING_CONSULTATION' : 'CHECKING_MISSING_INFO',
+      currentFocus: consultationTask
+        ? { type: consultationTask.type, id: consultationTask.id }
+        : { type: null, id: null },
       lastUpdatedAt: new Date().toISOString(),
     }
     setAgentCaseState(nextState)
@@ -658,9 +722,15 @@ export function useCaseAgent() {
       'FINANCIAL_DEBT_DOCUMENT',
       'CARD_DEBT_DOCUMENT',
     ].includes(document.type)
+    const consultationTask = state.tasks.find((task) => (
+      task.id === state.workflow.priorityTaskId && task.category === 'CONSULTATION'
+    ))
     return {
       ...state,
-      stage: 'CHECKING_MISSING_INFO' as const,
+      stage: consultationTask ? 'PREPARING_CONSULTATION' as const : 'CHECKING_MISSING_INFO' as const,
+      currentFocus: consultationTask
+        ? { type: consultationTask.type, id: consultationTask.id }
+        : state.currentFocus,
       onboarding: isFinancialDocument
         ? { ...state.onboarding, financialInquiryStatus: 'COMPLETED' as const }
         : state.onboarding,
@@ -687,10 +757,15 @@ export function useCaseAgent() {
   const confirmPipelineDocument = async (documentId: string) => {
     let nextState = applyVerifiedDocumentState(confirmAllDocumentFields(agentCaseState, documentId), documentId)
     const confirmedDocument = nextState.documents.find((item) => item.id === documentId)
+    const consultationTask = nextState.tasks.find((task) => (
+      task.id === nextState.workflow.priorityTaskId && task.category === 'CONSULTATION'
+    ))
     nextState = {
       ...nextState,
       currentFocus: confirmedDocument?.status === 'VERIFIED'
-        ? { type: null, id: null }
+        ? consultationTask
+          ? { type: consultationTask.type, id: consultationTask.id }
+          : { type: null, id: null }
         : { type: 'DOCUMENT_BATCH', id: null },
       lastUpdatedAt: new Date().toISOString(),
     }
@@ -712,26 +787,6 @@ export function useCaseAgent() {
       'complete',
     )
     if (document?.status === 'VERIFIED') await continueAfterDocumentVerification(nextState)
-  }
-
-  const saveFinance = () => {
-    const assets = Number(assetDraft) || 0
-    const debts = Number(debtDraft) || 0
-    setAgentCaseState((state) => ({
-      ...state,
-      stage: debts > assets ? 'URGENT_REVIEW' : 'IN_PROGRESS',
-      financials: {
-        assets: [{ id: 'asset-user', category: 'ASSET', type: 'OTHER', institution: null, amount: assets, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
-        debts: [{ id: 'debt-user', category: 'DEBT', type: 'OTHER', institution: null, amount: debts, amountStatus: 'VERIFIED', source: 'USER_INPUT', sourceDocumentId: null }],
-        totalAssets: assets,
-        totalDebts: debts,
-        difference: assets - debts,
-        hasUnverifiedItems: false,
-      },
-      missingFields: state.missingFields.map((field) => ({ ...field, resolved: true })),
-      lastUpdatedAt: new Date().toISOString(),
-    }))
-    addAgent('자산·채무 금액을 저장했고 확인이 필요했던 항목도 해결했어.', 'complete')
   }
 
   const completeTask = () => {
@@ -757,14 +812,18 @@ export function useCaseAgent() {
   const setSelectedDate = (selectedDate: string) =>
     setCaseUi((state) => ({ ...state, selectedDate }))
 
+  const resetCase = () => {
+    uploadedDocumentsRef.current.forEach((document) => URL.revokeObjectURL(document.url))
+    clearCaseSession(window.location.search)
+    window.location.reload()
+  }
+
   return {
     caseState,
     agentCaseState,
     messages,
     input,
     activeMenu,
-    assetDraft,
-    debtDraft,
     isResponding,
     responseStatus,
     documentProgress,
@@ -772,8 +831,6 @@ export function useCaseAgent() {
     previewDocument,
     stages,
     setInput,
-    setAssetDraft,
-    setDebtDraft,
     setSelectedDate,
     setPreviewDocument,
     addAgent,
@@ -788,9 +845,9 @@ export function useCaseAgent() {
     confirmPipelineField,
     startDocumentCorrection,
     confirmPipelineDocument,
-    saveFinance,
     completeTask,
     toggleChecklist,
+    resetCase,
   }
 }
 

@@ -46,9 +46,10 @@ describe('Document Pipeline', () => {
     expect(result.documents.find((document) => document.documentId === 'unknown')?.documentType).toBe('UNKNOWN')
   })
 
-  it('낮은 confidence가 문서 종류 확인 UI로 연결된다', async () => {
+  it('낮은 confidence도 내부 분류값으로만 유지하고 분류 확인 UI는 노출하지 않는다', async () => {
     const result = await runDocumentPipeline(input(file('blur', 'death-certificate-blurred-demo.png')), createInitialCaseState(), new MockDocumentPipelineAdapter())
-    expect(result.output.ui.some((block) => block.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION')).toBe(true)
+    expect(result.pipelineResult.documents[0]?.classificationConfidence).toBeLessThan(0.72)
+    expect(result.output.ui.some((block) => block.type === 'DOCUMENT_CLASSIFICATION_CONFIRMATION')).toBe(false)
   })
 
   it('사망일 충돌을 BLOCKING issue로 만든다', async () => {

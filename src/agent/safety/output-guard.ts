@@ -1,5 +1,9 @@
 import { AgentOutput } from '../schemas/agent-output'
 import { privacyFilter } from './privacy-filter'
+import {
+  promisesUnsupportedCapability,
+  unsupportedCapabilityFallback,
+} from './service-capabilities'
 
 const prohibited = [
   /상속포기(?:를)?\s*하세요/g,
@@ -23,6 +27,8 @@ export function guardOutput(output: AgentOutput): AgentOutput {
     message = message.replace(pattern, replacement)
   }
   message = privacyFilter.mask(message)
+  if (promisesUnsupportedCapability(message)) {
+    message = unsupportedCapabilityFallback
+  }
   return { ...output, message }
 }
-

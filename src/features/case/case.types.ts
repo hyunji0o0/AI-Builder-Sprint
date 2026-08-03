@@ -25,7 +25,6 @@ export type AgentBlockKind =
   | 'urgent'
   | 'next'
   | 'checklist'
-  | 'institution'
   | 'review'
   | 'complete'
 

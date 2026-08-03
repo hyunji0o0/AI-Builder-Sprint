@@ -276,7 +276,7 @@ describe('Agent Harness', () => {
     expect(result.output.ui.some((block) => block.type === 'TASK_CARD')).toBe(true)
   })
 
-  it('완료한 원스톱 서비스는 다음 업무에서 다시 묻지 않는다', async () => {
+  it('완료한 원스톱 서비스는 별도 금융조회 질문 없이 문서 업로드로 이어진다', async () => {
     const state = createInitialCaseState()
     state.onboardingCompleted = true
     state.onboarding = {
@@ -293,11 +293,32 @@ describe('Agent Harness', () => {
     })
 
     expect(result.output.meta.intent).toBe('ASK_NEXT_ACTION')
-    expect(result.output.message).toContain('금융조회 준비')
-    expect(result.output.message).not.toContain('원스톱 서비스가 아직')
+    expect(result.output.message).toContain('원스톱 서비스')
+    expect(result.output.message).not.toContain('금융조회 준비')
+    expect(result.output.ui[0]).toMatchObject({
+      type: 'DOCUMENT_UPLOAD',
+    })
+  })
+
+  it('사망신고 완료 뒤에는 금융조회 질문 대신 원스톱 서비스 신청을 다음 업무로 제시한다', async () => {
+    const state = createInitialCaseState()
+    state.onboardingCompleted = true
+    state.onboarding = {
+      currentStep: 'COMPLETE',
+      deathReportStatus: 'COMPLETED',
+      financialInquiryStatus: 'UNKNOWN',
+      oneStopServiceStatus: 'UNKNOWN',
+    }
+    const result = await runAgent({
+      input: '다음은 뭐 해야 해?',
+      caseState: state,
+    })
+
+    expect(result.output.message).toContain('원스톱 서비스')
+    expect(result.output.message).not.toContain('금융조회 준비')
     expect(result.output.ui[0]).toMatchObject({
       type: 'TASK_CARD',
-      title: '금융재산·채무 조회 준비',
+      title: '안심상속 원스톱 서비스 신청 준비',
     })
   })
 

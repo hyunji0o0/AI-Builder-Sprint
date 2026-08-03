@@ -6,8 +6,8 @@ export const userIntentSchema = z.enum([
   'CASUAL_CHAT', 'START_ONBOARDING', 'ANSWER_AGENT_QUESTION', 'UPLOAD_DOCUMENT',
   'CONFIRM_EXTRACTED_DATA', 'CORRECT_EXTRACTED_DATA', 'ADD_FINANCIAL_INFO',
   'ASK_CURRENT_STATUS', 'ASK_NEXT_ACTION', 'ASK_REQUIRED_DOCUMENTS', 'ASK_DEADLINE',
-  'ASK_FINANCIAL_RISK', 'ASK_INSTITUTION', 'ASK_COMMUNITY_TIP', 'ASK_DEATH_REPORT',
-  'UPDATE_TASK_STATUS', 'DEATH_REPORT_COMPLETED', 'ASK_LEGAL_DECISION', 'REQUEST_PAUSE',
+  'ASK_FINANCIAL_RISK', 'ASK_COMMUNITY_TIP', 'ASK_DEATH_REPORT',
+  'UPDATE_TASK_STATUS', 'DEATH_REPORT_COMPLETED', 'ASK_LEGAL_DECISION', 'ASK_LEGAL_INFORMATION', 'REQUEST_PAUSE',
   'CONTINUE_WORKFLOW', 'START_CONSULTATION_PREPARATION', 'PROCEED_WITH_AVAILABLE_DATA', 'UNSUPPORTED',
 ])
 
@@ -32,6 +32,23 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('TASK_CARD'), taskId: z.string(), title: z.string(), priority: z.enum(['URGENT', 'HIGH', 'NORMAL', 'LOW']), readiness: z.number(), actions: z.array(actionSchema) }),
   z.object({ type: z.literal('DOCUMENT_CHECKLIST'), taskId: z.string().nullable(), items: z.array(z.object({ id: z.string(), label: z.string(), verified: z.boolean() })) }),
   z.object({
+    type: z.literal('ONE_STOP_SERVICE_GUIDE'),
+    stage: z.enum(['APPLICATION', 'RESULTS']),
+    eyebrow: z.string(),
+    title: z.string(),
+    description: z.string(),
+    infoItems: z.array(z.object({ id: z.string(), title: z.string(), description: z.string() })),
+    checklist: z.array(z.object({ id: z.string(), label: z.string(), note: z.string().nullable() })),
+    resources: z.array(z.object({
+      id: z.string(),
+      label: z.string(),
+      url: z.string().url(),
+      kind: z.enum(['APPLICATION', 'GUIDE']),
+    })),
+    notice: z.string(),
+    actions: z.array(actionSchema),
+  }),
+  z.object({
     type: z.literal('DEATH_REPORT_PREPARATION'),
     taskId: z.string(),
     title: z.string(),
@@ -52,8 +69,16 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
     notice: z.string(),
     actions: z.array(actionSchema),
   }),
-  z.object({ type: z.literal('INSTITUTION'), results: z.array(z.object({ id: z.string(), name: z.string(), district: z.string(), sourceUrl: z.string().nullable(), verification: z.literal('MOCK_NEEDS_VERIFICATION') })) }),
   z.object({ type: z.literal('COMMUNITY_REVIEW'), reviews: z.array(z.object({ id: z.string(), excerpt: z.string(), reason: z.string(), createdAt: z.string(), helpfulCount: z.number(), url: z.string().nullable(), label: z.literal('사용자 경험') })), disclaimer: z.string() }),
+  z.object({
+    type: z.literal('LEGAL_REFERENCE'),
+    title: z.string(),
+    provisions: z.array(z.object({
+      id: z.string(), lawName: z.string(), article: z.string(), rule: z.string(),
+      caution: z.string(), effectiveDate: z.string(), checkedAt: z.string(), sourceUrl: z.string().url(),
+    })).min(1).max(3),
+    disclaimer: z.string(),
+  }),
   z.object({ type: z.literal('PROGRESS_SUMMARY'), progress: z.number(), completedTasks: z.number(), totalTasks: z.number() }),
   z.object({
     type: z.literal('PROCEDURE_PLAN'),
@@ -87,7 +112,7 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
     documents: z.array(z.object({
       type: z.string(),
       label: z.string(),
-      status: z.enum(['HELD', 'NEEDS_REVIEW', 'MISSING', 'NOT_APPLICABLE']),
+      status: z.enum(['HELD', 'PARTIAL', 'NEEDS_REVIEW', 'MISSING', 'NOT_APPLICABLE']),
     })),
   }),
   z.object({
@@ -104,13 +129,6 @@ export const agentUIBlockSchema = z.discriminatedUnion('type', [
     type: z.literal('OFFICIAL_PROCESS'),
     taskId: z.string(),
     title: z.string(),
-    institutions: z.array(z.object({
-      id: z.string(),
-      name: z.string(),
-      district: z.string(),
-      sourceUrl: z.string().nullable(),
-      verification: z.literal('MOCK_NEEDS_VERIFICATION'),
-    })),
     checklist: z.array(z.string()),
   }),
   z.object({

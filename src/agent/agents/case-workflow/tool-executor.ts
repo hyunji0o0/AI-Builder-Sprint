@@ -140,6 +140,11 @@ export async function executeSelection(
       }
       case 'PROCEED_AVAILABLE': {
         const missingKeys = state.financialCoverage.missingOrganizationKeys
+        const consultation = state.tasks.find((task) => (
+          task.id === state.workflow.priorityTaskId && task.category === 'CONSULTATION'
+        )) ?? (state.stage === 'PREPARING_CONSULTATION'
+          ? state.tasks.find((task) => task.category === 'CONSULTATION' && task.status !== 'COMPLETED')
+          : undefined)
         const existingMissingIds = new Set(state.missingFields.map((field) => field.id))
         const coverageFields = missingKeys
           .filter((key) => !existingMissingIds.has(`missing-financial-${key}`))
@@ -150,12 +155,47 @@ export async function executeSelection(
             resolved: false,
           }))
         result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
-          stage: 'CHECKING_MISSING_INFO',
+          stage: consultation ? 'PREPARING_CONSULTATION' : 'CHECKING_MISSING_INFO',
           financialCoverage: { ...state.financialCoverage, status: 'PROCEED_WITH_AVAILABLE' },
           financials: { ...state.financials, hasUnverifiedItems: missingKeys.length > 0 || state.financials.hasUnverifiedItems },
           missingFields: [...state.missingFields, ...coverageFields],
-          currentFocus: { type: null, id: null },
+          currentFocus: consultation
+            ? { type: consultation.type, id: consultation.id }
+            : { type: null, id: null },
+          workflow: consultation
+            ? {
+              ...state.workflow,
+              phase: 'PREPARING_TASK',
+              procedureGenerated: true,
+              priorityTaskId: consultation.id,
+              preparationPackageReady: false,
+              officialConnectionReady: false,
+              completionPending: false,
+            }
+            : state.workflow,
         }))
+        if (consultation) {
+          const prepared = await run('buildPreparationPackage', () => tools.buildPreparationPackage(state.caseId, consultation.id))
+          result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
+            stage: 'PREPARING_CONSULTATION',
+            workflow: {
+              ...result.state.workflow,
+              phase: 'CONNECTING_OFFICIAL_PROCESS',
+              preparationPackageReady: true,
+            },
+          }))
+          result.ui.push({
+            type: 'PREPARATION_PACKAGE',
+            ...prepared,
+            disclaimer: '현재 확인된 자료를 정리한 정보이며 법률 자문이나 제출 서류가 아니야.',
+          })
+          result.facts = [
+            `${missingKeys.length}개 기관 결과는 미확인으로 남겼어.`,
+            '올린 금융 문서는 일부 자료로 반영하고, 같은 상담 준비 업무를 다음 단계로 이어갔어.',
+          ]
+          result.suggestedActions.push({ id: 'connect_official', label: '공식 처리 단계 확인' })
+          break
+        }
         const tasks = await run('generatePersonalProcedure', () => tools.generatePersonalProcedure(state.caseId))
         result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
           workflow: {
@@ -186,7 +226,7 @@ export async function executeSelection(
           `${missingKeys.length}개 기관 결과는 미확인 상태로 보존했어.`,
           '현재 확인된 자료만 기준으로 다음 절차를 만들었어.',
         ]
-        result.suggestedActions.push({ id: 'select_priority', label: '가장 먼저 할 일 확인' })
+        if (tasks.length > 1) result.suggestedActions.push({ id: 'select_priority', label: '추천 순서로 시작하기' })
         break
       }
       case 'SHOW_NEXT_TASK': {
@@ -205,18 +245,8 @@ export async function executeSelection(
             readiness: 0,
             actions: [{ id: 'show_death_report_steps', label: '준비 시작하기' }, { id: 'later', label: '나중에 확인' }],
           })
-        } else if (state.onboarding.financialInquiryStatus !== 'COMPLETED') {
-          result.facts = ['사망신고는 완료했고 금융재산·채무 조회가 아직이라, 금융조회 준비가 다음 업무야.']
-          result.ui.push({
-            type: 'TASK_CARD',
-            taskId: 'onboarding-financial-inquiry',
-            title: '금융재산·채무 조회 준비',
-            priority: 'HIGH',
-            readiness: 0,
-            actions: [{ id: 'onboarding_start_financial', label: '금융조회 준비하기' }, { id: 'later', label: '나중에 확인' }],
-          })
         } else if (state.onboarding.oneStopServiceStatus !== 'COMPLETED') {
-          result.facts = ['사망신고와 금융조회는 완료했고 원스톱 서비스가 아직이라, 안심상속 원스톱 서비스 신청 준비가 다음 업무야.']
+          result.facts = ['사망신고는 완료했고 원스톱 서비스가 아직이라, 안심상속 원스톱 서비스 신청 준비가 다음 업무야.']
           result.ui.push({
             type: 'TASK_CARD',
             taskId: 'onboarding-one-stop-service',
@@ -226,7 +256,7 @@ export async function executeSelection(
             actions: [{ id: 'onboarding_start_one_stop', label: '준비하기' }, { id: 'later', label: '나중에 확인' }],
           })
         } else {
-          result.facts = ['사망신고, 금융조회, 안심상속 원스톱 서비스는 모두 완료 상태야. 다음 절차를 만들려면 현재 가진 문서를 확인하면 돼.']
+          result.facts = ['사망신고와 안심상속 원스톱 서비스는 완료 상태야. 다음 절차를 만들려면 원스톱 서비스 결과 문서를 올려주면 돼.']
           result.ui.push({ type: 'DOCUMENT_UPLOAD', accept: ['.pdf', '.jpg', '.jpeg', '.png'], taskId: null })
         }
         break
@@ -266,11 +296,6 @@ export async function executeSelection(
           disclaimer: '현재 확인된 자료 기준이며 정보 제공일 뿐 법률 자문이 아닙니다.',
         })
         result.suggestedActions.push({ id: 'prepare_consultation', label: '전문가 상담 준비' }, { id: 'verify_amounts', label: '미확인 금액 확인' })
-        break
-      }
-      case 'SHOW_INSTITUTION': {
-        const results = await run('findLocalInstitutions', () => tools.findLocalInstitutions(state.user.region.district, state.currentFocus.type || 'GENERAL'))
-        result.ui.push({ type: 'INSTITUTION', results })
         break
       }
       case 'SHOW_COMMUNITY_REVIEW': {
@@ -443,7 +468,7 @@ export async function executeSelection(
               }
             }),
           })
-          result.suggestedActions.push({ id: 'select_priority', label: '가장 먼저 할 일 확인' })
+          if (tasks.length > 1) result.suggestedActions.push({ id: 'select_priority', label: '추천 순서로 시작하기' })
           break
         }
         if (workflow.phase === 'SELECTING_PRIORITY_TASK') {
@@ -523,7 +548,6 @@ export async function executeSelection(
           const taskId = workflow.priorityTaskId
           const task = state.tasks.find((item) => item.id === taskId)
           if (!taskId || !task) throw new Error('PRIORITY_TASK_NOT_SELECTED')
-          const institutions = await run('findLocalInstitutions', () => tools.findLocalInstitutions(state.user.region.district, task.type))
           result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
             workflow: { ...workflow, phase: 'CONFIRMING_TASK_COMPLETION', officialConnectionReady: true, completionPending: true },
           }))
@@ -531,7 +555,6 @@ export async function executeSelection(
             type: 'OFFICIAL_PROCESS',
             taskId,
             title: task.title,
-            institutions,
             checklist: ['공식 기관에 필요 서류 재확인', '보유 서류와 미확인 항목 준비', '방문 또는 상담 후 처리 결과 기록'],
           })
           result.suggestedActions.push({ id: 'confirm_completion', label: '처리 완료 확인' })
@@ -542,16 +565,30 @@ export async function executeSelection(
           const task = state.tasks.find((item) => item.id === taskId)
           if (!taskId || !task) throw new Error('PRIORITY_TASK_NOT_SELECTED')
           result.state = await run('confirmTaskCompletion', () => tools.confirmTaskCompletion(state.caseId, taskId))
+          const isTerminalConsultationTask = task.category === 'CONSULTATION'
           result.state = await run('updateCaseState', () => tools.updateCaseState(state.caseId, {
-            workflow: { ...workflow, phase: 'GENERATING_NEXT_TASK', completionPending: false },
+            ...(isTerminalConsultationTask
+              ? {
+                  stage: 'COMPLETED' as const,
+                  currentFocus: { type: null, id: null },
+                }
+              : {}),
+            workflow: {
+              ...workflow,
+              phase: isTerminalConsultationTask ? 'ALL_TASKS_COMPLETED' : 'GENERATING_NEXT_TASK',
+              priorityTaskId: isTerminalConsultationTask ? null : workflow.priorityTaskId,
+              completionPending: false,
+            },
           }))
           result.ui.push({
             type: 'COMPLETION_CONFIRMATION',
             taskId,
             title: task.title,
-            actions: [{ id: 'generate_next', label: '다음 업무 생성' }],
+            actions: isTerminalConsultationTask ? [] : [{ id: 'generate_next', label: '다음 업무 생성' }],
           })
-          result.suggestedActions.push({ id: 'generate_next', label: '다음 업무 생성' })
+          if (!isTerminalConsultationTask) {
+            result.suggestedActions.push({ id: 'generate_next', label: '다음 업무 생성' })
+          }
           break
         }
         if (workflow.phase === 'GENERATING_NEXT_TASK') {
