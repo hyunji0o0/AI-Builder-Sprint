@@ -5,7 +5,7 @@ import {
   unsupportedCapabilityFallback,
 } from './service-capabilities'
 
-const prohibited = [
+const prohibitedAbsoluteRecommendations = [
   /상속포기(?:를)?\s*하세요/g,
   /단순승인으로\s*진행해도\s*됩니다/g,
   /무조건\s*한정승인/g,
@@ -20,8 +20,11 @@ const secretPatterns: Array<[RegExp, string]> = [
 
 export function guardOutput(output: AgentOutput): AgentOutput {
   let message = output.message
-  for (const pattern of prohibited) {
-    message = message.replace(pattern, '전문가와 신속히 검토해 주세요')
+  for (const pattern of prohibitedAbsoluteRecommendations) {
+    message = message.replace(
+      pattern,
+      '현재 확인된 자료를 기준으로 해당 상속 유형을 우선 검토하는 방향을 추천해 자세한 사항은 전문가와 검토해봐.',
+    )
   }
   for (const [pattern, replacement] of secretPatterns) {
     message = message.replace(pattern, replacement)
