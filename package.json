@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "guardrails:evaluate": "vitest run --configLoader runner src/agent/safety/guardrail-evaluation.test.ts",
+    "routing:evaluate": "vitest run --configLoader runner src/agent/orchestrator/agent-router.evaluation.test.ts",
     "fixtures:generate": "node scripts/generate-document-fixtures.mjs"
   },
   "dependencies": {

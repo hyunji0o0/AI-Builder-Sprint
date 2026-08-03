@@ -14,7 +14,15 @@
  * 주제어가 없어도 이 말이 있으면 사건 Agent로 보낸다.
  */
 export const caseOperationPattern =
-  /업로드|올려|올릴|올렸|올리면|첨부|스캔|추출|제출|접수|준비|진행|완료|다했|끝냈|시작|이어서|다음|뭐부터|무엇부터|단계|과정|상태|현황|어디까지|업무|할일|해야할|기한|남았|마감|며칠|조회|계산|확인|정리|저장|등록|수정|상담|전문가|나중에|미룰|미뤄/
+  /업로드|올려|올릴|올렸|올리면|첨부|스캔|추출|제출|접수|준비|진행|완료|다했|끝냈|시작|이어서|다음|뭐부터|무엇부터|단계|과정|상태|현황|어디까지|업무|할일|해야할|기한|남았|마감|며칠|조회|계산|확인|정리|저장|등록|수정|추가|넣어|반영|상담|전문가|나중에|미룰|미뤄/
+
+/** 사용자의 자료·사건·진행 상태를 직접 가리키는 표현. */
+export const personalCasePattern =
+  /내사건|내업무|내할일|내자료|내문서|내가올린|내가낸|업로드한|내상황|우리집|우리가족|내기준|내재산|내자산|내채무|내빚|내통장|내계좌/
+
+/** 설명이 아니라 사건 상태를 실제로 읽거나 바꾸라는 명시적인 동작. */
+export const caseMutationPattern =
+  /처리해|완료.{0,6}(?:처리|기록|체크|바꿔)|기록해|등록해|추가해|저장해|수정해|반영해|목록에.{0,4}넣어|시작해|진행해|넘어가|업로드할|업로드해|첨부할|첨부해|제출했|제출할게|접수했|끝냈|다했|해지했|추출해|조회해|계산해|확인해줘|정리해줘/
 
 /**
  * 상속·장례 도메인 주제어. 무엇에 관한 이야기인지만 나타내고, 처리 여부는 판단하지 않는다.
@@ -29,7 +37,26 @@ export const domainTermPattern =
  * 대한 판단이라 사건 Agent가 맥락을 보고 답해야 한다.
  */
 export const definitionQuestionPattern =
-  /뭐야|뭐예요|뭔가요|무엇인가|무슨뜻|무슨의미|뜻이|의미가|차이가|차이점|어떤건가|어떤거야|어떤제도|설명해|알려줄수/
+  /뭐야|뭐예요|뭔가요|무엇인가|무슨뜻|무슨의미|뜻이|의미가|차이|개념|어떤건가|어떤거야|어떤제도|설명해|알려줄수/
+
+/** 사건 자료를 보지 않아도 일반적인 순서나 주의점을 설명할 수 있는 질문 형태. */
+export const generalAdviceQuestionPattern =
+  /해도돼|해도됨|해도괜찮|하면돼|하면됨|해야돼|해야됨|해야하나|해야할까|가능해|가능한가/
+
+/** 사건 자료 없이 답할 수 있는 일반 절차·준비물·기관·경험담 질문. */
+export const generalKnowledgeQuestionPattern =
+  /방법|절차|순서|주의할점|주의점|어디서|어디에|언제|언제까지|준비서류|필요서류|무슨서류|뭐가필요|무엇이필요|발급|재발급|신고하는법|신고방법|팁|후기|경험담|추천|구별|판별|어느기관|받을수/
+
+/** 개인별 사실관계에 따라 결론이 크게 달라져 사건 Agent에서 다뤄야 하는 결정. */
+export const highStakesDecisionPattern =
+  /상속포기|한정승인|단순승인|유산분할|상속재산분할/
+
+/** 고위험 선택을 바로 실행하라는 요청이 아니라, 해도 되는지 판단을 묻는 문장인가. */
+export const isHighStakesDecisionQuestion = (input: string) => {
+  const text = compact(input)
+  return highStakesDecisionPattern.test(text)
+    && /도돼|도됨|도괜찮|해야해|해야돼|해야됨|해야하나|해야할까|나을까|맞아|괜찮아|가능해|가능한가|안돼|될까/.test(text)
+}
 
 /** 인사·감사·짧은 반응. 문장 전체가 이 형태일 때만 매치된다. */
 export const casualPattern =
@@ -50,6 +77,12 @@ export const needsCaseData = (input: string) => caseOperationPattern.test(compac
 /** 상속·장례 주제를 언급하고 있는가. */
 export const mentionsDomain = (input: string) => domainTermPattern.test(compact(input))
 
+/** 사용자가 자신의 사건이나 자료를 직접 가리키고 있는가. */
+export const mentionsPersonalCase = (input: string) => personalCasePattern.test(compact(input))
+
+/** 사건 상태를 실제로 바꾸거나 읽으라는 명시적인 요청인가. */
+export const requestsCaseMutation = (input: string) => caseMutationPattern.test(compact(input))
+
 /** 인사나 짧은 반응 한 마디인가. */
 export const isCasualGreeting = (input: string) => casualPattern.test(compact(input))
 
@@ -63,17 +96,30 @@ export const hasEmotionalSignal = (input: string) => emotionPattern.test(compact
  */
 export const isDomainQuestion = (input: string) => {
   const text = compact(input)
-  return domainTermPattern.test(text)
-    && definitionQuestionPattern.test(text)
-    && !caseOperationPattern.test(text)
+  if (!domainTermPattern.test(text)) return false
+
+  const explicitlyPersonal = personalCasePattern.test(text)
+  const changesCaseState = caseMutationPattern.test(text)
+  const isDefinition = definitionQuestionPattern.test(text) && !explicitlyPersonal && !changesCaseState
+  const isGeneralAdvice = generalAdviceQuestionPattern.test(text)
+    && !highStakesDecisionPattern.test(text)
+    && !explicitlyPersonal
+    && !changesCaseState
+  const isGeneralKnowledge = generalKnowledgeQuestionPattern.test(text)
+    && !explicitlyPersonal
+    && !changesCaseState
+  return isDefinition || isGeneralAdvice || isGeneralKnowledge || isHighStakesDecisionQuestion(input)
 }
 
 /** 상속·사망 맥락의 감정 표현이지만 아직 실제 사건 처리 요청은 아닌가. */
 export const shouldOfferCaseWorkflowHandoff = (input: string) =>
-  hasEmotionalSignal(input)
-  && mentionsDomain(input)
-  && !needsCaseData(input)
-  && !isDomainQuestion(input)
+  isHighStakesDecisionQuestion(input)
+  || (
+    hasEmotionalSignal(input)
+    && mentionsDomain(input)
+    && !needsCaseData(input)
+    && !isDomainQuestion(input)
+  )
 
 export const hasPendingCaseWorkflowHandoff = (memory?: {
   pendingInteraction?: { type: string } | null

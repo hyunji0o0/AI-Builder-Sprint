@@ -32,6 +32,9 @@ export function composeConversationMessage(input: string, hasTips = false) {
 
   // 팁 카드가 함께 나갈 때는 본문이 카드를 가리키기만 하면 된다.
   if (hasTips) return '비슷한 상황을 겪은 사람들의 경험을 아래에 모아봤어. 참고만 해줘.'
+  if (/(?:팁|후기|경험담).{0,12}(?:추천|찾아|보여|알려)?/.test(text)) {
+    return '지금 질문과 직접 관련된 경험담은 찾지 못했어. 다른 표현이나 상황으로 다시 찾아볼 수 있어.'
+  }
   if (isDomainQuestion(text)) return '지금은 자세히 설명해주기 어려운 상태야. 잠시 뒤에 다시 물어봐 줄래?'
 
   return pick(greetingMessages)

@@ -1,5 +1,6 @@
 import { CaseState, caseStateSchema } from '../schemas/case-state'
 import { CASE_WORKFLOW_HANDOFF_INTERACTION } from '../shared/domain-vocabulary'
+import { privacyFilter } from '../safety/privacy-filter'
 
 type MemoryMessage = { role: 'agent' | 'user'; text: string }
 
@@ -41,7 +42,7 @@ const expectedInputFor = (type: string | null) => {
 
 const summarizeConversation = (messages: MemoryMessage[]) => messages
   .slice(-20)
-  .map((message) => `${message.role === 'user' ? '사용자' : '곁'}: ${message.text.replace(/\s+/g, ' ').trim()}`)
+  .map((message) => `${message.role === 'user' ? '사용자' : '곁'}: ${privacyFilter.mask(message.text).replace(/\s+/g, ' ').trim()}`)
   .join('\n')
   .slice(-4000)
 
