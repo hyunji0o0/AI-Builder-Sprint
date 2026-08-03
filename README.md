@@ -1,119 +1,241 @@
-# AI Builder Sprint 2026
+# 애도할 시간
 
-> 총 168시간, AI와 함께 만드는 도전
+> AI가 복잡한 사후 행정과 서류 정리를 맡아, 가족을 잃은 사람이 애도할 시간을 되찾도록 돕는 서비스입니다.
 
-## 대회 소개
+가족을 잃은 사용자가 무엇부터 물어봐야 할지 몰라도 괜찮도록, 업로드한 문서를 읽고 현재 사건 상태를 기억하며 다음 할 일을 한 단계씩 안내합니다. 계산과 상태 검증은 결정론적인 코드가 담당하고, Solar 기반 Agent는 문서 이해·의도 분류·설명 생성에 집중합니다.
 
-**AI Builder Sprint 2026**은 부산대학교 **APPTIVE**가 주최하고, **Upstage**, 부산대학교 **Anchor 사업단** 및 부산대학교 **AI융합교육원**이 후원하는 해커톤입니다. 참가자들은 자유로운 기술 스택을 바탕으로 실제로 동작하는 서비스를 직접 코드로 구현합니다.
+본 서비스는 법률 정보를 이해하기 쉽게 정리하는 보조 도구이며 법률 자문이나 사용자를 대신한 법적 결정을 제공하지 않습니다.
 
-| 항목 | 내용 |
+> **실행 기준**: 현재 제출본은 외부 배포 없이 `localhost`에서 실행하는 로컬 데모를 기준으로 합니다. 프론트엔드, Agent API, 문서 분석 API, 커뮤니티 API가 하나의 Vite 개발 서버에서 함께 동작합니다.
+
+## 핵심 기능
+
+- **Agent 기반 사후 절차 안내**: 사망신고, 안심상속 원스톱, 자산·채무 확인, 전문가 상담 준비를 사건 상태에 맞춰 진행합니다.
+- **문서 자동 분류·추출**: Upstage Document Parse와 Information Extract로 이미지·PDF의 종류와 핵심 필드를 추출합니다.
+- **사용자 2중 확인**: AI가 추출한 값을 사람이 확인하거나 수정한 뒤에만 사건 상태와 금액 합계에 반영합니다.
+- **자산·채무 요약**: 확인된 값과 미확인 값을 구분하고, 법적 결론 대신 검토가 필요한 위험 신호와 다음 행동을 안내합니다.
+- **근거 기반 법률 안내**: 저장소에 검증해 둔 법령 데이터와 출처를 바탕으로 기한과 절차를 설명합니다.
+- **경험 나눔 커뮤니티**: 비슷한 상황의 경험담을 검색하고 Agent가 현재 단계에 맞는 팁 카드로 추천합니다.
+- **안전장치**: 개인정보 마스킹, 법률적 단정 차단, 위기 신호 감지, Agent 경계 및 라우팅 검증을 적용합니다.
+
+## AI 활용 구조
+
+```text
+사용자 입력
+  -> Agent Router
+     |- Conversation Agent: 인사·감정·일반 질문·용어 설명
+     `- Case Workflow Agent: 사건 상태 변경·문서·기한·업무 처리
+          -> Document Tool: Document Parse -> 분류 -> Information Extract -> 사용자 확인
+          -> Case Tools: 합계·누락·기한·우선순위 계산
+  -> 구조화된 메시지 + UI Block + 갱신된 대시보드 상태
+```
+
+핵심 원칙은 **“판단과 계산은 코드가, 읽기와 설명은 AI가”**입니다. Agent는 한 요청에서 필요한 행동과 도구를 선택하지만, 금액 합계·상태 전이·기한 검증은 일반 코드가 수행합니다.
+
+## 기술 스택
+
+| 영역 | 사용 기술 |
 | --- | --- |
-| 주제 | AI를 통해 인간다움을 더욱 잘 드러낼 수 있는 서비스 개발 |
-| 팀 구성 | 2~4인 1팀 |
-| 개발 방식 | 코드 기반 앱 개발 필수 (노코드/로우코드 단독 사용 불가) |
+| Frontend | Vite 6, React 18, TypeScript 5 |
+| Agent | Solar LLM, 구조화 출력, Tool Call 기반 자체 Harness |
+| Document AI | Upstage Document Parse, Information Extract, Python adapter |
+| Data/Auth | Supabase Postgres, pgvector, Google OAuth |
+| Validation/Test | Zod, Vitest, ESLint |
 
-### 진행 흐름
+## 프로젝트 구조
 
-1. **팀 단위 참가 신청** — 팀원 정보, 프로젝트 아이디어, 활용 예정 AI 기술·API 제출
-2. **참가팀 선발** (20~50팀) — 아이디어 참신성·실현 가능성·AI 활용 계획 기반 서류 심사
-3. **예선 개발 기간** (7.27 ~ 8.3, 약 1주일) — API 크레딧 발급, 아이디어 구체화 및 개발
-4. **결과물 제출 및 1차 심사** — 데모 영상/배포 링크, 코드 저장소, 발표 자료, AI 활용 증빙 제출
-5. **본선 발표 및 질의응답** (8.7) — 팀당 7분 발표 + 5분 Q&A, 심사 후 수상팀 확정
+```text
+src/
+  agent/                    Agent 라우팅·상태·도구·문서 처리·안전장치
+    agents/conversation/    일상 대화와 일반 질문 Agent
+    agents/case-workflow/   사건 처리 Agent
+    document-processing/    Python 문서 파이프라인과 Node adapter
+    orchestrator/           단일 Agent 진입점과 라우터
+    server/                 /api/agent, /api/documents Vite middleware
+  features/community/       경험 나눔 화면
+  server/                   커뮤니티 API·추천·Supabase 저장소·PII guard
+  schemas/                  공유 런타임 스키마
+prompts/                    Agent·추천 프롬프트
+supabase/                   DB 스키마와 마이그레이션
+docs/                       기획·대회·AI 활용 문서
+```
 
-### 기술 스택 및 규칙
+## 로컬 기동 실행 가이드
 
-- 사용 API·모델은 자유이며, **Upstage API**(Solar LLM, Document Parse, Information Extract) 활용 시 심사 가점
-- Claude, GPT, Gemini 등 타사 모델 병행 사용 가능 (제약 없음)
-- 프레임워크/언어 자유 (Python, JavaScript, React, Flutter 등)
-- 결과물은 데모 가능한 동작하는 앱 (웹앱, 모바일앱, CLI 도구 등 형태 무관)
-- 코딩 에이전트(Claude Code, Codex 등) 활용 시 `.claude/`, `AGENTS.md` 등 관련 설정·지침 파일을 저장소에 포함해야 심사에 반영됩니다
+### 1. 사전 준비
 
-### 심사 기준
+- **Node.js 20 LTS 이상**
+- **pnpm 10 이상**
+- **Python 3.10 이상**
+- Upstage API Key
+- Supabase 프로젝트
 
-| 기준 | 배점 |
-| --- | --- |
-| 창의성 | 20점 |
-| AI 활용도 | 20점 |
-| 완성도 | 20점 |
-| 실용성 | 20점 |
-| 발표력 (본선) | 20점 |
-| Upstage API 활용 가점 | +5점 |
-| 지역사회 기여도 가점 | +5점 |
+> 현재 개발 서버는 보안을 위해 `localhost`에만 바인딩됩니다. 같은 네트워크의 다른 기기에서는 접속할 수 없습니다.
 
-### 시상 내역
-
-- 대상 1팀: 100만원 + 상품
-- 최우수상 1팀: 50만원 + 상품
-- 우수상 1팀: 상품
-- 본선 참가 10팀: Upstage 굿즈 + 참가 인증서
-
-## Git Fork 하는 방법
-
-참가팀은 이 저장소를 팀 대표의 GitHub 계정으로 **Fork**한 뒤, 해당 Fork 저장소에서 프로젝트를 개발하고 최종 결과물을 제출합니다.
-
-### 1. 저장소 Fork하기
-
-1. [AI-Builder-Sprint 저장소](https://github.com/ApptiveDev/AI-Builder-Sprint)에 접속합니다.
-2. 우측 상단의 **Fork** 버튼을 클릭합니다.
-  <img width="1888" height="1131" alt="스크린샷 2026-07-27 오전 12 31 16" src="https://github.com/user-attachments/assets/2f0f7f80-6c92-4ba5-87c5-89ed6107eeab" />
-
-3. 본인(또는 팀 대표) GitHub 계정으로 저장소가 복사됩니다. (`https://github.com/<내-계정>/AI-Builder-Sprint`)
-
-### 2. Fork한 저장소 로컬로 클론하기
+### 2. 저장소와 의존성 준비
 
 ```bash
-git clone https://github.com/<내-계정>/AI-Builder-Sprint.git
+git clone https://github.com/hyunji0o0/AI-Builder-Sprint.git
 cd AI-Builder-Sprint
-```
-
-### 3. 개발 진행 및 커밋
-
-```bash
-git checkout -b develop
-# 코드 작성 및 수정
-git add .
-git commit -m "feat: 프로젝트 초기 구현"
-git push origin develop
-```
-
-포크된 저장소 내에서 개발을 진행해주시면 됩니다.
-
-### 4. 결과물 제출
-
-- **팀별로 Fork한 본인 저장소 URL을 제출 양식에 기재합니다.**
-- 제출 마감 전까지 코드, 데모 영상/배포 링크, 발표 자료를 함께 준비해 제출해주세요.
-- 코딩 에이전트를 활용한 경우 `.claude/`, `AGENTS.md` 등 설정 파일도 반드시 저장소에 포함해주세요.
-
-
-## 문의
-
-- 대회 관련 문의: 해커톤 문의 오픈채팅방
-- 주최: 부산대학교 APPTIVE, 정보컴퓨터공학부 동아리연합회 / 후원: Upstage, 부산대 Anchor 사업단, 부산대 AI융합교육원
-
-## 로컬 실행
-
-1. 프로젝트 루트에 `.env.local` 파일을 만들고 Upstage API 키를 설정합니다.
-
-```env
-UPSTAGE_API_KEY=up_your_api_key_here
-UPSTAGE_MODEL=solar-pro3
-DOCUMENT_PIPELINE_MODE=python
-# 자동 탐색이 실패할 때만 설정
-# PYTHON_COMMAND=C:\path\to\python.exe
-```
-
-2. 의존성을 설치하고 개발 서버를 실행합니다.
-
-```bash
 pnpm install
+```
+
+Python 문서 파이프라인 의존성을 설치합니다.
+
+```bash
 python -m pip install -r requirements.txt
+```
+
+Windows에서 `python` 명령을 찾지 못하면 다음 명령을 사용할 수 있습니다.
+
+```powershell
+py -m pip install -r requirements.txt
+```
+
+### 3. Supabase 설정
+
+1. Supabase 프로젝트를 생성합니다.
+2. SQL Editor에서 [`supabase/schema.sql`](supabase/schema.sql)을 실행합니다.
+3. 기존 DB의 임베딩 컬럼이 1536차원이라면 [`supabase/migration_fix_embedding_dim.sql`](supabase/migration_fix_embedding_dim.sql)을 실행해 4096차원으로 맞춥니다.
+4. Authentication > Providers에서 Google 로그인을 활성화합니다.
+5. Authentication의 Site URL과 허용 Redirect URL에 `http://localhost:5173`을 등록합니다.
+6. Project Settings > API에서 Project URL, `anon` key, `service_role` key를 확인합니다.
+
+### 4. 환경변수 설정
+
+예시 파일을 복사합니다.
+
+```powershell
+Copy-Item .env.local.example .env.local
+```
+
+macOS/Linux에서는 다음 명령을 사용합니다.
+
+```bash
+cp .env.local.example .env.local
+```
+
+생성한 `.env.local`에 실제 값을 입력합니다. 상세 항목은 아래 [환경변수 정보](#환경변수-정보)를 참고하세요.
+
+### 5. 개발 서버 실행
+
+```bash
 pnpm dev
 ```
 
-브라우저에는 API 키가 전달되지 않으며, Vite 개발 서버의 `/api/chat` 프록시가
-Upstage Solar Chat Completions API를 호출합니다. `.env.local`을 변경한 경우
-개발 서버를 다시 시작해야 합니다.
+브라우저에서 [http://localhost:5173](http://localhost:5173)을 엽니다. 개발 서버에는 프론트엔드와 다음 API middleware가 함께 실행됩니다.
 
-문서 업로드는 `src/agent/document-processing/python/document_analysis_pipeline.py`를 Tool Call로
-실행합니다. Python 명령어가 다르면 `PYTHON_COMMAND`를 변경해 주세요.
-제품 실행 경로에서는 Upstage 기반 실제 문서 파이프라인만 사용합니다.
+- `POST /api/agent`: Agent 실행
+- `POST /api/documents`: 문서 분석
+- `/api/community/*`: 게시글·댓글·추천
+
+`.env.local`, `vite.config.ts`, `src/server/*`, `src/agent/server/*` 또는 Agent 서버 코드를 수정했다면 Vite 개발 서버를 완전히 종료한 뒤 다시 실행해야 합니다.
+
+## 환경변수 정보
+
+환경변수는 프로젝트 루트의 `.env.local`에만 저장합니다. `.env.local`은 Git에서 제외되어 있으며 실제 키를 README, 예시 파일, 이슈 또는 커밋에 기록하면 안 됩니다.
+
+| 변수 | 필수 | 노출 범위 | 설명 |
+| --- | --- | --- | --- |
+| `UPSTAGE_API_KEY` | 필수 | 서버 전용 | Solar, Document Parse, Information Extract, 임베딩 호출에 사용하는 Upstage API Key |
+| `UPSTAGE_MODEL` | 선택 | 서버 전용 | 주 Agent 모델. 기본값은 `solar-pro3` |
+| `UPSTAGE_SIMPLE_MODEL` | 선택 | 서버 전용 | 분류 등 단순 작업용 모델. 기본값은 `solar-mini` |
+| `SUPABASE_URL` | 필수 | 서버 전용 | 커뮤니티 저장소에서 사용하는 Supabase Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | 필수 | **서버 비밀값** | 커뮤니티 서버가 DB에 접근할 때 사용. RLS를 우회하므로 절대 브라우저나 Git에 노출하지 않음 |
+| `VITE_SUPABASE_URL` | 필수 | 브라우저 공개 | 로그인 클라이언트에서 사용하는 Supabase Project URL. 보통 `SUPABASE_URL`과 같은 값 |
+| `VITE_SUPABASE_ANON_KEY` | 필수 | 브라우저 공개 | Google 로그인에 사용하는 Supabase `anon` key. `service_role` key와 혼동 금지 |
+| `PYTHON_COMMAND` | 선택 | 서버 전용 | Python 자동 탐색이 실패할 때 사용할 실행 파일 경로. 예: `C:\\Python311\\python.exe` |
+
+최소 설정 예시는 다음과 같습니다.
+
+```env
+UPSTAGE_API_KEY=up_xxxxxxxxxxxxxxxxxxxx
+UPSTAGE_MODEL=solar-pro3
+UPSTAGE_SIMPLE_MODEL=solar-mini
+
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# Python 자동 탐색이 실패할 때만 사용
+# PYTHON_COMMAND=C:\\path\\to\\python.exe
+```
+
+> `VITE_` 접두사가 붙은 값은 빌드 시 브라우저 코드에 포함됩니다. 비밀키에는 절대 `VITE_` 접두사를 사용하지 마세요.
+
+## 실행/배포 환경 정보
+
+이 프로젝트의 실행 및 데모 환경은 **로컬 PC**입니다. 별도의 운영 서버나 공개 배포 URL은 사용하지 않습니다.
+
+| 구분 | 주소/산출물 | 용도 | 전체 기능 사용 여부 |
+| --- | --- | --- | --- |
+| **로컬 통합 서버** | `http://localhost:5173` | 실제 데모. 프론트엔드 + Agent/문서/커뮤니티 API 통합 실행 | **가능** |
+| 로컬 정적 미리보기 | `http://localhost:4173` | 빌드된 프론트엔드 화면만 확인 | 불가 |
+| 로컬 빌드 산출물 | `dist/` | 타입 검사 및 정적 프론트엔드 빌드 결과 | 불가 |
+
+현재 API는 별도 백엔드가 아니라 `vite.config.ts`의 Vite 개발 서버 plugin으로 제공됩니다. 로컬 통합 서버를 실행하면 다음 구성요소가 한 프로세스 안에서 연결됩니다.
+
+- 브라우저: React UI와 Supabase Google 로그인
+- Node.js/Vite: Agent·문서·커뮤니티 API middleware
+- Python subprocess: Upstage 문서 분석 파이프라인
+- 외부 관리형 서비스: Upstage API, Supabase DB/Auth
+
+따라서 **전체 기능 테스트와 데모는 반드시 `pnpm dev`로 실행**해야 합니다. `pnpm build`로 생성한 `dist/`는 프론트엔드 정적 파일만 포함하므로, 이를 별도로 호스팅해도 `/api/agent`, `/api/documents`, `/api/community/*`는 동작하지 않습니다.
+
+외부 운영 배포는 현재 제출 범위에 포함하지 않습니다. 향후 배포할 때는 Vite middleware를 Node 서버 또는 Serverless Function으로 이전해야 하며, `UPSTAGE_API_KEY`와 `SUPABASE_SERVICE_ROLE_KEY`는 서버 런타임에만 주입해야 합니다.
+
+### 빌드 및 정적 미리보기
+
+```bash
+pnpm build
+pnpm preview
+```
+
+`pnpm preview`는 정적 화면 확인용입니다. Agent·문서 분석·커뮤니티 API까지 검증하려면 `pnpm dev`를 사용하세요.
+
+## 검증 명령어
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+세부 평가 명령은 다음과 같습니다.
+
+```bash
+pnpm guardrails:evaluate
+pnpm routing:evaluate
+pnpm tips:evaluate
+```
+
+## 자주 발생하는 문제
+
+### `Port 5173 is already in use`
+
+기존 개발 서버가 실행 중입니다. 이전 터미널의 Vite 프로세스를 종료한 뒤 `pnpm dev`를 다시 실행하세요. 이 프로젝트는 잘못된 서버에 접속하는 일을 막기 위해 `strictPort`를 사용합니다.
+
+### `UPSTAGE_API_KEY` 또는 Supabase 환경변수 오류
+
+`.env.local`의 변수명이 정확한지 확인하고 개발 서버를 재시작하세요. 키 앞뒤의 따옴표나 불필요한 공백도 제거합니다.
+
+### 문서 분석이 오래 걸리거나 실패함
+
+`python --version`과 `python -m pip install -r requirements.txt` 실행 여부를 확인하세요. Python 자동 탐색이 실패하면 `PYTHON_COMMAND`에 Python 실행 파일의 절대 경로를 지정합니다.
+
+## 보안 주의사항
+
+- 실제 주민등록번호, 계좌번호, 사건번호가 포함된 문서를 공개 데모에 사용하지 않습니다.
+- `SUPABASE_SERVICE_ROLE_KEY`는 관리자 권한이므로 노출이 의심되면 즉시 폐기하고 재발급합니다.
+- API Key를 과거 커밋에 올렸다면 파일에서 지우는 것만으로 해결되지 않습니다. 반드시 제공자 콘솔에서 키를 재발급해야 합니다.
+- Agent가 제공하는 상속 관련 안내는 정보 제공이며, 최종 법률 판단과 접수는 공식 기관 또는 전문가에게 확인합니다.
+
+## 대회 정보
+
+AI BUILDER SPRINT 2026의 주제인 **“AI를 통해 인간다움을 더욱 잘 드러낼 수 있는 서비스”**에 맞춰 개발했습니다. AI가 사람인 척 위로하는 대신, 사람이 감당하기 어려운 행정·서류·기한 정리를 맡아 가족과 애도에 쓸 시간을 돌려주는 것이 이 프로젝트의 인간다움입니다.
+
+- 주최: 부산대학교 APPTIVE
+- 후원: Upstage, 부산대학교 Anchor 사업단, 부산대학교 AI융합교육원, MODUSIGN
+- 상세 기획: [`docs/기획서.md`](docs/기획서.md)
+- 대회 규정: [`docs/대회_안내.md`](docs/대회_안내.md)
