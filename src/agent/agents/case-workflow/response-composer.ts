@@ -66,7 +66,25 @@ export function deterministicMessage(
   if (classification.intent === 'CASUAL_CHAT') return '행정업무가 아닌 대화는 대화 Agent에서 이어갈게.'
   if (classification.intent === 'REQUEST_PAUSE') return '응, 지금 상태로 저장해둘게. 필요할 때 여기서 다시 이어갈 수 있어.'
   if (classification.intent === 'ASK_LEGAL_DECISION') {
-    return `상속 방법을 대신 결정할 수는 없어. 지금 확인된 자료를 기준으로 위험 신호와 전문가 상담에 필요한 내용을 정리해줄게. ${legalDisclaimer}`
+  const summary = execution.financialSummary
+
+  if (!summary) {
+    return `상속 유형을 추천하려면 확인된 자산과 채무 정보가 필요해. 금융조회 결과를 먼저 확인해줘. ${legalDisclaimer}`
+  }
+
+  if (summary.hasUnverifiedItems) {
+      return `아직 확인되지 않은 금액이 있어서 상속 유형을 하나로 추천하기는 어려워. 다만 현재 자료에서는 채무 초과 가능성이 있으니 단순승인보다는 한정승인이나 상속포기를 우선 검토하는 방향을 추천해. ${legalDisclaimer}`
+    }
+
+    if (summary.totalDebts > summary.totalAssets) {
+      if (summary.totalAssets > 0) {
+        return `현재 확인된 자산은 ${summary.totalAssets.toLocaleString('ko-KR')}원이고 채무는 ${summary.totalDebts.toLocaleString('ko-KR')}원이야. 채무가 자산보다 ${Math.abs(summary.difference).toLocaleString('ko-KR')}원 많아서 단순승인보다는 한정승인을 우선 검토하는 방향을 추천해. 상속재산과 채무를 모두 승계하지 않으려는 경우에는 상속포기도 함께 비교해봐야 해. ${legalDisclaimer}`
+      }
+
+      return `현재 확인된 자산은 없고 채무가 ${summary.totalDebts.toLocaleString('ko-KR')}원 확인됐어. 현재 자료만 기준으로는 상속포기를 우선 검토하는 방향을 추천해. 다만 누락된 재산이나 이미 처분한 재산이 있는지는 추가 확인이 필요해. ${legalDisclaimer}`
+    }
+
+    return `현재 확인된 자료에서는 자산이 채무보다 많아. 다만 추가 채무가 없는지 확인한 뒤 단순승인을 검토하는 방향을 추천해. ${legalDisclaimer}`
   }
   if (selection.action === 'PROCEED_AVAILABLE') {
     return '알겠어. 아직 확인하지 못한 금융기관 자료는 미확인 상태로 남겨뒀어. 같은 자료를 다시 요청하지 않고, 지금 확인된 내용만 기준으로 다음 절차를 만들었어. 아래에서 가장 먼저 할 일을 확인하면 돼.'
@@ -120,19 +138,26 @@ export function deterministicMessage(
     SHOW_DOCUMENTS: '지금 업무에 필요한 서류를 정리했어.',
     SHOW_DEADLINE: execution.facts.join('\n'),
     CHECK_FINANCIAL_RISK: execution.financialSummary?.riskLevel === 'URGENT_REVIEW'
-      ? `지금 확인된 자료에서는 부채가 자산보다 ${Math.abs(execution.financialSummary.difference).toLocaleString('ko-KR')}원 많아. 미확인 항목과 검토 기한을 함께 확인하고 전문가 상담을 준비해줘. ${legalDisclaimer}`
-      : `지금 입력된 자산과 채무를 비교했어. ${legalDisclaimer}`,
-    SHOW_COMMUNITY_REVIEW: '비슷한 상황의 사용자 경험을 찾았어. 개인 경험이니 공식 기관 안내도 함께 확인해줘.',
-    SHOW_DEATH_REPORT: '사망신고에 필요한 서류와 공식 양식을 준비했어. 아래에서 준비물을 확인하고 신고서를 내려받은 뒤, 방문이나 우편 접수를 준비하면 돼.',
-    COMPLETE_TASK: '업무를 완료 처리하고 진행 상황에 반영했어.',
+      ? execution.financialSummary.hasUnverifiedItems
+        ? `지금 확인된 자료에서는 부채가 자산보다 ${Math.abs(execution.financialSummary.difference).toLocaleString('ko-KR')}원 많아. 아직 미확인 금액이 있으므로 단순승인보다는 한정승인이나 상속포기를 우선 검토하는 방향을 추천해. ${legalDisclaimer}`
+        : execution.financialSummary.totalAssets > 0
+          ? `지금 확인된 자료에서는 부채가 자산보다 ${Math.abs(execution.financialSummary.difference).toLocaleString('ko-KR')}원 많아. 상속재산이 일부 확인됐으므로 한정승인을 우선 검토하고, 재산과 채무를 모두 승계하지 않으려면 상속포기도 함께 비교해보는 방향을 추천해. ${legalDisclaimer}`
+          : `현재 확인된 자산은 없고 채무가 확인됐어. 현재 자료 기준으로는 상속포기를 우선 검토하는 방향을 추천해. ${legalDisclaimer}`
+      : `지금 입력된 자산과 채무를 비교했어. 추가 채무가 없는지 확인한 뒤 상속 유형을 결정하는 게 좋아. ${legalDisclaimer}`,
+        SHOW_COMMUNITY_REVIEW: '비슷한 상황의 사용자 경험을 찾았어. 개인 경험이니 공식 기관 안내도 함께 확인해줘.',
+        SHOW_DEATH_REPORT: '사망신고에 필요한 서류와 공식 양식을 준비했어. 아래에서 준비물을 확인하고 신고서를 내려받은 뒤, 방문이나 우편 접수를 준비하면 돼.',
+        COMPLETE_TASK: '업무를 완료 처리하고 진행 상황에 반영했어.',
     COMPLETE_DEATH_REPORT: execution.facts[0]
       ? `사망신고를 마친 것으로 반영했어.\n\n${execution.facts[0]}부터 이어서 확인해보자. 아래 버튼을 누르면 바로 시작할 수 있어.`
       : '사망신고를 마친 것으로 반영했어.\n\n지금 상태를 기준으로 다음 업무를 확인했어.',
     ADVANCE_WORKFLOW: '지금 사건 상태를 반영해 다음 준비 단계로 이동했어.',
     START_CONSULTATION: '전문가 상담 준비를 시작했어.',
     PROCEED_AVAILABLE: '미확인 자료는 그대로 표시하고, 현재 확인된 자료를 기준으로 다음 단계로 이동했어.',
-    LEGAL_BOUNDARY: `법률적 결정을 대신할 수는 없지만, 지금 확인된 자료와 검토할 항목을 정리해줄게. ${legalDisclaimer}`,
-    PAUSE: '응, 지금 상태로 저장해둘게.',
+    LEGAL_BOUNDARY: execution.financialSummary?.difference !== undefined
+      && execution.financialSummary.difference < 0
+      ? `현재 자료에서는 채무가 자산보다 많아 단순승인보다 한정승인이나 상속포기를 우선 검토하는 방향을 추천해. ${legalDisclaimer}`
+      : `현재 확인된 자산과 채무를 기준으로 적합한 상속 유형을 안내할게. ${legalDisclaimer}`,
+        PAUSE: '응, 지금 상태로 저장해둘게.',
     FALLBACK: '요청을 정확히 이해하지 못했어. 지금 할 일, 필요한 서류, 기한 중 하나를 골라줘.',
   }
   return prefix + messages[selection.action]
@@ -155,7 +180,7 @@ export async function composeMessage(
     || (selection.action === 'SHOW_COMMUNITY_REVIEW' && !execution.ui.some((block) => block.type === 'COMMUNITY_REVIEW'))
     || [
     'ADVANCE_WORKFLOW', 'START_CONSULTATION', 'PROCEED_AVAILABLE',
-    'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK', 'CHECK_FINANCIAL_RISK',
+    'COMPLETE_DEATH_REPORT', 'SHOW_NEXT_TASK', 'CHECK_FINANCIAL_RISK', 'LEGAL_BOUNDARY'
   ].includes(selection.action)) return fallback
   const policy = buildResponsePolicy(classification, selection, execution)
   try {

@@ -28,10 +28,16 @@ export function classifyDeterministically(input: string): Classification {
   else if (includesAny(text, ['나중에할게', '쉬고싶', '잠시쉴', '그만할게'])) intent = 'REQUEST_PAUSE'
   else if (includesAny(text, ['절차시작', '준비시작', '계속진행', '다음준비단계', '워크플로시작'])) intent = 'CONTINUE_WORKFLOW'
   else if (saysDeathReportCompleted) intent = 'DEATH_REPORT_COMPLETED'
-  else if (includesAny(text, [
-    '상속포기해야', '한정승인해야', '단순승인해야',
-    '상속포기해도', '한정승인해도', '단순승인해도',
-  ])) intent = 'ASK_LEGAL_DECISION'
+  else if (
+    includesAny(text, [
+      '상속포기해야', '한정승인해야', '단순승인해야',
+      '상속포기해도', '한정승인해도', '단순승인해도',
+      '상속포기가나아', '한정승인이나아', '단순승인이나아',
+      '상속유형추천', '상속방식추천', '어떤상속유형', 
+      '어떤상속방식',
+    ])
+    || /(?:상속유형|상속방식).*(?:추천|뭐가|어떤|나아|맞아)/.test(text)
+  ) intent = 'ASK_LEGAL_DECISION'
   else if (includesAny(text, ['사망신고', '사망 신고'])) intent = 'ASK_DEATH_REPORT'
   else if (includesAny(text, ['안녕', '굿굿', '고마워', '알겠어', '감사'])) intent = 'CASUAL_CHAT'
   else if (includesAny(text, ['처음시작', '시작할게'])) intent = 'START_ONBOARDING'

@@ -11,6 +11,7 @@ import { refreshAgentMemory } from '../memory/agent-memory'
 import {
   acceptsCaseWorkflowHandoff,
   hasPendingCaseWorkflowHandoff,
+  isHighStakesDecisionQuestion,
 } from '../shared/domain-vocabulary'
 import { caseStateSchema } from '../schemas/case-state'
 import { agentOutputSchema } from '../schemas/agent-output'
@@ -137,10 +138,23 @@ export async function runAgent(
     caseState: caseStateWithMemory,
     uiActionIntent: safeRequest.uiActionIntent ?? handoffIntent,
   }
-  const route = enrichedRequest.uiActionIntent
-    ? 'CASE_WORKFLOW'
-    : await routeAgent(safeRequest.input, dependencies.llm, safeRecentMessages, refreshedState.memory)
+  const hasFinancialData =
+    refreshedState.financials.assets.length > 0
+    || refreshedState.financials.debts.length > 0
 
+  const shouldRecommendInheritanceType =
+    isHighStakesDecisionQuestion(safeRequest.input)
+    && hasFinancialData
+
+  const route =
+    enrichedRequest.uiActionIntent || shouldRecommendInheritanceType
+      ? 'CASE_WORKFLOW'
+      : await routeAgent(
+          safeRequest.input,
+          dependencies.llm,
+          safeRecentMessages,
+          refreshedState.memory,
+        )
   if (route === 'CONVERSATION') {
     const result = await runConversationAgent(enrichedRequest, {
       llm: dependencies.conversationLlm ?? dependencies.llm,

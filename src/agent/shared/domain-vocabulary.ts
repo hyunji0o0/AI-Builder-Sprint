@@ -49,14 +49,16 @@ export const generalKnowledgeQuestionPattern =
 
 /** 개인별 사실관계에 따라 결론이 크게 달라져 사건 Agent에서 다뤄야 하는 결정. */
 export const highStakesDecisionPattern =
-  /상속포기|한정승인|단순승인|유산분할|상속재산분할/
+  /상속포기|한정승인|단순승인|유산분할|상속재산분할|상속유형|상속방식/
 
-/** 고위험 선택을 바로 실행하라는 요청이 아니라, 해도 되는지 판단을 묻는 문장인가. */
+/** 고위험 선택을 바로 실행하라는 요청이 아니라, 판단이나 추천을 요구하는 문장인가. */
 export const isHighStakesDecisionQuestion = (input: string) => {
   const text = compact(input)
+
   return highStakesDecisionPattern.test(text)
-    && /도돼|도됨|도괜찮|해야해|해야돼|해야됨|해야하나|해야할까|나을까|맞아|괜찮아|가능해|가능한가|안돼|될까/.test(text)
+    && /도돼|도됨|도괜찮|해야해|해야돼|해야됨|해야하나|해야할까|나을까|나아|맞아|괜찮아|가능해|가능한가|안돼|될까|추천해|추천/.test(text)
 }
+
 
 /** 인사·감사·짧은 반응. 문장 전체가 이 형태일 때만 매치된다. */
 export const casualPattern =
@@ -100,21 +102,42 @@ export const hasEmotionalSignal = (input: string) => emotionPattern.test(compact
  */
 export const isDomainQuestion = (input: string) => {
   const text = compact(input)
-  if (!domainTermPattern.test(text) && !isGeneralLifeQuestion(input)) return false
+
+  if (!domainTermPattern.test(text) && !isGeneralLifeQuestion(input)) {
+    return false
+  }
 
   const explicitlyPersonal = personalCasePattern.test(text)
   const changesCaseState = caseMutationPattern.test(text)
-  const isDefinition = definitionQuestionPattern.test(text) && !explicitlyPersonal && !changesCaseState
-  const isGeneralAdvice = generalAdviceQuestionPattern.test(text)
+
+  const isDefinition =
+    definitionQuestionPattern.test(text)
+    && !explicitlyPersonal
+    && !changesCaseState
+
+  const isGeneralAdvice =
+    generalAdviceQuestionPattern.test(text)
     && !highStakesDecisionPattern.test(text)
     && !explicitlyPersonal
     && !changesCaseState
-  const isGeneralKnowledge = generalKnowledgeQuestionPattern.test(text)
+
+  const isGeneralKnowledge =
+    generalKnowledgeQuestionPattern.test(text)
     && !explicitlyPersonal
     && !changesCaseState
-  // 핸드폰 해지·요금제·명의변경 같은 생활 정리 질문도 도메인 질문으로 본다.
-  const isLifeQuestion = isGeneralLifeQuestion(input) && !explicitlyPersonal && !changesCaseState
-  return isDefinition || isGeneralAdvice || isGeneralKnowledge || isLifeQuestion || isHighStakesDecisionQuestion(input)
+
+  // 휴대폰 해지·요금제·약정·명의변경 등의 생활 정리 질문
+  const isLifeQuestion =
+    isGeneralLifeQuestion(input)
+    && !changesCaseState
+
+  return (
+    isDefinition
+    || isGeneralAdvice
+    || isGeneralKnowledge
+    || isLifeQuestion
+    || isHighStakesDecisionQuestion(input)
+  )
 }
 
 /** 상속·사망 맥락의 감정 표현이지만 아직 실제 사건 처리 요청은 아닌가. */
