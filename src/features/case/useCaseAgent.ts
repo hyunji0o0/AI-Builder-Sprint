@@ -14,6 +14,7 @@ import {
   isDocumentReviewConfirmation,
 } from '../../agent/document-processing/document-correction'
 import { clearCaseSession, persistCaseSession, restoreCaseSession } from './case-session-storage'
+import { loadCaseStateFromCloud, saveCaseStateToCloud, deleteCaseStateFromCloud } from './case-cloud-storage'
 import { createOneStopApplicationGuide, createOneStopResultsGuide } from './one-stop-service-flow'
 
 const institutionNames = (keys: string[]) => keys.flatMap((key) => {
@@ -49,7 +50,7 @@ const blockFromUI = (ui: AgentUIBlock[]): AgentBlockKind | undefined => {
   return ui[0] ? map[ui[0].type] : undefined
 }
 
-export function useCaseAgent() {
+export function useCaseAgent(userId?: string) {
   const [scenario] = useState(() => resolveCaseScenario(window.location.search))
   const [restoredSession] = useState(() => restoreCaseSession(window.location.search, scenario))
   const [agentCaseState, setAgentCaseState] = useState(restoredSession.caseState)
@@ -77,7 +78,27 @@ export function useCaseAgent() {
 
   useEffect(() => {
     persistCaseSession(window.location.search, agentCaseState, messages)
-  }, [agentCaseState, messages])
+    // 로그인 상태이면 Supabase에도 비동기 저장 (실패해도 대화 진행에 영향 없음)
+    if (userId) void saveCaseStateToCloud(userId, agentCaseState, messages)
+  }, [agentCaseState, messages, userId])
+
+  // 로그인 직후 또는 페이지 로드 시 Supabase에서 이전 세션 복원
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+    loadCaseStateFromCloud(userId).then((cloud) => {
+      if (cancelled || !cloud) return
+      // Supabase 데이터가 현재 세션보다 최신이면 덮어쓴다
+      const cloudTime = new Date(cloud.state.lastUpdatedAt).getTime()
+      const localTime = new Date(agentCaseState.lastUpdatedAt).getTime()
+      if (cloudTime > localTime && cloud.state.stage !== 'FIRST_VISIT') {
+        setAgentCaseState(cloud.state)
+        setMessages(cloud.messages)
+      }
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   useEffect(() => () => {
     uploadedDocumentsRef.current.forEach((document) => URL.revokeObjectURL(document.url))
@@ -815,6 +836,7 @@ export function useCaseAgent() {
   const resetCase = () => {
     uploadedDocumentsRef.current.forEach((document) => URL.revokeObjectURL(document.url))
     clearCaseSession(window.location.search)
+    if (userId) void deleteCaseStateFromCloud(userId)
     window.location.reload()
   }
 

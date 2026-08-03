@@ -15,7 +15,7 @@ import '../dashboard.css'
 
 export default function App() {
   const auth = useAuth()
-  const controller = useCaseAgent()
+  const controller = useCaseAgent(auth.user?.id)
   const community = useCommunity()
   const [path, setPath] = useState(window.location.pathname)
   const [guideOpen, setGuideOpen] = useState(false)
